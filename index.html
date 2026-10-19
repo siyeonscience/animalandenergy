@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영양소 탐정</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
+  font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;}
+.screen{position:absolute;inset:0;display:none;}
+.screen.on{display:block;}
+.jua{font-family:'Jua','Malgun Gothic',sans-serif;}
+
+/* ===== 공통 버튼 ===== */
+.btn{font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;padding:13px 50px;border:none;border-radius:999px;
+  background:linear-gradient(#ff9d45,#f06e28);color:#fff;cursor:pointer;letter-spacing:.04em;
+  box-shadow:0 6px 0 #c4541b,0 12px 22px rgba(0,0,0,.18);transition:transform .1s,box-shadow .1s;}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c4541b,0 6px 12px rgba(0,0,0,.18);}
+.btn.sub{background:linear-gradient(#5aa9e6,#2f7fc4);box-shadow:0 6px 0 #22609a,0 12px 22px rgba(0,0,0,.18);font-size:20px;padding:10px 34px;}
+
+/* ===== 인트로 ===== */
+#intro{background:radial-gradient(ellipse at 50% 35%,#fff8e8 0%,#f2e4c6 55%,#e0cb9f 100%);}
+.title-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;transition:opacity .5s,transform .5s;text-align:center;padding:20px;}
+.title-wrap.hide{opacity:0;transform:translateY(-30px);pointer-events:none;}
+.logo{width:130px;height:130px;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.title{font-family:'Jua','Malgun Gothic',sans-serif;font-size:clamp(52px,10vw,96px);color:#3d2b17;letter-spacing:.05em;
+  text-shadow:0 5px 0 #f6c453,0 10px 22px rgba(0,0,0,.15);line-height:1.1;}
+.subtitle{font-size:clamp(14px,2.4vw,18px);color:#6b5638;margin-bottom:22px;}
+
+.book-stage{position:absolute;left:50%;top:calc(50% - 34px);width:980px;height:620px;
+  transform:translate(-50%,-50%) scale(var(--s,1));display:none;opacity:0;transition:opacity .6s;}
+.book-stage.show{display:block;}
+.book-stage.in{opacity:1;}
+.book{position:absolute;inset:0;perspective:2600px;transition:transform 1.2s cubic-bezier(.6,.05,.3,1);}
+.book.closed{transform:translateX(-245px);}
+.back-cover{position:absolute;left:490px;top:-10px;width:500px;height:640px;background:#22473d;
+  border-radius:0 14px 14px 0;box-shadow:0 22px 40px rgba(0,0,0,.3);}
+.page-r{position:absolute;left:490px;top:0;width:490px;height:620px;z-index:1;}
+.leaf{position:absolute;left:490px;top:0;width:490px;height:620px;transform-origin:left center;
+  transform-style:preserve-3d;transition:transform 1.3s cubic-bezier(.45,.05,.35,1);}
+.leaf.cover{top:-10px;width:500px;height:640px;}
+.leaf.flipped{transform:rotateY(-180deg);}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;}
+.face.back{transform:rotateY(180deg);}
+
+.cover .front{background:linear-gradient(135deg,#2f6253,#244c41);border-radius:0 14px 14px 0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#f6d98a;}
+.cover .front::before{content:'';position:absolute;inset:22px;border:3px double rgba(246,217,138,.6);border-radius:8px;}
+.cover .front::after{content:'';position:absolute;left:0;top:0;bottom:0;width:26px;
+  background:linear-gradient(to right,rgba(0,0,0,.3),rgba(0,0,0,0));}
+.cover-title{font-family:'Jua','Malgun Gothic',sans-serif;font-size:66px;letter-spacing:.06em;text-shadow:0 3px 0 rgba(0,0,0,.3);}
+.cover-sub{font-size:18px;letter-spacing:.3em;opacity:.85;}
+.cover .back{background:#e9dcc0 repeating-linear-gradient(45deg,rgba(80,120,100,.08) 0 10px,transparent 10px 20px);
+  border-radius:14px 0 0 14px;}
+
+.paper{background:#fffdf6;}
+.page-r .paper,.leaf .front.paper{background:linear-gradient(to right,rgba(0,0,0,.13),rgba(0,0,0,0) 38px),#fffdf6;}
+.leaf .back.paper{background:linear-gradient(to left,rgba(0,0,0,.13),rgba(0,0,0,0) 38px),#fffdf6;}
+.pg{position:absolute;inset:0;padding:30px 30px 26px 34px;display:flex;flex-direction:column;gap:12px;}
+.leaf .back .pg{padding:30px 34px 26px 30px;}
+.pg h2{font-family:'Jua','Malgun Gothic',sans-serif;font-size:26px;color:#5a4325;font-weight:400;
+  border-bottom:2px dashed #dccaa4;padding-bottom:6px;}
+.pg .pno{margin-top:auto;text-align:center;font-size:12px;color:#a9977a;}
+.pg .tip{font-size:13px;color:#7a6440;background:#fbf2dc;border-radius:10px;padding:8px 12px;line-height:1.5;}
+
+.intro-pg{align-items:center;justify-content:center;text-align:center;gap:18px;}
+.intro-pg h3{font-family:'Jua','Malgun Gothic',sans-serif;font-size:38px;color:#3d2b17;font-weight:400;}
+.intro-pg p{font-size:16px;line-height:1.8;color:#5a4a35;word-break:keep-all;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.chip{font-family:'Jua','Malgun Gothic',sans-serif;color:#fff;padding:5px 14px;border-radius:999px;font-size:17px;}
+
+.next-btn{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);opacity:0;pointer-events:none;transition:opacity .5s;}
+.next-btn.show{opacity:1;pointer-events:auto;}
+.next-btn:active{transform:translateX(-50%) translateY(4px);}
+
+/* ===== 검출 방법 카드 ===== */
+.mcard{--c:#888;position:relative;background:#fff;border:2.5px solid var(--c);border-radius:18px;
+  padding:24px 14px 12px;margin-top:16px;}
+.mhead{position:absolute;top:-17px;left:50%;transform:translateX(-50%);background:var(--c);color:#fff;
+  font-family:'Jua','Malgun Gothic',sans-serif;font-size:20px;padding:3px 22px;border-radius:999px;white-space:nowrap;}
+.mbody{display:flex;align-items:center;gap:10px;}
+.millu{width:190px;height:114px;flex-shrink:0;}
+.minfo{flex:1;font-size:13px;line-height:1.5;word-break:keep-all;}
+.minfo p{margin-bottom:4px;}
+.minfo b{display:inline-block;background:#f2ebdc;color:#6b5638;border-radius:6px;padding:0 6px;margin-right:5px;font-size:12px;}
+.mres{font-family:'Jua','Malgun Gothic',sans-serif;font-size:20px;margin-top:4px;}
+
+/* ===== 실험실 ===== */
+#lab{background:#dfe9ef;display:none;flex-direction:column;}
+#lab.on{display:flex;}
+.labbar{flex-shrink:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:#2f5d50;color:#f6d98a;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:2;}
+.labbar .lt{font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;display:flex;align-items:center;gap:8px;}
+.labbar .lt small{font-size:15px;color:#cfe3da;}
+.dict{display:flex;align-items:center;gap:6px;background:#f6d98a;color:#2f5d50;border:none;border-radius:12px;
+  padding:6px 12px 6px 8px;cursor:pointer;font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;
+  box-shadow:0 3px 0 #c9a54a;}
+.dict:active{transform:translateY(2px);box-shadow:0 1px 0 #c9a54a;}
+.dict svg{width:30px;height:30px;}
+.labwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
+#labsvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none;}
+.bottle{cursor:pointer;}
+.hint{animation:pulse 1.1s ease-in-out infinite;pointer-events:none;}
+.hint rect.ring{animation:march .9s linear infinite;}
+@keyframes march{to{stroke-dashoffset:-34;}}
+@keyframes pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+.bubble{animation:bob2 1.4s ease-in-out infinite;}
+@keyframes bob2{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+
+#toast{position:absolute;left:50%;top:72px;transform:translate(-50%,-10px);background:rgba(47,42,36,.88);color:#fff;
+  padding:10px 20px;border-radius:999px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+  white-space:nowrap;z-index:5;}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+
+.overlay{position:absolute;inset:0;background:rgba(30,26,20,.5);display:none;align-items:center;justify-content:center;
+  z-index:10;padding:14px;}
+.overlay.on{display:flex;}
+.modal{background:#fffdf6;border-radius:20px;width:min(980px,100%);max-height:100%;overflow:auto;padding:18px 22px 22px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);animation:pop .3s ease-out;}
+@keyframes pop{from{transform:scale(.92);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.modal-h h2{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:26px;color:#3d2b17;}
+.xbtn{border:none;background:#efe4cc;width:38px;height:38px;border-radius:50%;font-size:22px;cursor:pointer;color:#5a4325;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
+@media (max-width:760px){.mgrid{grid-template-columns:1fr;}}
+
+.done-card{background:#fffdf6;border-radius:22px;padding:28px 34px;text-align:center;max-width:440px;
+  box-shadow:0 20px 50px rgba(0,0,0,.35);animation:pop .3s ease-out;}
+.done-card h3{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:30px;color:#3d2b17;margin-bottom:10px;}
+.done-card p{font-size:15px;line-height:1.7;color:#5a4a35;margin-bottom:20px;word-break:keep-all;}
+.done-card .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<!-- ================= 인트로 + 책 ================= -->
+<section id="intro" class="screen on">
+  <div class="title-wrap" id="titleWrap">
+    <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="50" cy="50" r="34" fill="#dff1fb" stroke="#3d2b17" stroke-width="8"/>
+      <circle cx="40" cy="44" r="7" fill="#f3d36b"/><circle cx="58" cy="40" r="5" fill="#9b6fd1"/>
+      <circle cx="54" cy="60" r="8" fill="#e8722b"/><circle cx="38" cy="62" r="5" fill="#3f7fd0"/>
+      <path d="M33 34 Q40 26 50 25" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      <rect x="75" y="72" width="16" height="42" rx="7" fill="#3d2b17" transform="rotate(-45 83 93)"/>
+    </svg>
+    <h1 class="title">영양소 탐정</h1>
+    <p class="subtitle">음식 속에 숨어 있는 영양소를 찾아라!</p>
+    <button class="btn" id="startBtn">시작하기</button>
+  </div>
+
+  <div class="book-stage" id="bookStage">
+    <div class="book closed" id="book">
+      <div class="back-cover"></div>
+      <div class="page-r"><div class="face paper"><div class="pg" id="pageRight"></div></div></div>
+      <div class="leaf" id="leaf1" style="z-index:2">
+        <div class="face front paper"><div class="pg intro-pg">
+          <h3>🔍 탐정 수첩</h3>
+          <p>영양소는 특정한 <b>검출 시약</b>을 만나면<br>고유한 색깔로 변해요.</p>
+          <p>다음 장의 단서를 잘 익혀 두면<br>음식 속 영양소를 밝혀낼 수 있어요!</p>
+          <div class="chips">
+            <span class="chip" style="background:#2a8ccc">녹말</span><span class="chip" style="background:#ef7a2f">포도당</span>
+            <span class="chip" style="background:#8648bd">단백질</span><span class="chip" style="background:#cf4fae">지방</span>
+          </div>
+        </div></div>
+        <div class="face back paper"><div class="pg" id="pageLeft"></div></div>
+      </div>
+      <div class="leaf cover" id="cover" style="z-index:3">
+        <div class="face front">
+          <svg width="110" height="110" viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="50" cy="50" r="34" fill="none" stroke="#f6d98a" stroke-width="8"/>
+            <rect x="75" y="72" width="16" height="42" rx="7" fill="#f6d98a" transform="rotate(-45 83 93)"/>
+          </svg>
+          <div class="cover-title">영양소 탐정</div>
+          <div class="cover-sub">사건 수첩 No.1</div>
+        </div>
+        <div class="face back"></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn next-btn" id="nextBtn">다음 ▶</button>
+</section>
+
+<!-- ================= 실험실 ================= -->
+<section id="lab" class="screen">
+  <header class="labbar">
+    <div class="lt">
+      <svg width="26" height="26" viewBox="0 0 120 120" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="#f6d98a" stroke-width="12"/><rect x="73" y="70" width="20" height="46" rx="9" fill="#f6d98a" transform="rotate(-45 83 93)"/></svg>
+      영양소 탐정 <small>· 실험실</small>
+    </div>
+    <button class="dict" id="dictBtn" title="영양소 검출 방법 다시 보기">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <rect x="6" y="4" width="26" height="32" rx="3" fill="#2f5d50"/>
+        <rect x="9" y="4" width="23" height="28" rx="2" fill="#fffdf6"/>
+        <rect x="6" y="30" width="26" height="6" rx="2" fill="#244c41"/>
+        <path d="M13 11h13M13 16h13M13 21h8" stroke="#c9a54a" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="27" cy="26" r="6" fill="#fff" stroke="#e8722b" stroke-width="3"/>
+        <path d="M31 30l5 5" stroke="#e8722b" stroke-width="3.4" stroke-linecap="round"/>
+      </svg>
+      검출 방법
+    </button>
+  </header>
+  <div class="labwrap">
+    <svg id="labsvg" viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef4f7"/><stop offset="1" stop-color="#d6e3eb"/></linearGradient>
+        <linearGradient id="tableG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ead8b8"/><stop offset="1" stop-color="#d7bc8f"/></linearGradient>
+        <linearGradient id="plateG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbfdff" stop-opacity=".96"/><stop offset="1" stop-color="#dfe8f0" stop-opacity=".96"/></linearGradient>
+        <radialGradient id="wellG" cx=".5" cy=".38" r=".62"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#edf2f6"/><stop offset="1" stop-color="#c6d2dc"/></radialGradient>
+        <filter id="soft" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-opacity=".18"/></filter>
+        <clipPath id="dclip"><path d="M-3 0 L-7 -22 L-7 -88 L7 -88 L7 -22 L3 0 Z"/></clipPath>
+      </defs>
+
+      <!-- 벽과 실험대 -->
+      <rect x="-1000" y="-600" width="3000" height="840" fill="#eef4f7"/>
+      <rect x="-1000" width="3000" height="240" fill="url(#wallG)"/>
+      <rect x="-1000" y="240" width="3000" height="1000" fill="#d7bc8f"/>
+      <rect x="-1000" y="240" width="3000" height="410" fill="url(#tableG)"/>
+      <rect x="-1000" y="236" width="3000" height="8" fill="#c4a678"/>
+      <path d="M0 300 Q250 290 500 302 T1000 296 M0 420 Q300 410 600 424 T1000 418 M0 560 Q260 548 520 562 T1000 556" fill="none" stroke="rgba(140,100,50,.10)" stroke-width="3"/>
+
+      <!-- 안내 메모 -->
+      <g id="panel">
+        <rect x="28" y="30" width="278" height="196" rx="14" fill="#fffdf5" stroke="#e2d3b0" stroke-width="2" filter="url(#soft)"/>
+        <circle cx="167" cy="40" r="6" fill="#e8722b"/>
+        <text x="48" y="74" font-family="Jua, Malgun Gothic, sans-serif" font-size="22" fill="#3d2b17">탐구 ① 시료 넣기</text>
+        <text font-size="14" fill="#5a4a35">
+          <tspan x="48" y="104">반짝이는 용기를 클릭하면</tspan>
+          <tspan x="48" y="126">스포이드로 시료를 12홈판의</tspan>
+          <tspan x="48" y="148">세로줄에 차례대로 넣어요.</tspan>
+        </text>
+        <g id="progress"></g>
+      </g>
+
+      <!-- 검출 시약 라벨 -->
+      <g id="rowLabels"></g>
+
+      <!-- 12홈판 -->
+      <g id="plate">
+        <rect x="318" y="356" width="584" height="278" rx="24" fill="url(#plateG)" stroke="#b4c4d2" stroke-width="2" filter="url(#soft)"/>
+        <rect x="326" y="364" width="568" height="262" rx="18" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2"/>
+        <g id="colHeads"></g>
+        <g id="wells"></g>
+      </g>
+
+      <!-- 용기 -->
+      <g id="bottles"></g>
+      <g id="hint" class="hint" style="display:none">
+        <rect class="ring" x="-60" y="-184" width="120" height="196" rx="18" fill="rgba(255,190,40,.10)" stroke="#ffb21e" stroke-width="4" stroke-dasharray="10 7"/>
+        <g transform="translate(0,-208)"><g class="bubble">
+          <rect x="-64" y="-18" width="128" height="34" rx="17" fill="#ffb21e"/>
+          <path d="M-8 15 L0 25 L8 15 Z" fill="#ffb21e"/>
+          <text x="0" y="5" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="18" fill="#fff">클릭해 보세요!</text>
+        </g></g>
+      </g>
+
+      <!-- 스포이드 -->
+      <circle id="drop" r="5" cx="0" cy="0" opacity="0"/>
+      <g id="dropper" opacity="0">
+        <rect id="dfluid" clip-path="url(#dclip)" x="-8" y="0" width="16" height="0"/>
+        <path d="M-3 0 L-7 -22 L-7 -88 L7 -88 L7 -22 L3 0 Z" fill="rgba(255,255,255,.35)" stroke="#8ea3b5" stroke-width="2"/>
+        <line x1="-3.5" y1="-80" x2="-3.5" y2="-28" stroke="#fff" stroke-width="2" opacity=".8"/>
+        <g id="bulb">
+          <path d="M-10 -88 L-10 -116 Q-10 -138 0 -138 Q10 -138 10 -116 L10 -88 Z" fill="#e25b45"/>
+          <path d="M-5 -120 Q-5 -132 0 -133" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="3" stroke-linecap="round"/>
+          <rect x="-12" y="-92" width="24" height="7" rx="2" fill="#c4452f"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div id="toast"></div>
+
+  <div class="overlay" id="dictModal">
+    <div class="modal" role="dialog" aria-label="영양소 검출 방법">
+      <div class="modal-h"><h2>📖 영양소 검출 방법</h2><button class="xbtn" id="dictClose" aria-label="닫기">×</button></div>
+      <div class="mgrid" id="dictGrid"></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="doneModal">
+    <div class="done-card">
+      <h3>🎉 시료 넣기 완료!</h3>
+      <p>네 가지 시료를 12홈판의 각 세로줄에 모두 넣었어요.<br>다음 단계(검출 시약 넣기)는 준비 중이에요.</p>
+      <div class="row">
+        <button class="btn sub" id="againBtn">다시 해 보기</button>
+        <button class="btn sub" id="closeDone" style="background:linear-gradient(#a6c35a,#7fa23a);box-shadow:0 6px 0 #5f7d27,0 12px 22px rgba(0,0,0,.18)">홈판 보기</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const $=s=>document.querySelector(s);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+const easeIn=t=>t*t;
+const SPEED=.75; // 애니메이션 속도 (작을수록 빠름)
+function tween(d,fn,e=ease){
+  return new Promise(res=>{
+    const t0=performance.now();d*=SPEED;
+    const f=now=>{const p=Math.max(0,Math.min(1,(now-t0)/d));fn(e(p));p<1?requestAnimationFrame(f):res();};
+    requestAnimationFrame(f);
+  });
+}
+
+/* ================= 검출 방법 카드 ================= */
+const METHODS=[
+  {key:'starch',name:'녹말 검출',color:'#2a8ccc',sample:'녹말 용액',reagent:'아이오딘-아이오딘화 칼륨 용액',
+   rColor:'#d97a1c',after:'#2e3c8f',result:'청람색',tc:'#24346f'},
+  {key:'glucose',name:'포도당 검출',color:'#ef7a2f',sample:'포도당 용액',reagent:'베네딕트 용액',heat:true,
+   rColor:'#5fc0e2',after:'#e2622f',result:'황적색',tc:'#e8692b'},
+  {key:'protein',name:'단백질 검출',color:'#8648bd',sample:'단백질 용액',
+   reagent:'뷰렛 용액<br>(5% 수산화 나트륨 수용액 + 1% 황산 구리(Ⅱ) 수용액)',
+   rColor:'#3ea8cc',after:'#c7a2dc',result:'보라색',tc:'#8648bd'},
+  {key:'fat',name:'지방 검출',color:'#cf4fae',sample:'지방 용액 + 증류수',reagent:'수단 Ⅲ 용액',
+   rColor:'#e6461f',after:'#e8461f',result:'선홍색',tc:'#d43b8e'},
+];
+let uid=0;
+const CLEAR='rgba(214,230,242,.9)';
+function tubeSVG(x,y,layers){
+  const id='tc'+(uid++), w=17, h=82;
+  const d=`M${x-w} ${y} L${x-w} ${y+h} A${w} ${w} 0 0 0 ${x+w} ${y+h} L${x+w} ${y} Z`;
+  let s=`<clipPath id="${id}"><path d="${d}"/></clipPath>`;
+  layers.forEach(l=>{s+=`<rect clip-path="url(#${id})" x="${x-w}" y="${y+l.f}" width="${2*w}" height="${l.t-l.f}" fill="${l.c}"/>`;});
+  s+=`<path d="${d}" fill="rgba(255,255,255,.2)" stroke="#9aa9b8" stroke-width="2.2"/>`;
+  s+=`<ellipse cx="${x}" cy="${y}" rx="${w+2}" ry="3" fill="#fff" stroke="#9aa9b8" stroke-width="2"/>`;
+  s+=`<line x1="${x-10}" y1="${y+10}" x2="${x-10}" y2="${y+80}" stroke="#fff" stroke-width="3" opacity=".7" stroke-linecap="round"/>`;
+  return s;
+}
+function miniDropper(x,tip,color){
+  return `<path d="M${x-5} ${tip-34} L${x-5} ${tip-9} L${x} ${tip} L${x+5} ${tip-9} L${x+5} ${tip-34} Z" fill="${color}" stroke="#7d8d9c" stroke-width="1.5"/>`+
+    `<rect x="${x-7}" y="${tip-52}" width="14" height="20" rx="6" fill="#555"/>`+
+    `<circle cx="${x}" cy="${tip+5}" r="2.6" fill="${color}"/>`;
+}
+function illu(m){
+  const fat=m.key==='fat';
+  const before=fat?[{f:40,t:62,c:'rgba(236,222,150,.95)'},{f:62,t:120,c:CLEAR}]:[{f:40,t:120,c:CLEAR}];
+  const after=fat?[{f:40,t:62,c:m.after},{f:62,t:120,c:CLEAR}]:[{f:40,t:120,c:m.after}];
+  return miniDropper(70,56,m.rColor)+tubeSVG(70,62,before)+
+    `<path d="M120 112 h36 v-12 l26 20 l-26 20 v-12 h-36 z" fill="#a6c35a"/>`+
+    (m.heat?`<text x="150" y="90" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="17" fill="#e0543f">중탕 가열</text>`:'')+
+    tubeSVG(230,62,after);
+}
+function methodCard(m){
+  return `<div class="mcard" style="--c:${m.color}"><div class="mhead">${m.name}</div><div class="mbody">
+    <svg class="millu" viewBox="0 0 300 180">${illu(m)}</svg>
+    <div class="minfo"><p><b>시료</b>${m.sample}</p><p><b>시약</b>${m.reagent}</p>${m.heat?'<p><b>조건</b>중탕 가열</p>':''}
+    <p class="mres"><span style="color:${m.tc}">${m.result}</span>으로 변한다.</p></div></div></div>`;
+}
+$('#pageLeft').innerHTML=`<h2>단서 노트 ① 녹말 · 포도당</h2>${methodCard(METHODS[0])}${methodCard(METHODS[1])}<div class="pno">- 2 -</div>`;
+$('#pageRight').innerHTML=`<h2>단서 노트 ② 단백질 · 지방</h2>${methodCard(METHODS[2])}${methodCard(METHODS[3])}
+  <div class="tip">💡 실험실 오른쪽 위의 <b>사전 아이콘</b>을 누르면 언제든 이 검출 방법을 다시 볼 수 있어요.</div><div class="pno">- 3 -</div>`;
+$('#dictGrid').innerHTML=METHODS.map(methodCard).join('');
+
+/* ================= 인트로: 책 펼치기 ================= */
+function fitBook(){
+  const s=Math.min((innerWidth-24)/1000,(innerHeight-130)/650,1.2);
+  document.documentElement.style.setProperty('--s',Math.max(.2,s));
+}
+addEventListener('resize',fitBook);fitBook();
+
+$('#startBtn').onclick=async()=>{
+  $('#startBtn').disabled=true;
+  $('#titleWrap').classList.add('hide');
+  await wait(450);
+  const st=$('#bookStage');st.classList.add('show');
+  await wait(30);st.classList.add('in');
+  await wait(800);
+  $('#book').classList.remove('closed');
+  const cover=$('#cover');cover.style.zIndex=10;cover.classList.add('flipped');
+  await wait(1900);
+  const l1=$('#leaf1');l1.style.zIndex=11;l1.classList.add('flipped');
+  await wait(1400);
+  $('#nextBtn').classList.add('show');
+};
+$('#nextBtn').onclick=()=>{
+  $('#intro').classList.remove('on');
+  $('#lab').classList.add('on');
+  startLab();
+};
+
+/* ================= 실험실 ================= */
+const NAMES=['증류수','쌀 음료','두유','식용유'];
+const SAMPLES=[
+  {col:'#f5a043',bottle:'rgba(190,222,245,.45)',well:'rgba(170,210,240,.6)',fluid:'rgba(170,210,240,.75)'},
+  {col:'#e8737a',bottle:'#f6f0dd',well:'#f3ead0',fluid:'#f3ead0'},
+  {col:'#93bf55',bottle:'#e6cf9e',well:'#e2c893',fluid:'#e2c893'},
+  {col:'#6c98d6',bottle:'rgba(242,206,70,.75)',well:'rgba(240,203,62,.85)',fluid:'rgba(240,203,62,.85)'},
+];
+const COLX=[400,540,680,820], ROWY=[445,518,591], BASE=318, LV0=95;
+const ROW_LABELS=[['아이오딘-아이오딘화','칼륨 용액'],['5% 수산화 나트륨 수용액,','1% 황산 구리(Ⅱ) 수용액'],['수단 Ⅲ 용액']];
+const BOTTLE_D='M-40 -8 Q-40 0 -32 0 L32 0 Q40 0 40 -8 L40 -92 Q40 -112 18 -122 L16 -128 L16 -150 L-16 -150 L-16 -128 L-18 -122 Q-40 -112 -40 -92 Z';
+const D={x:0,y:0,bulb:1,fluid:0};
+let state, busy=false;
+
+function setAttrs(el,o){for(const k in o)el.setAttribute(k,o[k]);}
+
+function buildLab(){
+  state={next:0,done:[false,false,false,false],level:[LV0,LV0,LV0,LV0]};
+  // 라벨
+  $('#rowLabels').innerHTML=`<text x="160" y="406" text-anchor="middle" font-size="13" fill="#7a6a50">다음 단계에서 넣을 검출 시약</text>`+
+    ROW_LABELS.map((lines,r)=>{
+      const y=ROWY[r];
+      const t=lines.length===1?`<tspan x="160" y="${y+5}">${lines[0]}</tspan>`:
+        `<tspan x="160" y="${y-5}">${lines[0]}</tspan><tspan x="160" y="${y+15}">${lines[1]}</tspan>`;
+      return `<rect x="30" y="${y-28}" width="260" height="56" rx="10" fill="#fff" stroke="#9fb6c9" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <text text-anchor="middle" font-size="14.5" fill="#33475a" font-weight="700">${t}</text>
+        <line x1="290" y1="${y}" x2="346" y2="${y}" stroke="#9fb6c9" stroke-width="1.6" stroke-dasharray="3 4"/>
+        <circle cx="290" cy="${y}" r="3" fill="#9fb6c9"/>`;
+    }).join('');
+  // 홈판 머리글
+  $('#colHeads').innerHTML=COLX.map((x,i)=>`<rect x="${x-62}" y="368" width="124" height="30" rx="9" fill="${SAMPLES[i].col}" opacity=".92"/>
+    <text id="ch${i}" x="${x}" y="389" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="18" fill="#fff">${NAMES[i]}</text>`).join('');
+  // 홈
+  let w='';
+  ROWY.forEach((y,r)=>COLX.forEach((x,c)=>{
+    w+=`<g><ellipse cx="${x}" cy="${y}" rx="50" ry="28" fill="url(#wellG)" stroke="#a9bac8" stroke-width="2"/>
+      <ellipse cx="${x}" cy="${y+2}" rx="42" ry="22" fill="none" stroke="rgba(0,0,0,.05)" stroke-width="3"/>
+      <ellipse id="wl${r}${c}" cx="${x}" cy="${y+3}" rx="0" ry="0" fill="${SAMPLES[c].well}"/>
+      <ellipse id="ws${r}${c}" cx="${x-14}" cy="${y-3}" rx="0" ry="0" fill="#fff" opacity=".5"/>
+      <ellipse id="wr${r}${c}" cx="${x}" cy="${y+3}" rx="0" ry="0" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></g>`;
+  }));
+  $('#wells').innerHTML=w;
+  // 용기
+  $('#bottles').innerHTML=COLX.map((x,i)=>{
+    const s=SAMPLES[i];
+    return `<g class="bottle" id="b${i}" data-i="${i}" transform="translate(${x},${BASE})">
+      <ellipse cx="0" cy="2" rx="46" ry="7" fill="rgba(0,0,0,.14)"/>
+      <clipPath id="bc${i}"><path d="${BOTTLE_D}"/></clipPath>
+      <rect id="bl${i}" clip-path="url(#bc${i})" x="-45" y="${-LV0}" width="90" height="${LV0}" fill="${s.bottle}"/>
+      <rect id="bs${i}" clip-path="url(#bc${i})" x="-45" y="${-LV0}" width="90" height="3" fill="#fff" opacity=".45"/>
+      <path d="${BOTTLE_D}" fill="rgba(255,255,255,.2)" stroke="#8ea3b5" stroke-width="2.5"/>
+      <path d="M-30 -88 L-30 -16" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+      <rect x="-34" y="-74" width="68" height="34" rx="6" fill="#fff" stroke="${s.col}" stroke-width="2.5"/>
+      <text x="0" y="-51" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="16" fill="#3d2b17">${NAMES[i]}</text>
+      <g id="cap${i}"><rect x="-20" y="-172" width="40" height="24" rx="4" fill="${s.col}" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+        <path d="M-12 -168v16M-4 -168v16M4 -168v16M12 -168v16" stroke="rgba(0,0,0,.15)" stroke-width="2"/></g>
+      <g id="ck${i}" opacity="0"><circle cx="30" cy="-102" r="14" fill="#2bb673" stroke="#fff" stroke-width="2.5"/>
+        <path d="M23 -102 l5 5 l9 -10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <rect x="-56" y="-180" width="112" height="192" fill="transparent"/>
+    </g>`;
+  }).join('');
+  document.querySelectorAll('.bottle').forEach(b=>b.addEventListener('click',()=>onBottle(+b.dataset.i)));
+  drawProgress();
+  Object.assign(D,{x:0,y:0,bulb:1,fluid:0});renderDropper();$('#dropper').setAttribute('opacity',0);
+}
+
+function drawProgress(){
+  $('#progress').innerHTML=NAMES.map((n,i)=>{
+    const x=62+i*68, done=state.done[i], cur=i===state.next;
+    return `<circle cx="${x}" cy="186" r="11" fill="${done?'#2bb673':cur?'#ffb21e':'#e6dcc6'}"/>
+      ${done?`<path d="M${x-5} 186 l3.5 3.5 l6.5 -7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>`:
+        `<text x="${x}" y="191" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${i+1}</text>`}
+      <text x="${x}" y="214" text-anchor="middle" font-size="12.5" fill="${done?'#2b8a5a':'#6b5638'}" font-weight="${cur?700:400}">${n}</text>`;
+  }).join('');
+}
+
+function showHint(i){
+  const h=$('#hint');
+  if(i==null||i>3){h.style.display='none';return;}
+  h.setAttribute('transform',`translate(${COLX[i]},${BASE})`);h.style.display='';
+}
+
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1800);}
+
+function startLab(){buildLab();busy=false;showHint(0);}
+
+/* ---- 그리기 도우미 ---- */
+function renderDropper(){
+  $('#dropper').setAttribute('transform',`translate(${D.x},${D.y})`);
+  $('#bulb').setAttribute('transform',`translate(0,-113) scale(${D.bulb},1) translate(0,113)`);
+  setAttrs($('#dfluid'),{y:-D.fluid,height:D.fluid});
+}
+function setDropper(o){Object.assign(D,o);renderDropper();}
+function moveDropper(x,y,dur,e){const x0=D.x,y0=D.y;return tween(dur,p=>setDropper({x:lerp(x0,x,p),y:lerp(y0,y,p)}),e);}
+function setCap(i,dx,dy,rot){$('#cap'+i).setAttribute('transform',`translate(${dx},${dy}) rotate(${rot||0} 0 -160)`);}
+function setLevel(i,lv){state.level[i]=lv;setAttrs($('#bl'+i),{y:-lv,height:lv});$('#bs'+i).setAttribute('y',-lv);}
+
+async function capOff(i){
+  await tween(260,p=>setCap(i,0,-40*p));
+  await tween(480,p=>setCap(i,62*p,lerp(-40,148,p)-Math.sin(Math.PI*p)*36,0));
+}
+async function capOn(i){
+  await tween(480,p=>setCap(i,62*(1-p),lerp(148,-40,p)-Math.sin(Math.PI*p)*36,0));
+  await tween(260,p=>setCap(i,0,-40*(1-p)));
+}
+
+async function dispense(i,r){
+  const x=COLX[i], y=ROWY[r];
+  await moveDropper(x,y-64,r===0?650:420);
+  await moveDropper(x,y-22,260);
+  // 스포이드 꾹 → 한 방울
+  const drop=$('#drop');
+  setAttrs(drop,{fill:SAMPLES[i].fluid,cx:x,cy:D.y+4,opacity:1});
+  const f0=D.fluid;
+  await tween(240,p=>setDropper({bulb:1-.3*p,fluid:f0-18*p}));
+  await tween(200,p=>drop.setAttribute('cy',lerp(y-18,y+2,p)),easeIn);
+  drop.setAttribute('opacity',0);
+  const wl=$(`#wl${r}${i}`),ws=$(`#ws${r}${i}`),wr=$(`#wr${r}${i}`);
+  await Promise.all([
+    tween(420,p=>{setAttrs(wl,{rx:39*p,ry:21*p});setAttrs(ws,{rx:12*p,ry:5*p});},easeOut),
+    tween(420,p=>setDropper({bulb:.7+.3*p})),
+    tween(560,p=>setAttrs(wr,{rx:10+32*p,ry:5+17*p,opacity:.9*(1-p)}),easeOut),
+  ]);
+  await moveDropper(x,y-64,220);
+}
+
+async function runBottle(i){
+  busy=true;showHint(null);
+  const x=COLX[i];
+  $('#dfluid').setAttribute('fill',SAMPLES[i].fluid);
+  // 1. 뚜껑 열기
+  await capOff(i);
+  // 2. 스포이드 등장
+  setDropper({x,y:60,bulb:1,fluid:0});
+  await tween(450,p=>{$('#dropper').setAttribute('opacity',p);setDropper({y:lerp(60,150,p)});});
+  // 3. 고무 꼭지 누르고 용기 속으로
+  await tween(220,p=>setDropper({bulb:1-.3*p}));
+  await moveDropper(x,268,520);
+  // 4. 꼭지 놓으며 빨아들이기
+  const lv=state.level[i];
+  await tween(650,p=>{setDropper({bulb:.7+.3*p,fluid:56*p});setLevel(i,lv-9*p);});
+  await moveDropper(x,150,480);
+  // 5. 세로줄에 차례대로 넣기
+  for(let r=0;r<3;r++) await dispense(i,r);
+  // 6. 스포이드 정리, 뚜껑 닫기
+  await moveDropper(x,150,600);
+  await tween(350,p=>{$('#dropper').setAttribute('opacity',1-p);setDropper({y:lerp(150,80,p)});});
+  await capOn(i);
+  // 7. 완료 표시
+  await tween(300,p=>$('#ck'+i).setAttribute('opacity',p));
+  state.done[i]=true;state.next=i+1;drawProgress();
+  busy=false;
+  if(state.next<4){showHint(state.next);toast(`잘했어요! 이번에는 ${NAMES[state.next]}를 넣어 볼까요?`);}
+  else{await wait(500);$('#doneModal').classList.add('on');}
+}
+
+async function shake(i){
+  const b=$('#b'+i),x=COLX[i];
+  await tween(380,p=>b.setAttribute('transform',`translate(${x+Math.sin(p*Math.PI*6)*5*(1-p)},${BASE})`),t=>t);
+  b.setAttribute('transform',`translate(${x},${BASE})`);
+}
+
+function onBottle(i){
+  if(busy)return;
+  if(state.done[i]){toast(`${NAMES[i]}는 이미 홈판에 넣었어요.`);return;}
+  if(i!==state.next){toast(`먼저 반짝이는 ${NAMES[state.next]} 용기를 클릭해 보세요!`);shake(i);return;}
+  runBottle(i);
+}
+
+/* ---- 사전(검출 방법) / 완료 창 ---- */
+$('#dictBtn').onclick=()=>$('#dictModal').classList.add('on');
+$('#dictClose').onclick=()=>$('#dictModal').classList.remove('on');
+$('#dictModal').onclick=e=>{if(e.target.id==='dictModal')$('#dictModal').classList.remove('on');};
+addEventListener('keydown',e=>{if(e.key==='Escape')$('#dictModal').classList.remove('on');});
+$('#againBtn').onclick=()=>{$('#doneModal').classList.remove('on');startLab();};
+$('#closeDone').onclick=()=>$('#doneModal').classList.remove('on');
+</script>
+</body>
+</html>
