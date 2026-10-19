@@ -183,10 +183,10 @@ const LABS=[
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];
 
-$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}" data-i="${i}" aria-label="${l.title}${l.href?(l.ext?' (새 창에서 열림)':''):' (준비 중)'}">
+$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}" data-i="${i}" aria-label="${l.title}${l.href?'':' (준비 중)'}">
   <span class="thumb"><svg viewBox="0 0 320 200" aria-hidden="true">${THUMBS[l.id]}</svg></span>
   <span class="body"><span class="no">실험 ${String(i+1).padStart(2,'0')}</span><span class="ct">${l.title}</span><span class="cd">${l.desc}</span>
-  <span class="tag ${l.href?'go':'wait'}">${l.href?(l.ext?'VR 열기 ↗':'시작하기 ▶'):'준비 중'}</span></span></button>`).join('');
+  <span class="tag ${l.href?'go':'wait'}">${l.href?(l.ext?'VR 열기 ▶':'시작하기 ▶'):'준비 중'}</span></span></button>`).join('');
 
 document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{
   const l=LABS[+c.dataset.i];
@@ -194,7 +194,6 @@ document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{
     $('#soonText').innerHTML=`<b>${l.title}</b> 실험은 지금 열심히 준비하고 있어요.<br>조금만 기다려 주세요!`;
     $('#soon').classList.add('on');$('#soonClose').focus();return;
   }
-  if(l.ext){window.open(l.href,'_blank','noopener');return;}  // 외부 사이트는 새 창으로
   c.classList.add('zoom');$('#fadeOut').classList.add('on');
   setTimeout(()=>location.href=l.href,450);
 }));
