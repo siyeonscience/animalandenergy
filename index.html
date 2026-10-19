@@ -162,8 +162,8 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .mk{width:38px;height:38px;border-radius:50%;border:2px solid #a9b4c0;background:#fff;cursor:pointer;position:relative;
   box-shadow:inset 0 2px 4px rgba(0,0,0,.14);vertical-align:middle;}
 .mk:disabled{cursor:default;}
-.mk svg{position:absolute;left:3px;top:-10px;width:42px;height:42px;opacity:0;transform:scale(.4);transition:opacity .15s,transform .15s;}
-.mk.on svg{opacity:1;transform:scale(1);}
+.mk .ck{position:absolute;left:3px;top:-10px;width:42px;height:42px;opacity:0;transform:scale(.4);transition:opacity .15s,transform .15s;}
+.mk.on .ck{opacity:1;transform:scale(1);}
 .mk.bad{border-color:#e5484d;box-shadow:0 0 0 4px rgba(229,72,77,.3);}
 .rt-f{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px;min-height:46px;}
 .rt-f .msg{flex:1;font-size:14px;font-weight:700;line-height:1.4;word-break:keep-all;}
@@ -181,6 +181,62 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 #steam.on path:nth-child(2){animation-delay:.8s;}
 #steam.on path:nth-child(3){animation-delay:1.6s;}
 @keyframes steam{0%{opacity:0;transform:translateY(10px);}40%{opacity:.85;}100%{opacity:0;transform:translateY(-30px);}}
+
+/* ===== 보고서 버튼 주목 ===== */
+.attn{animation:attn 1.2s ease-out infinite;}
+.attn::after{content:'클릭해 보세요!';position:absolute;top:calc(100% + 10px);right:0;background:#ffb21e;color:#fff;
+  font-family:'Jua','Malgun Gothic',sans-serif;font-size:15px;padding:4px 12px;border-radius:999px;white-space:nowrap;
+  animation:bob2 1.4s ease-in-out infinite;pointer-events:none;}
+@keyframes attn{0%{box-shadow:0 3px 0 #c9a54a,0 0 0 0 rgba(255,178,30,.9);}100%{box-shadow:0 3px 0 #c9a54a,0 0 0 14px rgba(255,178,30,0);}}
+
+/* ===== 보고서 패널 ===== */
+#repDim{position:fixed;inset:0;background:rgba(30,26,20,.5);opacity:0;pointer-events:none;transition:opacity .5s;z-index:20;}
+#repDim.on{opacity:1;pointer-events:auto;}
+.rep-panel{position:fixed;z-index:21;background:#fffdf6;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.35);
+  padding:14px 20px 16px;overflow:auto;display:none;max-height:calc(100vh - 80px);border:2px solid #e2d3b0;
+  transition:left .75s cubic-bezier(.5,0,.3,1),top .75s cubic-bezier(.5,0,.3,1),width .75s cubic-bezier(.5,0,.3,1);}
+.rep-panel.on{display:block;}
+.rep-panel.center{max-height:calc(100vh - 40px);}
+.rep-panel.pop{animation:dockpop .35s ease-out;transform-origin:top right;}
+@keyframes dockpop{from{transform:scale(.3);opacity:0;}to{transform:scale(1);opacity:1;}}
+.rep-panel .modal-h{margin-bottom:2px;}
+.rep-sec.shake{animation:shake .45s;}
+.rep-sec h3 small{display:block;font-family:'Noto Sans KR',sans-serif;font-size:14px;color:#5a4a35;margin-top:2px;}
+.rt tr.bene td.rl{background:#efe9dd;}
+.mk.tb{border:none;background:none;box-shadow:none;width:42px;height:48px;}
+.mk.tb .ti{width:30px;height:44px;display:block;margin:0 auto;}
+.mk.tb .ck{left:4px;top:-4px;}
+.mk.tb.bad{box-shadow:0 0 0 4px rgba(229,72,77,.3);border-radius:10px;}
+.rep-q{font-family:'Jua','Malgun Gothic',sans-serif;font-size:21px;color:#3d2b17;margin:16px 0 8px;}
+
+/* 공책 */
+.nb{position:relative;border:4px solid #9cc7ec;border-radius:20px;background:#fff;padding:16px 16px 16px 44px;}
+.nb .rings{position:absolute;left:-14px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-evenly;}
+.nb .rings i{display:block;width:34px;height:9px;border-radius:5px;background:linear-gradient(#e9edf1,#8f99a3);box-shadow:0 1px 1px rgba(0,0,0,.3);}
+.nb-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+@media (max-width:640px){.nb-cards{grid-template-columns:1fr;}}
+.nc{position:relative;border:1.5px solid #cfd3d8;border-radius:12px;min-height:140px;padding:44px 14px 22px 14px;background:#fff;
+  transition:border-color .2s,box-shadow .2s;}
+.nc::after{content:'';position:absolute;right:-1.5px;bottom:-1.5px;width:26px;height:26px;border-radius:0 0 12px 0;
+  background:linear-gradient(135deg,#fff 50%,var(--t) 50%);}
+.ntag{position:absolute;left:10px;top:10px;background:var(--c);color:#fff;font-family:'Jua','Malgun Gothic',sans-serif;
+  font-size:16px;padding:3px 26px 3px 12px;border-radius:5px 2px 2px 5px;box-shadow:3px 3px 0 rgba(0,0,0,.18);
+  clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%);}
+.pen{position:absolute;left:12px;top:46px;width:26px;height:26px;}
+.nc textarea,.nc .ntext{display:block;width:100%;min-height:70px;margin-left:0;padding:4px 0 0 34px;border:none;outline:none;resize:none;background:transparent;
+  font-family:'Noto Sans KR','Malgun Gothic',sans-serif;font-size:18px;font-weight:700;color:#2a4fd6;line-height:1.5;}
+.nc textarea::placeholder{color:#b9c2cc;font-weight:400;font-size:14px;}
+.nc.ok{border-color:#2bb673;box-shadow:0 0 0 3px rgba(43,182,115,.25);}
+.nc.no{border-color:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.25);animation:shake .45s;}
+.nc .st{position:absolute;right:12px;top:10px;font-size:20px;}
+
+/* 축하 */
+#celebrate{z-index:40;}
+#celebrate .done-card{max-width:620px;width:100%;}
+#celebrate h3{font-size:32px;}
+#repPreview{display:block;width:100%;border-radius:10px;border:1px solid #e2d3b0;margin:0 0 16px;max-height:46vh;object-fit:contain;background:#fff;}
+.confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:41;pointer-events:none;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);}}
 </style>
 </head>
 <body>
@@ -331,7 +387,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
           <rect id="rackHit" x="146" y="340" width="448" height="282" fill="transparent" style="cursor:pointer"/>
         </g>
         <g id="bkFront" opacity="0" style="display:none">
-          <rect clip-path="url(#bkclip)" x="655" y="480" width="250" height="140" fill="rgba(150,200,235,.45)"/>
+          <rect clip-path="url(#bkclip)" x="655" y="480" width="250" height="140" fill="rgba(170,210,240,.28)"/>
           <path d="M660 480 Q700 474 740 480 T820 480 T900 480" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2.5"/>
           <path d="M652 434 Q660 436 660 446 L660 600 Q660 612 672 612 L888 612 Q900 612 900 600 L900 440" fill="none" stroke="#8ea3b5" stroke-width="3"/>
           <path d="M876 500h16M882 525h10M876 550h16M882 575h10" stroke="#8ea3b5" stroke-width="2"/>
@@ -343,6 +399,17 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
           </g>
           <line x1="900" y1="560" x2="930" y2="560" stroke="#6b5638" stroke-width="1.5"/>
           <text x="936" y="566" font-size="16" font-weight="700" fill="#5a4325">뜨거운 물</text>
+        </g>
+        <g id="clock" opacity="0" style="display:none" transform="translate(880,500)">
+          <rect x="-9" y="-88" width="18" height="12" rx="3" fill="#3d2b17"/>
+          <circle r="74" fill="#fff" stroke="#3d2b17" stroke-width="7" filter="url(#soft)"/>
+          <path id="minArc" fill="rgba(255,178,30,.35)"/>
+          <g id="ticks"></g>
+          <line id="minHand" x1="0" y1="6" x2="0" y2="-46" stroke="#3d2b17" stroke-width="6" stroke-linecap="round"/>
+          <line id="secHand" x1="0" y1="12" x2="0" y2="-58" stroke="#e5484d" stroke-width="2.5" stroke-linecap="round"/>
+          <circle r="6" fill="#e5484d"/>
+          <rect x="-58" y="86" width="116" height="32" rx="16" fill="#2f5d50"/>
+          <text id="clockTxt" y="108" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="18" fill="#f6d98a">0분</text>
         </g>
       </g>
 
@@ -381,10 +448,21 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
     </div>
   </div>
 
-  <div class="overlay" id="reportModal">
-    <div class="modal" role="dialog" aria-label="실험 보고서">
-      <div class="modal-h"><h2>📋 실험 보고서</h2><button class="xbtn" id="reportClose" aria-label="닫기">×</button></div>
-      <div id="reportBody"></div>
+  <div id="repDim"></div>
+  <div class="rep-panel" id="report" role="dialog" aria-label="실험 보고서">
+    <div class="modal-h"><h2>📋 실험 보고서</h2><button class="xbtn" id="reportClose" aria-label="닫기">×</button></div>
+    <div id="reportBody"></div>
+  </div>
+
+  <div class="overlay" id="celebrate">
+    <div class="done-card">
+      <h3>🎉 축하합니다!</h3>
+      <p><b>영양소를 완벽하게 검출해 냈습니다!</b><br><span id="saveMsg">보고서를 이미지로 저장하는 중이에요…</span></p>
+      <img id="repPreview" alt="실험 보고서 이미지">
+      <div class="row">
+        <button class="btn sub" id="saveAgain">이미지 다시 저장</button>
+        <button class="btn" id="restartBtn">처음으로</button>
+      </div>
     </div>
   </div>
 
@@ -540,7 +618,17 @@ const FAST=.46, NORMAL=.75;   // 시료 넣기는 약 5초
 const D={x:0,y:0,bulb:1,fluid:0};
 const RD={x:0,y:-115,bulb:1,fluid:0,rot:0};
 let state, busy=false;
-const CHECK_SVG='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 21 L17 32 L36 5" fill="none" stroke="#3566d6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TUBE_ICON='<svg class="ti" viewBox="0 0 30 44" aria-hidden="true"><path d="M10.5 22v11a4.5 4.5 0 0 0 9 0V22z" fill="#dfe6ee"/><path d="M7 3h16M10 3v30a5 5 0 0 0 10 0V3" fill="none" stroke="#9aa6b2" stroke-width="2.4" stroke-linecap="round"/><path d="M12.5 26h3M12.5 30h3" stroke="#b5c0cb" stroke-width="1.6"/></svg>';
+const PEN_SVG='<svg class="pen" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#fff" stroke="#9aa6b2" stroke-width="1.5"/><path d="M8 18l1.2-4 6.6-6.6 2.8 2.8L12 16.8z" fill="none" stroke="#7d8894" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+/* 실험 2 결과 */
+const B_ANSWER=[0,1,0,0];                      // 베네딕트 반응: 쌀 음료만 황적색
+const HEAT=[null,[[214,226,228,1],[120,185,175,1],[190,205,90,1],[235,175,50,1],[236,118,36,1],[222,88,28,1]],null,null];
+/* 영양소 쓰기: 쌀 음료, 두유, 식용유 */
+const NUT_COLS=[1,2,3], NUT_ANS=[['녹말','포도당'],['단백질'],['지방']];
+const NUT_WORDS={'녹말':['녹말','전분'],'포도당':['포도당'],'단백질':['단백질'],'지방':['지방']};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stopsAt(st,p){const n=st.length-1,k=Math.min(n-1,Math.floor(p*n));return mix(st[k],st[k+1],p*n-k);}
+const CHECK_SVG='<svg class="ck" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 21 L17 32 L36 5" fill="none" stroke="#3566d6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function setAttrs(el,o){for(const k in o)el.setAttribute(k,o[k]);}
 function show(el,on){el.style.display=on?'':'none';}
@@ -578,13 +666,20 @@ function bottleSVG(pre,i){
 
 function buildLab(){
   state={phase:1,s:{next:0,done:[0,0,0,0]},r:{next:0,done:[0,0,0]},e:{next:0,done:[0,0,0,0]},
-    lv:{},marks:ROW_LABELS.map(()=>[0,0,0,0]),graded:false,tc:WELL_RGBA.map(a=>a.slice()),tbb:[0,0,0,0]};
+    lv:{},marks:ROW_LABELS.map(()=>[0,0,0,0]),graded:false,
+    bmarks:[0,0,0,0],bgraded:false,nut:['','',''],nutSt:[null,null,null],nutOk:false,tc:WELL_RGBA.map(a=>a.slice()),tbb:[0,0,0,0]};
   SPEED=NORMAL;
   $('#labsvg').setAttribute('viewBox','0 0 1000 650');
   const e1=$('#exp1');show(e1,true);e1.setAttribute('opacity',1);
   const e2=$('#exp2');show(e2,false);e2.setAttribute('opacity',0);
   show($('#rtFO'),false);$('#rtBox').innerHTML='';
   $('#reportBadge').classList.remove('on');
+  $('#reportBtn').classList.remove('attn');closeReport();$('#celebrate').classList.remove('on');
+  const ck=$('#clock');show(ck,false);ck.setAttribute('opacity',0);
+  $('#ticks').innerHTML=[...Array(12)].map((_,k)=>{const a=k*Math.PI/6,r1=k%3?60:54;
+    return `<line x1="${Math.sin(a)*r1}" y1="${-Math.cos(a)*r1}" x2="${Math.sin(a)*66}" y2="${-Math.cos(a)*66}" stroke="#3d2b17" stroke-width="${k%3?2:4}" stroke-linecap="round"/>`;}).join('')+
+    [[12,0,-38],[3,40,6],[6,0,48],[9,-40,6]].map(([n,x,y])=>`<text x="${x}" y="${y}" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="17" fill="#3d2b17">${n}</text>`).join('');
+  setClock(0);
   setPanel('탐구 ① 시료 넣기',['반짝이는 용기를 클릭하면','스포이드로 시료를 12홈판의','세로줄에 차례대로 넣어요.']);
   $('#rowHi').style.display='none';
   const st=$('#rstation');st.style.display='none';st.setAttribute('opacity',0);
@@ -851,31 +946,34 @@ async function runReagent(r){
 }
 
 /* ---- 실험 1 · 3단계: 결과 기록표 ---- */
-function resultTableHTML(marks,interactive){
+// marks: 실험 1(3줄), bmarks: 베네딕트 줄(없으면 생략)
+function resultTableHTML({marks,bmarks=null,edit=false,editB=false}){
   let h='<table class="rt"><thead><tr><th class="corner"></th>'+
     NAMES.map((n,c)=>`<th style="background:${SAMPLES[c].col}">${n}</th>`).join('')+'</tr></thead><tbody>';
   ROW_LABELS.forEach((lines,r)=>{
     h+=`<tr><td class="rl">${lines.join('<br>')}</td>`+NAMES.map((_,c)=>
-      `<td style="background:${TINT[c]}"><button class="mk${marks[r][c]?' on':''}" data-r="${r}" data-c="${c}"${interactive?'':' disabled'} aria-label="${ROW_LABELS[r].join(' ')} - ${NAMES[c]}">${CHECK_SVG}</button></td>`).join('')+'</tr>';
+      `<td style="background:${TINT[c]}"><button class="mk${marks[r][c]?' on':''}" data-r="${r}" data-c="${c}"${edit?'':' disabled'} aria-label="${ROW_LABELS[r].join(' ')} - ${NAMES[c]}">${CHECK_SVG}</button></td>`).join('')+'</tr>';
   });
+  if(bmarks)h+='<tr class="bene"><td class="rl">베네딕트 용액</td>'+NAMES.map((_,c)=>
+    `<td style="background:${TINT[c]}"><button class="mk tb${bmarks[c]?' on':''}" data-b="${c}"${editB?'':' disabled'} aria-label="베네딕트 용액 - ${NAMES[c]}">${TUBE_ICON}${CHECK_SVG}</button></td>`).join('')+'</tr>';
   return h+'</tbody></table>';
 }
 
 async function startRecord(){
   state.phase=3;
-  setPanel('탐구 ③ 결과 기록하기',['홈판의 색깔 변화를 관찰하고','색깔이 변한 칸을 표에','표시한 뒤 채점해 보세요.']);
+  setPanel('탐구 ③ 결과 기록하기',['홈판의 색깔 변화를 관찰하고','시약의 색깔이 변한 칸을 표에','표시한 뒤 채점해 보세요.']);
   toast('홈판의 색깔 변화를 잘 관찰해 보세요!');
   await wait(2600);
   await fade($('#bottles'),1,0,500);
   const box=$('#rtBox');
   box.innerHTML=`<div class="rtpop pop">
-    <div class="rt-h"><b>결과 기록</b>색깔 변화가 나타난 칸을 클릭해 표시해 보세요.</div>
-    ${resultTableHTML(state.marks,true)}
+    <div class="rt-h"><b>결과 기록</b>시약의 색깔 변화가 나타난 칸을 클릭해 표시해 보세요.</div>
+    ${resultTableHTML({marks:state.marks,edit:true})}
     <div class="rt-f"><span class="msg" id="rtMsg"></span>
       <button class="btn sub" id="gradeBtn">채점하기</button>
       <button class="btn" id="rtNext" style="display:none">다음 ▶</button></div></div>`;
   show($('#rtFO'),true);
-  box.querySelectorAll('.mk').forEach(b=>b.addEventListener('click',()=>{
+  box.querySelectorAll('.mk[data-r]').forEach(b=>b.addEventListener('click',()=>{
     if(state.graded)return;
     const r=+b.dataset.r,c=+b.dataset.c;
     state.marks[r][c]^=1;b.classList.toggle('on',!!state.marks[r][c]);
@@ -894,12 +992,12 @@ function grade(){
   if(ok){
     state.graded=true;
     box.querySelectorAll('.mk').forEach(b=>b.disabled=true);
-    msg.className='msg ok';msg.textContent='정답이에요! 색깔이 변한 칸을 정확히 찾았어요. 🎉';
+    msg.className='msg ok';msg.textContent='정답이에요! 시약의 색깔이 변한 칸을 정확히 찾았어요. 🎉';
     $('#gradeBtn').style.display='none';$('#rtNext').style.display='';
     return;
   }
   msg.className='msg no';
-  msg.textContent=any?'다시 관찰해 보세요! 색깔이 변한 칸에만 정확히 표시해야 해요.':'색깔이 변한 칸을 클릭해 표시해 보세요.';
+  msg.textContent=any?'다시 관찰해 보세요! 시약의 색깔이 변한 칸에만 정확히 표시해야 해요.':'시약의 색깔이 변한 칸을 클릭해 표시해 보세요.';
   ANSWER.forEach((row,r)=>row.forEach((v,c)=>{if(m[r][c]&&!v)box.querySelector(`.mk[data-r="${r}"][data-c="${c}"]`).classList.add('bad');}));
   const pop=box.querySelector('.rtpop');pop.classList.remove('pop','shake');void pop.offsetWidth;pop.classList.add('shake');
 }
@@ -930,15 +1028,205 @@ async function toReport(){
   goExp2();
 }
 
-function renderReport(){
+/* ---- 보고서: 오른쪽 위 작은 창(dock) ↔ 가운데 큰 창(center) ---- */
+let repMode=null;
+function placeReport(mode,instant){
+  const el=$('#report'), dock=mode==='dock', W=dock?Math.min(660,innerWidth-24):Math.min(1000,innerWidth-24);
+  if(instant)el.style.transition='none';
+  Object.assign(el.style,{width:W+'px',left:(dock?innerWidth-W-12:(innerWidth-W)/2)+'px',top:(dock?66:20)+'px'});
+  el.classList.toggle('center',!dock);
+  $('#repDim').classList.toggle('on',!dock);
+  if(instant){void el.offsetWidth;el.style.transition='';}
+  repMode=mode;
+}
+addEventListener('resize',()=>{if(repMode)placeReport(repMode,true);});
+function openReport(){
+  const el=$('#report'), mode=state&&state.phase===8?'dock':'center';
+  renderReportBody();
+  el.classList.add('on');placeReport(mode,true);el.scrollTop=0;
+  el.classList.remove('pop');void el.offsetWidth;if(mode==='dock')el.classList.add('pop');
+}
+function closeReport(){$('#report').classList.remove('on','pop');$('#repDim').classList.remove('on');repMode=null;}
+$('#reportBtn').onclick=()=>{$('#reportBtn').classList.remove('attn');openReport();};
+$('#reportClose').onclick=closeReport;
+$('#repDim').onclick=closeReport;
+
+function notebookHTML(edit){
+  return `<div class="nb"><div class="rings">${'<i></i>'.repeat(5)}</div><div class="nb-cards">${NUT_COLS.map((c,k)=>{
+    const st=state.nutSt[k];
+    return `<div class="nc ${st||''}" id="nc${k}" style="--c:${SAMPLES[c].col};--t:${SAMPLES[c].col}">
+      <span class="ntag">${NAMES[c]}</span>${PEN_SVG}${st==='ok'?'<span class="st">✅</span>':''}
+      ${edit?`<textarea id="nt${k}" placeholder="클릭해서 입력해요" aria-label="${NAMES[c]}에 들어 있는 영양소">${esc(state.nut[k])}</textarea>`:
+        `<div class="ntext">${esc(state.nut[k])}</div>`}</div>`;
+  }).join('')}</div></div>`;
+}
+
+function renderReportBody(){
   const body=$('#reportBody');
   if(!state||!state.graded){body.innerHTML='<div class="rep-empty">아직 기록된 결과가 없어요.<br>실험을 진행하면 결과가 여기에 모여요.</div>';return;}
-  body.innerHTML=`<div class="rep-sec"><h3>실험 1. 12홈판으로 녹말·단백질·지방 검출하기<span class="tag">채점 완료</span></h3>
-    ${resultTableHTML(state.marks,false)}</div>`;
+  const ph=state.phase, recB=ph===8, editB=recB&&!state.bgraded;
+  let h=`<div class="rep-sec" id="secB"><h3>실험 결과${recB?'<small>베네딕트 용액의 색깔 변화가 나타난 시험관을 클릭해 표시해 보세요.</small>':''}</h3>
+    ${resultTableHTML({marks:state.marks,bmarks:ph>=8?state.bmarks:null,editB})}`;
+  if(recB)h+=`<div class="rt-f"><span class="msg${state.bgraded?' ok':''}" id="bMsg">${state.bgraded?'정답이에요! 베네딕트 용액의 색깔이 변한 시험관을 정확히 찾았어요. 🎉':''}</span>
+    <button class="btn sub" id="bGrade"${state.bgraded?' style="display:none"':''}>채점하기</button>
+    <button class="btn" id="bNext"${state.bgraded?'':' style="display:none"'}>다음 ▶</button></div>`;
+  h+='</div>';
+  if(ph>=9){
+    const edit=ph===9&&!state.nutOk;
+    h+=`<div class="rep-q">실험 결과를 바탕으로 음식에 들어 있는 영양소를 모두 써 보자.</div>${notebookHTML(edit)}
+      <div class="rt-f"><span class="msg${state.nutOk?' ok':''}" id="nMsg">${state.nutOk?'정답이에요! 음식에 들어 있는 영양소를 모두 찾았어요. 🎉':''}</span>
+      ${ph===9?`<button class="btn sub" id="nCheck"${state.nutOk?' style="display:none"':''}>확인</button>
+        <button class="btn" id="nDone"${state.nutOk?'':' style="display:none"'}>완료</button>`:
+        '<button class="btn sub" id="nSave">이미지로 저장</button>'}</div>`;
+  }
+  body.innerHTML=h;
+  // 베네딕트 줄 표시·채점
+  body.querySelectorAll('.mk[data-b]').forEach(b=>b.addEventListener('click',()=>{
+    if(state.bgraded)return;
+    const c=+b.dataset.b;state.bmarks[c]^=1;b.classList.toggle('on',!!state.bmarks[c]);
+    body.querySelectorAll('.mk.bad').forEach(x=>x.classList.remove('bad'));$('#bMsg').textContent='';
+  }));
+  if($('#bGrade'))$('#bGrade').onclick=gradeBene;
+  if($('#bNext'))$('#bNext').onclick=()=>{state.phase=9;renderReportBody();placeReport('center');$('#report').scrollTop=0;};
+  // 영양소 쓰기
+  body.querySelectorAll('textarea').forEach((t,k)=>t.addEventListener('input',()=>{
+    state.nut[k]=t.value;state.nutSt[k]=null;$('#nc'+k).classList.remove('ok','no');$('#nMsg').textContent='';
+  }));
+  if($('#nCheck'))$('#nCheck').onclick=checkNutrients;
+  if($('#nDone'))$('#nDone').onclick=finish;
+  if($('#nSave'))$('#nSave').onclick=()=>saveReportImage();
 }
-$('#reportBtn').onclick=()=>{renderReport();$('#reportModal').classList.add('on');};
-$('#reportClose').onclick=()=>$('#reportModal').classList.remove('on');
-$('#reportModal').onclick=e=>{if(e.target.id==='reportModal')$('#reportModal').classList.remove('on');};
+
+function gradeBene(){
+  const m=state.bmarks, msg=$('#bMsg');
+  if(B_ANSWER.every((v,c)=>v===m[c])){state.bgraded=true;renderReportBody();return;}
+  msg.className='msg no';
+  msg.textContent=m.some(v=>v)?'다시 관찰해 보세요! 베네딕트 용액의 색깔이 변한 시험관에만 정확히 표시해야 해요.':'베네딕트 용액의 색깔이 변한 시험관을 클릭해 표시해 보세요.';
+  B_ANSWER.forEach((v,c)=>{if(m[c]&&!v)$(`.mk[data-b="${c}"]`).classList.add('bad');});
+  const sec=$('#secB');sec.classList.remove('shake');void sec.offsetWidth;sec.classList.add('shake');
+}
+
+function checkNut(v,ans){
+  const t=v.replace(/\s/g,'');
+  return !!t&&Object.entries(NUT_WORDS).every(([k,ws])=>ws.some(w=>t.includes(w))===ans.includes(k));
+}
+function checkNutrients(){
+  const vals=[0,1,2].map(k=>$('#nt'+k).value.trim());state.nut=vals;
+  const res=vals.map((v,k)=>checkNut(v,NUT_ANS[k]));
+  state.nutSt=res.map(r=>r?'ok':'no');
+  if(res.every(r=>r)){state.nutOk=true;renderReportBody();return;}
+  res.forEach((r,k)=>{const el=$('#nc'+k);el.classList.remove('ok','no');void el.offsetWidth;el.classList.add(r?'ok':'no');});
+  const msg=$('#nMsg');msg.className='msg no';
+  msg.textContent=vals.some(v=>v)?'다시 생각해 보세요! 실험 결과표를 보고 각 음식에 들어 있는 영양소를 모두 써야 해요.':'빈칸을 클릭해 영양소를 입력해 보세요.';
+}
+
+/* ---- 완료: 축하 + 보고서 이미지 저장 ---- */
+let lastImg=null;
+async function finish(){
+  state.phase=10;closeReport();
+  setPanel('🎉 탐구 완료!',['영양소를 완벽하게','검출해 냈어요!','']);
+  $('#saveMsg').textContent='보고서를 이미지로 저장하는 중이에요…';
+  $('#repPreview').removeAttribute('src');
+  $('#celebrate').classList.add('on');confetti();
+  await saveReportImage();
+}
+async function saveReportImage(){
+  try{
+    const cv=await makeReportImage();
+    $('#repPreview').src=cv.toDataURL('image/png');
+    await new Promise(res=>cv.toBlob(b=>{lastImg=b;res();},'image/png'));
+    downloadBlob(lastImg);
+    $('#saveMsg').textContent='보고서가 이미지로 저장되었어요. 저장되지 않았다면 아래 버튼을 눌러 주세요.';
+  }catch(e){
+    $('#saveMsg').textContent='이미지 저장에 실패했어요. 아래 버튼을 눌러 다시 시도해 주세요.';
+  }
+}
+function downloadBlob(b){
+  const u=URL.createObjectURL(b), a=document.createElement('a');
+  a.href=u;a.download=`nutrient-detective-report_${new Date().toISOString().slice(0,10)}.png`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);
+}
+$('#saveAgain').onclick=()=>{if(lastImg)downloadBlob(lastImg);else saveReportImage();};
+$('#restartBtn').onclick=()=>{$('#celebrate').classList.remove('on');startLab();};
+function confetti(){
+  const cols=['#f5a043','#e8737a','#93bf55','#6c98d6','#ffb21e','#9b6fd1'];
+  for(let k=0;k<70;k++){
+    const d=document.createElement('div');d.className='confetti';
+    Object.assign(d.style,{left:Math.random()*100+'vw',background:cols[k%cols.length],animationDuration:(2.2+Math.random()*2.2)+'s',
+      animationDelay:Math.random()*.8+'s',transform:`rotate(${Math.random()*360}deg)`,borderRadius:k%3?'2px':'50%'});
+    document.body.appendChild(d);setTimeout(()=>d.remove(),5500);
+  }
+}
+
+/* 보고서 그림 그리기 (외부 라이브러리 없이 canvas로) */
+async function makeReportImage(){
+  try{await document.fonts.ready;}catch(e){}
+  const W=1000, H=820, S=2, P=40;
+  const JUA="'Jua','Malgun Gothic',sans-serif", NOTO="'Noto Sans KR','Malgun Gothic',sans-serif";
+  const cv=document.createElement('canvas');cv.width=W*S;cv.height=H*S;
+  const x=cv.getContext('2d');x.scale(S,S);
+  const rr=(X,Y,w,h,r)=>{r=typeof r==='number'?[r,r,r,r]:r;x.beginPath();x.moveTo(X+r[0],Y);x.lineTo(X+w-r[1],Y);x.quadraticCurveTo(X+w,Y,X+w,Y+r[1]);
+    x.lineTo(X+w,Y+h-r[2]);x.quadraticCurveTo(X+w,Y+h,X+w-r[2],Y+h);x.lineTo(X+r[3],Y+h);x.quadraticCurveTo(X,Y+h,X,Y+h-r[3]);x.lineTo(X,Y+r[0]);x.quadraticCurveTo(X,Y,X+r[0],Y);x.closePath();};
+  const txt=(t,X,Y,font,color,align='left')=>{x.font=font;x.fillStyle=color;x.textAlign=align;x.textBaseline='middle';x.fillText(t,X,Y);};
+  const check=(cx,cy)=>{x.save();x.translate(cx-18,cy-26);x.beginPath();x.moveTo(7,21);x.lineTo(17,32);x.lineTo(36,5);
+    x.strokeStyle='#3566d6';x.lineWidth=5.5;x.lineCap='round';x.lineJoin='round';x.stroke();x.restore();};
+  // 배경, 머리
+  x.fillStyle='#fffdf6';x.fillRect(0,0,W,H);
+  rr(0,0,W,96,[0,0,0,0]);x.fillStyle='#2f5d50';x.fill();
+  txt('영양소 탐정 실험 보고서',P,50,`36px ${JUA}`,'#f6d98a');
+  txt(new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}),W-P,52,`16px ${NOTO}`,'#cfe3da','right');
+  // 결과표
+  txt('실험 결과',P,132,`24px ${JUA}`,'#3d2b17');
+  const LW=250, G=3, CW=(W-2*P-LW-4*G)/4, rows=[...ROW_LABELS,['베네딕트 용액']], RH=[62,62,52,58];
+  let y=152;
+  NAMES.forEach((n,c)=>{const X=P+LW+G+c*(CW+G);rr(X,y,CW,40,[9,9,0,0]);x.fillStyle=SAMPLES[c].col;x.fill();txt(n,X+CW/2,y+21,`20px ${JUA}`,'#fff','center');});
+  y+=40+G;
+  rows.forEach((lines,r)=>{
+    const h=RH[r];
+    rr(P,y,LW,h,8);x.fillStyle=r===3?'#efe9dd':'#fff';x.fill();x.strokeStyle='#e3e8ee';x.lineWidth=1;x.stroke();
+    lines.forEach((l,k)=>txt(l,P+LW/2,y+h/2+(k-(lines.length-1)/2)*20,`bold 15px ${NOTO}`,'#33475a','center'));
+    NAMES.forEach((_,c)=>{
+      const X=P+LW+G+c*(CW+G), cx=X+CW/2, cy=y+h/2, on=r<3?state.marks[r][c]:state.bmarks[c];
+      x.fillStyle=TINT[c];x.fillRect(X,y,CW,h);
+      if(r<3){x.beginPath();x.arc(cx,cy,18,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle='#a9b4c0';x.lineWidth=2;x.stroke();}
+      else{
+        x.save();x.translate(cx-15,cy-22);
+        x.fillStyle='#dfe6ee';x.beginPath();x.moveTo(10.5,22);x.lineTo(10.5,33);x.arc(15,33,4.5,Math.PI,0,true);x.lineTo(19.5,22);x.closePath();x.fill();
+        x.strokeStyle='#9aa6b2';x.lineWidth=2.4;x.lineCap='round';x.beginPath();x.moveTo(7,3);x.lineTo(23,3);x.moveTo(10,3);x.lineTo(10,33);x.arc(15,33,5,Math.PI,0,true);x.lineTo(20,3);x.stroke();
+        x.restore();
+      }
+      if(on)check(cx+(r<3?2:2),cy+(r<3?0:6));
+    });
+    y+=h+G;
+  });
+  // 영양소 쓰기
+  y+=34;
+  txt('실험 결과를 바탕으로 음식에 들어 있는 영양소를 모두 써 보자.',P,y,`22px ${JUA}`,'#3d2b17');
+  y+=26;
+  const NBH=210;
+  rr(P,y,W-2*P,NBH,20);x.fillStyle='#fff';x.fill();x.strokeStyle='#9cc7ec';x.lineWidth=5;x.stroke();
+  for(let k=0;k<5;k++){const ry=y+NBH*(k+.5)/5-5;const g=x.createLinearGradient(0,ry,0,ry+10);g.addColorStop(0,'#e9edf1');g.addColorStop(1,'#8f99a3');
+    rr(P-14,ry,34,10,5);x.fillStyle=g;x.fill();}
+  const cx0=P+44, cw=(W-2*P-60-32)/3, ch=NBH-32;
+  NUT_COLS.forEach((c,k)=>{
+    const X=cx0+k*(cw+16), Y=y+16;
+    rr(X,Y,cw,ch,12);x.fillStyle='#fff';x.fill();x.strokeStyle='#cfd3d8';x.lineWidth=1.5;x.stroke();
+    x.beginPath();x.moveTo(X+cw,Y+ch-26);x.lineTo(X+cw,Y+ch-12);x.quadraticCurveTo(X+cw,Y+ch,X+cw-12,Y+ch);x.lineTo(X+cw-26,Y+ch);x.closePath();x.fillStyle=SAMPLES[c].col;x.fill();
+    x.font=`17px ${JUA}`;const tw=x.measureText(NAMES[c]).width+40;
+    x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.moveTo(X+13,Y+13);x.lineTo(X+13+tw,Y+13);x.lineTo(X+13+tw*.92,Y+28);x.lineTo(X+13+tw,Y+43);x.lineTo(X+13,Y+43);x.fill();
+    x.fillStyle=SAMPLES[c].col;x.beginPath();x.moveTo(X+10,Y+10);x.lineTo(X+10+tw,Y+10);x.lineTo(X+10+tw*.92,Y+25);x.lineTo(X+10+tw,Y+40);x.lineTo(X+10,Y+40);x.fill();
+    txt(NAMES[c],X+22,Y+26,`17px ${JUA}`,'#fff');
+    x.beginPath();x.arc(X+25,Y+62,12,0,Math.PI*2);x.fillStyle='#fff';x.fill();x.strokeStyle='#9aa6b2';x.lineWidth=1.5;x.stroke();
+    x.beginPath();x.moveTo(X+20,Y+67);x.lineTo(X+21.2,Y+63);x.lineTo(X+27.8,Y+56.4);x.lineTo(X+30.6,Y+59.2);x.lineTo(X+24,Y+65.8);x.closePath();x.strokeStyle='#7d8894';x.stroke();
+    // 답(줄바꿈)
+    x.font=`bold 20px ${NOTO}`;const maxW=cw-60;let line='',ly=Y+64;
+    for(const chr of state.nut[k]){if(chr==='\n'||x.measureText(line+chr).width>maxW){txt(line,X+46,ly,`bold 20px ${NOTO}`,'#2a4fd6');line=chr==='\n'?'':chr;ly+=30;}else line+=chr;}
+    txt(line,X+46,ly,`bold 20px ${NOTO}`,'#2a4fd6');
+  });
+  y+=NBH+50;
+  txt('🎉 축하합니다! 영양소를 완벽하게 검출해 냈습니다!',W/2,y,`26px ${JUA}`,'#e8722b','center');
+  return cv;
+}
 
 /* ================= 실험 2: 포도당 검출 ================= */
 function buildExp2(){
@@ -1075,11 +1363,30 @@ async function runHeat(){
     IN_X.forEach((x,c)=>$('#tb'+c).setAttribute('transform',`translate(${x+d},${IN_DY})`));
   });
   state.phase=7;
-  setProgress(E2_STEPS,[1,1,1],3);
   setPanel('실험 ② 중탕 가열',['시험관 4개를 뜨거운 물에','10분 동안 담가 두어요.','']);
-  await wait(900);
-  openDone(3);
+  // 비커 옆 시계: 10분이 빠르게 흐르며 색깔 변화
+  await wait(300);
+  const ck=$('#clock');show(ck,true);
+  await tween(500,p=>{ck.setAttribute('opacity',p);ck.setAttribute('transform',`translate(880,500) scale(${.6+.4*p})`);},easeOut);
+  await tween(6000,p=>{
+    setClock(p);
+    HEAT.forEach((st,c)=>{if(st){state.tc[c]=stopsAt(st,p);$('#tbl'+c).setAttribute('fill',rgba(state.tc[c]));}});
+  },t=>t);
+  $('#clockTxt').textContent='10분 경과!';
+  setProgress(E2_STEPS,[1,1,1],3);
+  state.phase=8;
+  setPanel('실험 ② 결과 기록하기',['시험관의 색깔 변화를 관찰한 뒤','오른쪽 위 보고서 버튼을 눌러','결과를 기록해 보세요.']);
+  toast('10분이 지났어요! 시험관의 색깔 변화를 관찰해 보세요.');
+  await wait(1500);
+  $('#reportBtn').classList.add('attn');
   busy=false;
+}
+function setClock(p){
+  const a=60*p*Math.PI/180;
+  $('#minHand').setAttribute('transform',`rotate(${60*p})`);
+  $('#secHand').setAttribute('transform',`rotate(${3600*p})`);
+  $('#minArc').setAttribute('d',p>0?`M0 0 L0 -64 A64 64 0 0 1 ${64*Math.sin(a)} ${-64*Math.cos(a)} Z`:'');
+  $('#clockTxt').textContent=`${Math.min(10,Math.floor(p*10+1e-6))}분`;
 }
 
 /* ---- 완료 창 ---- */
@@ -1098,7 +1405,7 @@ $('#phase2Btn').onclick=()=>{$('#doneModal').classList.remove('on');startReagent
 $('#dictBtn').onclick=()=>$('#dictModal').classList.add('on');
 $('#dictClose').onclick=()=>$('#dictModal').classList.remove('on');
 $('#dictModal').onclick=e=>{if(e.target.id==='dictModal')$('#dictModal').classList.remove('on');};
-addEventListener('keydown',e=>{if(e.key==='Escape')['#dictModal','#reportModal'].forEach(s=>$(s).classList.remove('on'));});
+addEventListener('keydown',e=>{if(e.key==='Escape'){$('#dictModal').classList.remove('on');closeReport();}});
 $('#againBtn').onclick=()=>{$('#doneModal').classList.remove('on');startLab();};
 $('#closeDone').onclick=()=>$('#doneModal').classList.remove('on');
 </script>
