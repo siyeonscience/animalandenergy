@@ -424,7 +424,6 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
       </g>
 
       <!-- 스포이드 -->
-      <rect id="stream" opacity="0"/>
       <circle id="drop" r="5" cx="0" cy="0" opacity="0"/>
       <g id="dropper" opacity="0">
         <rect id="dfluid" clip-path="url(#dclip)" x="-8" y="0" width="16" height="0"/>
@@ -1124,6 +1123,7 @@ let lastImg=null;
 async function finish(){
   state.phase=10;closeReport();
   setPanel('🎉 탐구 완료!',['영양소를 완벽하게','검출해 냈어요!','']);
+  setProgress(E2_STEPS,[1,1,1,1],4);
   $('#saveMsg').textContent='보고서를 이미지로 저장하는 중이에요…';
   $('#repPreview').removeAttribute('src');
   $('#celebrate').classList.add('on');confetti();
@@ -1237,6 +1237,8 @@ function buildExp2(){
       <clipPath id="tbc${i}"><path d="${TUBE_D}"/></clipPath>
       <rect id="tbl${i}" clip-path="url(#tbc${i})" x="-18" y="${TB}" width="36" height="0" fill="${rgba(WELL_RGBA[i])}"/>
       <rect id="tbb${i}" clip-path="url(#tbc${i})" x="-18" y="${TB}" width="36" height="0" fill="${rgba(BENEDICT.color)}"/>
+      <rect id="tbs${i}" x="-1.5" y="${TT-18}" width="3" height="0" opacity="0"/>
+      <circle id="tbd${i}" r="5" cx="0" cy="0" opacity="0"/>
       <path d="${TUBE_D}" fill="rgba(255,255,255,.22)" stroke="#8ea3b5" stroke-width="2.2"/>
       <ellipse cx="0" cy="${TT}" rx="19" ry="3.5" fill="none" stroke="#8ea3b5" stroke-width="2"/>
       <line x1="-10" y1="${TT+74}" x2="-10" y2="${TB-24}" stroke="#fff" stroke-width="3" opacity=".7" stroke-linecap="round"/>
@@ -1252,14 +1254,14 @@ function buildExp2(){
 $('#rackHit').addEventListener('click',()=>{if(!busy&&state.phase===6)runHeat();});
 
 function setTube(i,h){setAttrs($('#tbl'+i),{y:TB-h,height:h});}
-const E2_STEPS=['시료 넣기','베네딕트 용액','중탕 가열'];
+const E2_STEPS=['시료 넣기','베네딕트','중탕 가열','결과 기록'];
 
 async function goExp2(){
   busy=true;
   const e1=$('#exp1'), e2=$('#exp2');
   await fade(e1,1,0,600);show(e1,false);
   state.phase=4;
-  setPanel('실험 ② 포도당 검출',['반짝이는 용기를 클릭하면','스포이드로 시료를 각 시험관에','3 mL씩 넣어요.']);
+  setPanel('단계 ① 시료 넣기',['반짝이는 용기를 클릭하면','스포이드로 시료를 각 시험관에','3 mL씩 넣어요.']);
   setProgress(NAMES,state.e.done,0);
   show(e2,true);await fade(e2,0,1,600);
   toast('실험 ②: 이번에는 시험관으로 포도당을 검출해 봐요!');
@@ -1269,8 +1271,8 @@ async function goExp2(){
 async function fillTube(i){
   const x=TX[i];
   await moveDropper(x,TT-18,700);
-  const st=$('#stream');
-  setAttrs(st,{x:x-1.5,y:TT-18,width:3,height:0,fill:SAMPLES[i].fluid,opacity:1});
+  const st=$('#tbs'+i);   // 라벨 뒤로 흘러 들어가도록 시험관 안쪽 층 사용
+  setAttrs(st,{height:0,fill:SAMPLES[i].fluid,opacity:1});
   const f0=D.fluid;
   await tween(1000,p=>{
     const h=TLV*p;setTube(i,h);
@@ -1295,8 +1297,8 @@ async function onBottle2(i){
   await wait(400);
   await fade($('#bottles2'),1,0,500);show($('#bottles2'),false);
   state.phase=5;
-  setPanel('실험 ② 베네딕트 용액 넣기',['반짝이는 시약병을 클릭하면','각 시험관에 베네딕트 용액을','3방울씩 떨어뜨려요.']);
-  setProgress(E2_STEPS,[1,0,0],1);
+  setPanel('단계 ② 베네딕트 용액 넣기',['반짝이는 시약병을 클릭하면','각 시험관에 베네딕트 용액을','3방울씩 떨어뜨려요.']);
+  setProgress(E2_STEPS,[1,0,0,0],1);
   await showReagent(BENEDICT);
   toast('베네딕트 용액이 준비되었어요!');
   busy=false;
@@ -1304,8 +1306,8 @@ async function onBottle2(i){
 
 async function benedictDrop(c,k){
   const tipX=SX+RD.x, tipY=SY+RD.y+RTIP, oil=TUBE_AFTER[c]===null;
-  const drop=$('#drop');
-  setAttrs(drop,{fill:rgba(BENEDICT.color),cx:tipX,cy:tipY+4,opacity:1});
+  const drop=$('#tbd'+c);   // 라벨 뒤로 떨어지도록 시험관 안쪽 층 사용
+  setAttrs(drop,{fill:rgba(BENEDICT.color),cx:tipX-TX[c],cy:tipY+4,opacity:1});
   const f0=RD.fluid;
   await tween(160,p=>setR({bulb:1-.28*p,fluid:f0-2.5*p}));
   const target=oil?TB-5-state.tbb[c]:TB-TLV;
@@ -1330,11 +1332,11 @@ async function runBenedict(){
     for(let k=0;k<3;k++){await benedictDrop(c,k);await wait(80);}
   }
   await closeStation();
-  setProgress(E2_STEPS,[1,1,0],2);
+  setProgress(E2_STEPS,[1,1,0,0],2);
   await wait(500);
   await hideReagent();
   state.phase=6;
-  setPanel('실험 ② 중탕 가열',['시험관대를 클릭하면','시험관을 뜨거운 물이 담긴','비커에 넣어요.']);
+  setPanel('단계 ③ 중탕 가열',['시험관대를 클릭하면','시험관을 뜨거운 물이 담긴','비커에 넣어요.']);
   showRingAt(370,624,464,288);
   toast('이제 시험관대를 클릭해 보세요!');
   busy=false;
@@ -1362,7 +1364,7 @@ async function runHeat(){
     IN_X.forEach((x,c)=>$('#tb'+c).setAttribute('transform',`translate(${x+d},${IN_DY})`));
   });
   state.phase=7;
-  setPanel('실험 ② 중탕 가열',['시험관 4개를 뜨거운 물에','10분 동안 담가 두어요.','']);
+  setPanel('단계 ③ 중탕 가열',['시험관 4개를 뜨거운 물에','10분 동안 담가 두어요.','']);
   // 비커 옆 시계: 10분이 빠르게 흐르며 색깔 변화
   await wait(300);
   const ck=$('#clock');show(ck,true);
@@ -1372,9 +1374,9 @@ async function runHeat(){
     HEAT.forEach((st,c)=>{if(st){state.tc[c]=stopsAt(st,p);$('#tbl'+c).setAttribute('fill',rgba(state.tc[c]));}});
   },t=>t);
   $('#clockTxt').textContent='10분 경과!';
-  setProgress(E2_STEPS,[1,1,1],3);
+  setProgress(E2_STEPS,[1,1,1,0],3);
   state.phase=8;
-  setPanel('실험 ② 결과 기록하기',['시험관의 색깔 변화를 관찰한 뒤','오른쪽 위 보고서 버튼을 눌러','결과를 기록해 보세요.']);
+  setPanel('단계 ④ 결과 기록하기',['시험관의 색깔 변화를 관찰한 뒤','오른쪽 위 보고서 버튼을 눌러','결과를 기록해 보세요.']);
   toast('10분이 지났어요! 시험관의 색깔 변화를 관찰해 보세요.');
   await wait(1500);
   $('#reportBtn').classList.add('attn');
