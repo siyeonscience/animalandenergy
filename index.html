@@ -342,7 +342,6 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
       <!-- 안내 메모 -->
       <g id="panel">
         <rect x="28" y="30" width="278" height="196" rx="14" fill="#fffdf5" stroke="#e2d3b0" stroke-width="2" filter="url(#soft)"/>
-        <circle cx="167" cy="40" r="6" fill="#e8722b"/>
         <text x="48" y="74" font-family="Jua, Malgun Gothic, sans-serif" font-size="22" fill="#3d2b17" id="pTitle"></text>
         <text font-size="14" fill="#5a4a35">
           <tspan x="48" y="104" id="pL1"></tspan>
@@ -625,7 +624,7 @@ const B_ANSWER=[0,1,0,0];                      // 베네딕트 반응: 쌀 음�
 const HEAT=[null,[[214,226,228,1],[120,185,175,1],[190,205,90,1],[235,175,50,1],[236,118,36,1],[222,88,28,1]],null,null];
 /* 영양소 쓰기: 쌀 음료, 두유, 식용유 */
 const NUT_COLS=[1,2,3], NUT_ANS=[['녹말','포도당'],['단백질'],['지방']];
-const NUT_WORDS={'녹말':['녹말','전분'],'포도당':['포도당'],'단백질':['단백질'],'지방':['지방']};
+const NUT_WORDS={'녹말':['녹말'],'포도당':['포도당'],'단백질':['단백질'],'지방':['지방']};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function stopsAt(st,p){const n=st.length-1,k=Math.min(n-1,Math.floor(p*n));return mix(st[k],st[k+1],p*n-k);}
 const CHECK_SVG='<svg class="ck" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 21 L17 32 L36 5" fill="none" stroke="#3566d6" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -680,7 +679,7 @@ function buildLab(){
     return `<line x1="${Math.sin(a)*r1}" y1="${-Math.cos(a)*r1}" x2="${Math.sin(a)*66}" y2="${-Math.cos(a)*66}" stroke="#3d2b17" stroke-width="${k%3?2:4}" stroke-linecap="round"/>`;}).join('')+
     [[12,0,-38],[3,40,6],[6,0,48],[9,-40,6]].map(([n,x,y])=>`<text x="${x}" y="${y}" text-anchor="middle" font-family="Jua, Malgun Gothic, sans-serif" font-size="17" fill="#3d2b17">${n}</text>`).join('');
   setClock(0);
-  setPanel('탐구 ① 시료 넣기',['반짝이는 용기를 클릭하면','스포이드로 시료를 12홈판의','세로줄에 차례대로 넣어요.']);
+  setPanel('단계 ① 시료 넣기',['반짝이는 용기를 클릭하면','스포이드로 시료를 12홈판의','세로줄에 차례대로 넣어요.']);
   $('#rowHi').style.display='none';
   const st=$('#rstation');st.style.display='none';st.setAttribute('opacity',0);
   // 라벨
@@ -881,7 +880,7 @@ $('#rstation').addEventListener('click',()=>{
 async function startReagents(){
   busy=true;
   state.phase=2;
-  setPanel('탐구 ② 검출 시약 넣기',['반짝이는 시약병을 클릭하면','스포이드로 홈판의 가로줄에','시약을 2방울씩 떨어뜨려요.']);
+  setPanel('단계 ② 검출 시약 넣기',['반짝이는 시약병을 클릭하면','스포이드로 홈판의 가로줄에','시약을 2방울씩 떨어뜨려요.']);
   $('#rowHead').textContent='검출 시약';
   setProgress(REAGENTS.map(r=>r.short),state.r.done,0);
   await tween(800,p=>$('#labsvg').setAttribute('viewBox',`0 0 ${lerp(1000,VBW2,p)} 650`));
@@ -961,7 +960,7 @@ function resultTableHTML({marks,bmarks=null,edit=false,editB=false}){
 
 async function startRecord(){
   state.phase=3;
-  setPanel('탐구 ③ 결과 기록하기',['홈판의 색깔 변화를 관찰하고','시약의 색깔이 변한 칸을 표에','표시한 뒤 채점해 보세요.']);
+  setPanel('단계 ③ 결과 기록하기',['홈판의 색깔 변화를 관찰하고','시약의 색깔이 변한 칸을 표에','표시한 뒤 채점해 보세요.']);
   toast('홈판의 색깔 변화를 잘 관찰해 보세요!');
   await wait(2600);
   await fade($('#bottles'),1,0,500);
