@@ -66,7 +66,7 @@ body{background:radial-gradient(ellipse at 50% 30%,#fff8e8 0%,#f2e4c6 60%,#e2cfa
 .tag.wait{background:#ece5d6;color:#8a7a60;}
 .card.wait .thumb{filter:saturate(.55);}
 .card.go{border-color:#f5a043;}
-.card.go::after{content:'NEW';position:absolute;top:12px;right:12px;background:#e5484d;color:#fff;font:700 12px 'Noto Sans KR',sans-serif;
+.card.go:not(.ext)::after{content:'NEW';position:absolute;top:12px;right:12px;background:#e5484d;color:#fff;font:700 12px 'Noto Sans KR',sans-serif;
   padding:3px 9px;border-radius:999px;letter-spacing:.05em;}
 .card.zoom{transform:scale(1.04);box-shadow:0 20px 40px rgba(80,60,30,.3);}
 #fadeOut{position:fixed;inset:0;background:#f0e2c4;opacity:0;pointer-events:none;transition:opacity .45s;z-index:30;}
@@ -177,16 +177,16 @@ const THUMBS={
 const LABS=[
   {id:'nutrient',title:'영양소 탐정',desc:'검출 시약으로 음식 속에 숨어 있는 영양소를 찾아요.',href:'nutrient-detective.html'},
   {id:'saliva',title:'침의 소화 작용',desc:'침이 녹말을 어떻게 바꾸는지 알아봐요.'},
-  {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.'},
+  {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.',href:'https://filest.edunet.net/360vr/webvr/m220001034/m220001034.html',ext:true},
   {id:'circ',title:'순환계',desc:'심장과 혈관이 하는 일을 탐구해요.'},
   {id:'resp',title:'호흡계',desc:'숨을 쉴 때 폐에서 일어나는 일을 알아봐요.'},
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];
 
-$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}" data-i="${i}" aria-label="${l.title}${l.href?'':' (준비 중)'}">
+$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}" data-i="${i}" aria-label="${l.title}${l.href?(l.ext?' (새 창에서 열림)':''):' (준비 중)'}">
   <span class="thumb"><svg viewBox="0 0 320 200" aria-hidden="true">${THUMBS[l.id]}</svg></span>
   <span class="body"><span class="no">실험 ${String(i+1).padStart(2,'0')}</span><span class="ct">${l.title}</span><span class="cd">${l.desc}</span>
-  <span class="tag ${l.href?'go':'wait'}">${l.href?'시작하기 ▶':'준비 중'}</span></span></button>`).join('');
+  <span class="tag ${l.href?'go':'wait'}">${l.href?(l.ext?'VR 열기 ↗':'시작하기 ▶'):'준비 중'}</span></span></button>`).join('');
 
 document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{
   const l=LABS[+c.dataset.i];
@@ -194,6 +194,7 @@ document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{
     $('#soonText').innerHTML=`<b>${l.title}</b> 실험은 지금 열심히 준비하고 있어요.<br>조금만 기다려 주세요!`;
     $('#soon').classList.add('on');$('#soonClose').focus();return;
   }
+  if(l.ext){window.open(l.href,'_blank','noopener');return;}  // 외부 사이트는 새 창으로
   c.classList.add('zoom');$('#fadeOut').classList.add('on');
   setTimeout(()=>location.href=l.href,450);
 }));
