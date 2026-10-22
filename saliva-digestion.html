@@ -456,8 +456,8 @@ const REASONS=[
 ];
 const ANS=[['청람색','변화 없음',1],['변화 없음','황적색',0]];
 const ROWS=[['3의 변화','아이오딘 반응'],['4의 변화','베네딕트 반응']];
-/* 정리하기 2: 꼭 들어가야 할 말 (모두) */
-const EXPLAIN_KEYS=[['녹말'],['분해'],['엿당','당']];
+/* 정리하기 2: 꼭 들어가야 할 말 (모두) — '침이 녹말을 분해한다'면 정답 */
+const EXPLAIN_KEYS=[['녹말'],['분해']];
 const EVAL=[['지식∙이해','침이 녹말에 어떤 작용을 하였는지 올바르게 설명하였는가?'],
   ['과정∙기능','실험 결과를 정확하게 관찰하여 기록하였는가?'],
   ['가치∙태도','입에서 일어나는 소화 과정에 흥미와 호기심을 가지고 참여하였는가?']];
@@ -959,7 +959,7 @@ function grade2(){
   if(ok){state.expOk=true;renderReport();$('#report').scrollTop=$('#report').scrollHeight;return;}
   const n=$('#note');n.classList.remove('no');void n.offsetWidth;n.classList.add('no');
   const m=$('#m2');m.className='msg no';
-  m.textContent=t?'다시 생각해 보세요! 침이 녹말을 어떻게 바꾸었는지, 무엇이 만들어졌는지 설명해 보세요.':'빈칸을 클릭해 설명을 입력해 보세요.';
+  m.textContent=t?'다시 생각해 보세요! 침이 녹말을 어떻게 바꾸었는지 설명해 보세요.':'빈칸을 클릭해 설명을 입력해 보세요.';
 }
 
 /* ================= 완료 · 보고서 이미지 ================= */
