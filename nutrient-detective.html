@@ -245,6 +245,11 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .hub-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin-right:4px;
   background:rgba(246,217,138,.18);color:#f6d98a;text-decoration:none;font-size:20px;}
 .hub-btn:hover{background:rgba(246,217,138,.32);}
+
+/* 태블릿 화면 키보드 대응: 맨 아래 버튼 줄은 보고서 창 아래에 붙어 있음 */
+.rep-panel{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.rt-f.sticky{position:sticky;bottom:-16px;z-index:2;background:#fffdf6;margin:8px -20px -16px;padding:8px 20px 12px;
+  box-shadow:0 -10px 14px -12px rgba(0,0,0,.35);}
 </style>
 </head>
 <body>
@@ -1041,13 +1046,22 @@ let repMode=null;
 function placeReport(mode,instant){
   const el=$('#report'), dock=mode==='dock', W=dock?Math.min(660,innerWidth-24):Math.min(1000,innerWidth-24);
   if(instant)el.style.transition='none';
-  Object.assign(el.style,{width:W+'px',left:(dock?innerWidth-W-12:(innerWidth-W)/2)+'px',top:(dock?66:20)+'px'});
+  // 화면 키보드가 올라오면 보이는 영역(visualViewport)이 줄어들므로 그 안에 맞춤
+  const v=window.visualViewport, vw=v?v.width:innerWidth, vh=v?v.height:innerHeight, vt=v?v.offsetTop:0, vl=v?v.offsetLeft:0;
+  const top=vt+(dock?Math.min(66,vh*.12):Math.min(20,vh*.03));
+  Object.assign(el.style,{width:W+'px',left:(vl+(dock?vw-W-12:(vw-W)/2))+'px',top:top+'px',maxHeight:Math.max(160,vt+vh-top-10)+'px'});
   el.classList.toggle('center',!dock);
   $('#repDim').classList.toggle('on',!dock);
   if(instant){void el.offsetWidth;el.style.transition='';}
   repMode=mode;
 }
 addEventListener('resize',()=>{if(repMode)placeReport(repMode,true);});
+if(window.visualViewport)['resize','scroll'].forEach(ev=>visualViewport.addEventListener(ev,()=>{if(repMode)placeReport(repMode,true);}));
+// 보고서를 다시 그린 뒤: 맨 아래 버튼 줄을 고정하고, 입력칸을 누르면 그 칸이 보이게 함
+function afterReportRender(body){
+  const f=body.querySelectorAll('.rt-f');if(f.length)f[f.length-1].classList.add('sticky');
+  body.querySelectorAll('textarea').forEach(t=>t.addEventListener('focus',()=>setTimeout(()=>t.scrollIntoView({block:'center',behavior:'smooth'}),350)));
+}
 function openReport(){
   const el=$('#report'), mode=state&&state.phase===8?'dock':'center';
   renderReportBody();
@@ -1088,6 +1102,7 @@ function renderReportBody(){
         '<button class="btn sub" id="nSave">이미지로 저장</button>'}</div>`;
   }
   body.innerHTML=h;
+  afterReportRender(body);
   // 베네딕트 줄 표시·채점
   body.querySelectorAll('.mk[data-b]').forEach(b=>b.addEventListener('click',()=>{
     if(state.bgraded)return;

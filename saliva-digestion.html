@@ -154,6 +154,11 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .note textarea::placeholder{color:#b9c2cc;font-weight:400;font-size:14px;}
 .note.ok{border-color:#2bb673;}.note.no{border-color:#e5484d;animation:shake .45s;}
 .rep-empty{padding:30px 10px;text-align:center;color:#7a6a50;line-height:1.8;}
+
+/* 태블릿 화면 키보드 대응: 맨 아래 버튼 줄은 보고서 창 아래에 붙어 있음 */
+.rep-panel{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+.rt-f.sticky{position:sticky;bottom:-16px;z-index:2;background:#fffdf6;margin:8px -20px -16px;padding:8px 20px 12px;
+  box-shadow:0 -10px 14px -12px rgba(0,0,0,.35);}
 </style>
 </head>
 <body>
@@ -285,7 +290,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 
       <g id="bottles"></g>
       <!-- 침 용액 비커 -->
-      <g id="sbeaker" class="click" transform="translate(760,430)">
+      <g id="sbeaker" class="click" transform="translate(560,480)">
         <ellipse cx="0" cy="2" rx="54" ry="7" fill="rgba(0,0,0,.14)"/>
         <rect id="sbL" clip-path="url(#sbClip)" x="-52" y="0" width="104" height="0" fill="rgba(228,232,224,.9)"/>
         <path d="M-58 -124 Q-50 -122 -50 -114 L-50 -8 Q-50 0 -42 0 L42 0 Q50 0 50 -8 L50 -120" fill="rgba(255,255,255,.28)" stroke="#8ea3b5" stroke-width="2.5"/>
@@ -658,7 +663,7 @@ function startLab(){
   const s1=$('#scene1');show(s1,true);s1.setAttribute('opacity',1);
   $('#cup').setAttribute('transform','translate(400,430)');setAttrs($('#cupW'),{y:-52,height:52});
   puff(0);mouth('N');
-  const sb=$('#sbeaker');show(sb,true);sb.setAttribute('opacity',1);sb.setAttribute('transform','translate(760,430)');setAttrs($('#sbL'),{y:0,height:0});$('#sbCk').setAttribute('opacity',0);
+  const sb=$('#sbeaker');show(sb,true);sb.setAttribute('opacity',1);sb.setAttribute('transform','translate(560,480)');setAttrs($('#sbL'),{y:0,height:0});$('#sbCk').setAttribute('opacity',0);
   ['petri','rackBack','rackFront','tubes','bathBack','bathFront','clock','rstation'].forEach(id=>{const g=$('#'+id);show(g,false);g.setAttribute('opacity',0);});
   ['pud0','pud1'].forEach(id=>setAttrs($('#'+id),{rx:0,ry:0}));
   setAttrs($('#pud0'),{fill:'rgba(222,232,240,.9)'});setAttrs($('#pud1'),{fill:'rgba(225,235,242,.9)'});
@@ -694,7 +699,7 @@ $('#cup').addEventListener('click',async()=>{
   await runClock(2,2600);
   state.phase='1b';
   setPanel('단계 ① 침 용액 만들기',['비커를 클릭해','머금은 물을 뱉어','침 용액을 만들어요.']);
-  showRingAt(760,436,124,150);
+  showRingAt(560,486,124,150);
   busy=false;
 });
 $('#sbeaker').addEventListener('click',async()=>{
@@ -705,10 +710,10 @@ $('#sbeaker').addEventListener('click',async()=>{
 async function spitOut(){
   busy=true;hideHint();
   mouth('O');
-  // 입(578,234) → 비커 입구(760,312)로 포물선을 그리며 물방울이 이어짐
+  // 입(574,236) → 바로 앞 비커 입구(560,370)로 물방울이 이어짐
   const g=$('#spit');g.innerHTML=[...Array(14)].map(()=>`<circle r="4.5" fill="rgba(220,230,226,.95)" opacity="0"/>`).join('');
   const drops=[...g.children];
-  const pt=t=>({x:lerp(578,760,t),y:lerp(234,320,t)-Math.sin(Math.PI*t)*40*(1-t)});
+  const pt=t=>({x:lerp(574,560,t)+Math.sin(Math.PI*t)*12,y:lerp(236,372,t)});
   await tween(1500,p=>{
     drops.forEach((d,k)=>{const t=p*1.6-k*.045;if(t<0||t>1){d.setAttribute('opacity',0);return;}const q=pt(t);setAttrs(d,{cx:q.x,cy:q.y,opacity:1});});
     const h=60*Math.min(1,Math.max(0,(p-.3)/.7));setAttrs($('#sbL'),{y:-h,height:h});puff(1-p);
@@ -725,7 +730,7 @@ async function startStep2(){
   await fade($('#scene1'),1,0,600);
   // 침 용액 비커를 뒤쪽 줄로
   const sb=$('#sbeaker');
-  await tween(700,p=>sb.setAttribute('transform',`translate(${lerp(760,SB_X,p)},${lerp(430,BASE,p)})`));
+  await tween(700,p=>sb.setAttribute('transform',`translate(${lerp(560,SB_X,p)},${lerp(480,BASE,p)})`));
   await Promise.all(['bottles','rackBack','rackFront','tubes'].map(id=>fade($('#'+id),0,1,600)));
   state.phase='2';state.s2=0;
   setPanel('단계 ② 녹말 용액에 침 넣기',['반짝이는 용기를 클릭해','시험관 A, B에 용액을','차례대로 넣어요.']);
@@ -889,12 +894,21 @@ let repMode=null;
 function placeReport(mode,instant){
   const el=$('#report'), dock=mode==='dock', W=dock?Math.min(680,innerWidth-24):Math.min(980,innerWidth-24);
   if(instant)el.style.transition='none';
-  Object.assign(el.style,{width:W+'px',left:(dock?innerWidth-W-12:(innerWidth-W)/2)+'px',top:(dock?66:20)+'px'});
+  // 화면 키보드가 올라오면 보이는 영역(visualViewport)이 줄어들므로 그 안에 맞춤
+  const v=window.visualViewport, vw=v?v.width:innerWidth, vh=v?v.height:innerHeight, vt=v?v.offsetTop:0, vl=v?v.offsetLeft:0;
+  const top=vt+(dock?Math.min(66,vh*.12):Math.min(20,vh*.03));
+  Object.assign(el.style,{width:W+'px',left:(vl+(dock?vw-W-12:(vw-W)/2))+'px',top:top+'px',maxHeight:Math.max(160,vt+vh-top-10)+'px'});
   el.classList.toggle('center',!dock);$('#repDim').classList.toggle('on',!dock);
   if(instant){void el.offsetWidth;el.style.transition='';}
   repMode=mode;
 }
 addEventListener('resize',()=>{if(repMode)placeReport(repMode,true);});
+if(window.visualViewport)['resize','scroll'].forEach(ev=>visualViewport.addEventListener(ev,()=>{if(repMode)placeReport(repMode,true);}));
+// 보고서를 다시 그린 뒤: 맨 아래 버튼 줄을 고정하고, 입력칸을 누르면 그 칸이 보이게 함
+function afterReportRender(body){
+  const f=body.querySelectorAll('.rt-f');if(f.length)f[f.length-1].classList.add('sticky');
+  body.querySelectorAll('textarea').forEach(t=>t.addEventListener('focus',()=>setTimeout(()=>t.scrollIntoView({block:'center',behavior:'smooth'}),350)));
+}
 function openReport(){
   const el=$('#report'), mode=state&&state.phase==='5'&&!state.graded?'dock':'center';
   renderReport();el.classList.add('on');placeReport(mode,true);el.scrollTop=0;
@@ -928,6 +942,7 @@ function renderReport(){
         edit2?'<button class="btn sub" id="g2">확인</button>':state.phase==='6'?'<button class="btn" id="done">완료</button>':'<button class="btn sub" id="saveBtn">이미지로 저장</button>'}</div>`;
   }
   body.innerHTML=h;
+  afterReportRender(body);
   body.querySelectorAll('.opt:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
     const r=+b.dataset.r,c=+b.dataset.c;state.pick[r][c]=c===2?+b.dataset.v:b.dataset.v;
     b.parentNode.querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o===b));
