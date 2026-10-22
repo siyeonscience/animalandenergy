@@ -47,6 +47,10 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .goal{background:#eef6f2;border-left:5px solid #2f5d50;border-radius:8px;padding:10px 14px;font-weight:700;color:#2f5d50;}
 .safety{background:#fff4e6;border-left:5px solid #f06e28;border-radius:8px;padding:10px 14px 10px 30px;}
 .gfoot{text-align:center;margin-top:20px;}
+.pred-q{font-size:16px;line-height:1.7;color:#4a3e30;word-break:keep-all;margin-bottom:12px;}
+.pred-q small{display:block;color:#7a6a50;font-size:14px;}
+.pred-msg{min-height:22px;margin-top:8px;font-size:14px;font-weight:700;color:#d63c41;text-align:center;}
+.note.pred{border-color:#c9b98f;background:#fffdf3;}
 @keyframes pop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
 
 /* ===== 실험실 ===== */
@@ -149,16 +153,6 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
   font-family:'Noto Sans KR','Malgun Gothic',sans-serif;font-size:17px;font-weight:700;color:#2a4fd6;line-height:1.6;white-space:pre-wrap;}
 .note textarea::placeholder{color:#b9c2cc;font-weight:400;font-size:14px;}
 .note.ok{border-color:#2bb673;}.note.no{border-color:#e5484d;animation:shake .45s;}
-.eval{width:100%;border-collapse:separate;border-spacing:0 6px;}
-.eval td{background:#fff;border-top:1px solid #e3e8ee;border-bottom:1px solid #e3e8ee;padding:8px 10px;font-size:14.5px;line-height:1.5;word-break:keep-all;}
-.eval td:first-child{border-left:1px solid #e3e8ee;border-radius:10px 0 0 10px;font-family:'Jua','Malgun Gothic',sans-serif;color:#2f5d50;width:96px;white-space:nowrap;}
-.eval td:last-child{border-right:1px solid #e3e8ee;border-radius:0 10px 10px 0;width:190px;}
-.faces{display:flex;gap:6px;justify-content:center;}
-.face{width:52px;height:56px;border:2px solid transparent;border-radius:12px;background:#fff;cursor:pointer;padding:2px;display:flex;flex-direction:column;align-items:center;font:inherit;font-size:11px;color:#5a7a8a;}
-.face svg{width:36px;height:36px;}
-.face.on{border-color:#1fb3e8;background:#e8f8fe;font-weight:700;}
-.face:disabled{cursor:default;}
-.face:disabled:not(.on){opacity:.4;}
 .rep-empty{padding:30px 10px;text-align:center;color:#7a6a50;line-height:1.8;}
 </style>
 </head>
@@ -190,6 +184,17 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
         <li>시약이나 용액을 떨어뜨릴 때 반드시 실험용 장갑을 착용하고, 용액을 손으로 직접 만지지 않는다.</li>
         <li>뜨거운 물을 다룰 때는 반드시 면장갑을 착용하고, 화상을 입지 않도록 주의한다.</li>
         <li>시험관이나 비커 등 유리 기구를 다룰 때는 깨지지 않게 조심한다.</li></ul></div>
+      <div class="gfoot"><button class="btn" id="goPredict">다음 ▶</button></div>
+    </div>
+  </div>
+  <div class="guide" id="predict">
+    <div class="gcard">
+      <h2>🤔 실험 전에 예측해 보자</h2>
+      <div class="pred-q"><b>침은 녹말에 어떤 작용을 할까요?</b> 실험 결과를 예측하고, 그렇게 생각한 까닭도 함께 써 보세요.
+        <small>· 시험관 A: 1 % 녹말 용액 + 증류수 &nbsp; · 시험관 B: 1 % 녹말 용액 + 침 용액</small></div>
+      <div class="note pred"><svg class="pen" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#fff" stroke="#9aa6b2" stroke-width="1.5"/><path d="M8 18l1.2-4 6.6-6.6 2.8 2.8L12 16.8z" fill="none" stroke="#7d8894" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <textarea id="predText" placeholder="클릭해서 나의 예측을 입력해요" aria-label="실험 전 예측"></textarea></div>
+      <div class="pred-msg" id="predMsg"></div>
       <div class="gfoot"><button class="btn" id="goLab">실험 시작 ▶</button></div>
     </div>
   </div>
@@ -423,7 +428,15 @@ const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 
 /* ================= 인트로 ================= */
 $('#startBtn').onclick=()=>{$('#titleWrap').classList.add('hide');$('#guide').classList.add('on');};
-$('#goLab').onclick=()=>{$('#intro').classList.remove('on');$('#lab').classList.add('on');startLab();};
+let prediction='';   // 실험 전 예측 (다시 해도 유지)
+$('#goPredict').onclick=()=>{$('#guide').classList.remove('on');$('#predict').classList.add('on');$('#predText').focus();};
+$('#predText').addEventListener('input',()=>$('#predMsg').textContent='');
+$('#goLab').onclick=()=>{
+  const t=$('#predText').value.trim();
+  if(!t){$('#predMsg').textContent='실험을 시작하기 전에 나의 예측을 써 보세요.';$('#predText').focus();return;}
+  prediction=t;
+  $('#intro').classList.remove('on');$('#lab').classList.add('on');startLab();
+};
 
 /* ================= 상수 ================= */
 const STARCH=[238,238,230,.95], WATER=[190,222,245,.6], SALIVA=[228,232,224,.9];
@@ -458,13 +471,6 @@ const ANS=[['청람색','변화 없음',1],['변화 없음','황적색',0]];
 const ROWS=[['3의 변화','아이오딘 반응'],['4의 변화','베네딕트 반응']];
 /* 정리하기 2: 꼭 들어가야 할 말 (모두) — '침이 녹말을 분해한다'면 정답 */
 const EXPLAIN_KEYS=[['녹말'],['분해']];
-const EVAL=[['지식∙이해','침이 녹말에 어떤 작용을 하였는지 올바르게 설명하였는가?'],
-  ['과정∙기능','실험 결과를 정확하게 관찰하여 기록하였는가?'],
-  ['가치∙태도','입에서 일어나는 소화 과정에 흥미와 호기심을 가지고 참여하였는가?']];
-const FACES=['잘함','보통','노력 필요'];
-const faceSVG=k=>`<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3a16 16 0 1 0 9.5 28.9L35 35l-1.6-6.4A16 16 0 0 0 20 3z" fill="#fff" stroke="#1fb3e8" stroke-width="2.6" stroke-linejoin="round"/>
-  <circle cx="14" cy="15" r="2.4" fill="#1fb3e8"/><circle cx="26" cy="15" r="2.4" fill="#1fb3e8"/>${
-  k===0?'<path d="M11 21h18a9 9 0 0 1-18 0z" fill="#1fb3e8"/>':k===1?'<path d="M12 22q8 8 16 0" fill="none" stroke="#1fb3e8" stroke-width="2.6" stroke-linecap="round"/>':'<path d="M13 24h14" stroke="#1fb3e8" stroke-width="2.6" stroke-linecap="round"/>'}</svg>`;
 const PEN_SVG='<svg class="pen" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="#fff" stroke="#9aa6b2" stroke-width="1.5"/><path d="M8 18l1.2-4 6.6-6.6 2.8 2.8L12 16.8z" fill="none" stroke="#7d8894" stroke-width="1.5" stroke-linejoin="round"/></svg>';
 
 const D={x:0,y:0,bulb:1,fluid:0}, RD={x:0,y:-115,bulb:1,fluid:0,rot:0};
@@ -646,7 +652,7 @@ async function reagentDrop(color,tx,ty,onLand,el,ox=0,oy=0){
 function startLab(){
   closeReport();$('#celebrate').classList.remove('on');$('#reportBtn').classList.remove('attn');
   state={phase:'1a',s2:0,lv:[LV0,LV0],sb:0,tube:[{x:TX[0],dy:0,lv:0,c:STARCH.slice()},{x:TX[1],dy:0,lv:0,c:STARCH.slice()}],
-    pud:[0,0],pick:[[null,null,null],[null,null,null]],graded:false,explain:'',expOk:false,evals:[null,null,null]};
+    pud:[0,0],pick:[[null,null,null],[null,null,null]],graded:false,explain:'',expOk:false};
   SPEED=.75;busy=false;
   // 장면 초기화
   const s1=$('#scene1');show(s1,true);s1.setAttribute('opacity',1);
@@ -910,20 +916,16 @@ function renderReport(){
   const body=$('#reportBody');
   if(!state||state.phase!=='5'&&state.phase!=='6'&&state.phase!=='7'){body.innerHTML='<div class="rep-empty">아직 정리할 결과가 없어요.<br>실험을 끝까지 진행하면 여기에서 결과를 정리해요.</div>';return;}
   const edit1=!state.graded;
-  let h=`<div class="rep-sec" id="sec1"><h3>정리하기 1<small>실험하기 3과 4에서 관찰한 색깔 변화를 표에 정리하고, 색깔이 변한 까닭을 골라 보자.</small></h3>${tableHTML(edit1)}
+  let h=state.phase==='6'||state.phase==='7'?`<div class="rep-sec"><h3>실험 전 나의 예측</h3><div class="note pred">${PEN_SVG}<div class="ntext">${esc(prediction)}</div></div></div>`:'';
+  h+=`<div class="rep-sec" id="sec1"><h3>정리하기 1<small>실험하기 3과 4에서 관찰한 색깔 변화를 표에 정리하고, 색깔이 변한 까닭을 골라 보자.</small></h3>${tableHTML(edit1)}
     <div class="rt-f"><span class="msg${state.graded?' ok':''}" id="m1">${state.graded?'정답이에요! 관찰 결과를 정확하게 정리했어요. 🎉':''}</span>
     ${state.phase==='5'?(state.graded?'<button class="btn" id="n1">다음 ▶</button>':'<button class="btn sub" id="g1">채점하기</button>'):''}</div></div>`;
   if(state.phase==='6'||state.phase==='7'){
     const edit2=state.phase==='6'&&!state.expOk;
     h+=`<div class="rep-q">정리하기 2 · 실험 결과를 바탕으로 침이 어떤 작용을 하는지 설명해 보자.</div>
       <div class="note${state.expOk?' ok':''}" id="note">${PEN_SVG}${edit2?`<textarea id="exp" placeholder="클릭해서 입력해요" aria-label="침의 작용 설명">${esc(state.explain)}</textarea>`:`<div class="ntext">${esc(state.explain)}</div>`}</div>
-      <div class="rt-f"><span class="msg${state.expOk?' ok':''}" id="m2">${state.expOk?'정답이에요! 침의 작용을 잘 설명했어요. 🎉':''}</span>${edit2?'<button class="btn sub" id="g2">확인</button>':''}</div>`;
-    if(state.expOk){
-      const edit3=state.phase==='6';
-      h+=`<div class="rep-q">스스로 평가하기</div><table class="eval">${EVAL.map((e,k)=>`<tr><td>${e[0]}</td><td>${e[1]}</td><td><div class="faces">${
-        FACES.map((f,j)=>`<button class="face${state.evals[k]===j?' on':''}" data-k="${k}" data-j="${j}"${edit3?'':' disabled'} aria-label="${f}">${faceSVG(j)}${f}</button>`).join('')}</div></td></tr>`).join('')}</table>
-        <div class="rt-f"><span class="msg" id="m3"></span>${state.phase==='6'?`<button class="btn" id="done"${state.evals.every(v=>v!==null)?'':' disabled'}>완료</button>`:'<button class="btn sub" id="saveBtn">이미지로 저장</button>'}</div>`;
-    }
+      <div class="rt-f"><span class="msg${state.expOk?' ok':''}" id="m2">${state.expOk?'정답이에요! 침의 작용을 잘 설명했어요. 🎉':''}</span>${
+        edit2?'<button class="btn sub" id="g2">확인</button>':state.phase==='6'?'<button class="btn" id="done">완료</button>':'<button class="btn sub" id="saveBtn">이미지로 저장</button>'}</div>`;
   }
   body.innerHTML=h;
   body.querySelectorAll('.opt:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
@@ -935,11 +937,6 @@ function renderReport(){
   if($('#n1'))$('#n1').onclick=()=>{state.phase='6';renderReport();placeReport('center');$('#report').scrollTop=0;};
   if($('#exp'))$('#exp').addEventListener('input',e=>{state.explain=e.target.value;$('#note').classList.remove('no');$('#m2').textContent='';});
   if($('#g2'))$('#g2').onclick=grade2;
-  body.querySelectorAll('.face:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
-    state.evals[+b.dataset.k]=+b.dataset.j;
-    b.parentNode.querySelectorAll('.face').forEach(f=>f.classList.toggle('on',f===b));
-    $('#done').disabled=!state.evals.every(v=>v!==null);
-  }));
   if($('#done'))$('#done').onclick=finish;
   if($('#saveBtn'))$('#saveBtn').onclick=()=>saveImage();
 }
@@ -1005,8 +1002,9 @@ async function drawReport(){
   const reasonFont=`14px ${NOTO}`, RW=W-2*P-90-2*150-12;
   const reasonLines=[0,1].map(r=>wrap(REASONS[r][state.pick[r][2]],reasonFont,RW-20));
   const RH=reasonLines.map(l=>Math.max(56,l.length*20+20));
-  const expFont=`bold 19px ${NOTO}`, expLines=wrap(state.explain,expFont,W-2*P-80);
-  const H=110+40+40+RH[0]+RH[1]+20+50+Math.max(90,expLines.length*30+40)+50+3*52+90;
+  const expFont=`bold 19px ${NOTO}`, expLines=wrap(state.explain,expFont,W-2*P-80), predLines=wrap(prediction,expFont,W-2*P-80);
+  const boxH=n=>Math.max(80,n*30+34);
+  const H=110+22+boxH(predLines.length)+40+40+40+RH[0]+RH[1]+20+50+boxH(expLines.length)+100;
   const cv=document.createElement('canvas');cv.width=W*S;cv.height=H*S;
   const x=cv.getContext('2d');x.scale(S,S);
   const rr=(X,Y,w,h,r)=>{r=typeof r==='number'?[r,r,r,r]:r;x.beginPath();x.moveTo(X+r[0],Y);x.lineTo(X+w-r[1],Y);x.quadraticCurveTo(X+w,Y,X+w,Y+r[1]);
@@ -1017,6 +1015,11 @@ async function drawReport(){
   txt('침의 소화 작용 탐구 보고서',P,50,`36px ${JUA}`,'#f6d98a');
   txt(new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'}),W-P,52,`16px ${NOTO}`,'#cfe3da','right');
   let y=132;
+  const noteBox=(lines,stroke,fill)=>{const nh=boxH(lines.length);rr(P,y,W-2*P,nh,18);x.fillStyle=fill;x.fill();x.strokeStyle=stroke;x.lineWidth=4;x.stroke();
+    lines.forEach((l,k)=>txt(l,P+30,y+32+k*30,expFont,'#2a4fd6'));y+=nh;};
+  txt('실험 전 나의 예측',P,y,`22px ${JUA}`,'#3d2b17');y+=22;
+  noteBox(predLines,'#c9b98f','#fffdf3');
+  y+=40;
   txt('정리하기 1 · 관찰한 색깔 변화와 까닭',P,y,`22px ${JUA}`,'#3d2b17');y+=22;
   const cols=[[P,90,'',null],[P+93,150,'A','#f5a043'],[P+246,150,'B','#e8737a'],[P+399,W-2*P-399,'색깔이 변한 까닭','#6c98d6']];
   cols.slice(1).forEach(([X,w,t,c])=>{rr(X,y,w,36,[9,9,0,0]);x.fillStyle=c;x.fill();txt(t,X+w/2,y+19,`19px ${JUA}`,'#fff','center');});
@@ -1033,18 +1036,8 @@ async function drawReport(){
   });
   y+=36;
   txt('정리하기 2 · 침은 어떤 작용을 할까?',P,y,`22px ${JUA}`,'#3d2b17');y+=22;
-  const nh=Math.max(90,expLines.length*30+40);
-  rr(P,y,W-2*P,nh,18);x.fillStyle='#fff';x.fill();x.strokeStyle='#9cc7ec';x.lineWidth=4;x.stroke();
-  expLines.forEach((l,k)=>txt(l,P+30,y+34+k*30,expFont,'#2a4fd6'));
-  y+=nh+40;
-  txt('스스로 평가하기',P,y,`22px ${JUA}`,'#3d2b17');y+=20;
-  EVAL.forEach((e,k)=>{
-    rr(P,y,W-2*P,46,10);x.fillStyle='#fff';x.fill();x.strokeStyle='#e3e8ee';x.lineWidth=1;x.stroke();
-    txt(e[0],P+16,y+23,`16px ${JUA}`,'#2f5d50');txt(e[1],P+120,y+23,`14px ${NOTO}`,'#4a3e30');
-    const f=FACES[state.evals[k]];rr(W-P-110,y+9,96,28,14);x.fillStyle='#e8f8fe';x.fill();txt(f,W-P-62,y+23,`bold 14px ${NOTO}`,'#1a8fbf','center');
-    y+=52;
-  });
-  y+=34;
+  noteBox(expLines,'#9cc7ec','#fff');
+  y+=50;
   txt('🎉 축하합니다! 침이 녹말을 분해한다는 사실을 밝혀냈습니다!',W/2,y,`24px ${JUA}`,'#e8722b','center');
   return cv;
 }
