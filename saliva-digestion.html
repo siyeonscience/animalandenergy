@@ -162,6 +162,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .rep-panel{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .rt-f.sticky{position:sticky;bottom:-16px;z-index:2;background:#fffdf6;margin:8px -20px -16px;padding:8px 20px 12px;
   box-shadow:0 -10px 14px -12px rgba(0,0,0,.35);}
+#resumeCover{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(240,226,196,.96);
+  font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;color:#3d2b17;}
+#resumeCover.on{display:flex;}
 </style>
 </head>
 <body>
@@ -216,6 +219,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
       침의 소화 작용 <small>· 실험실</small>
     </div>
     <div class="hbtns">
+      <button class="dict" id="restartLab" title="처음부터 다시 하기" aria-label="처음부터 다시 하기" style="padding:6px 12px;font-size:15px"><span style="font-family:'Noto Sans KR',sans-serif;font-weight:700">↺</span> 처음부터</button>
       <button class="dict" id="reportBtn" title="실험 보고서 보기">
         <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="6" width="26" height="31" rx="3" fill="#2f5d50"/><rect x="10" y="9" width="20" height="25" rx="2" fill="#fffdf6"/><rect x="14" y="3" width="12" height="7" rx="2" fill="#c9a54a"/><path d="M13 16h14M13 21h14M13 26h9" stroke="#8aa89c" stroke-width="2.4" stroke-linecap="round"/></svg>
         보고서
@@ -390,6 +394,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
     </svg>
   </div>
   <div id="toast"></div>
+  <div id="resumeCover"><div>⏳ 지난번에 하던 곳을 불러오는 중이에요…</div></div>
 
   <div class="overlay" id="howModal">
     <div class="modal" role="dialog" aria-label="실험 방법">
@@ -427,13 +432,15 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 
 <script>
 const $=s=>document.querySelector(s);
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let REPLAY=false;   // 저장된 진행을 다시 실행하는 중이면 애니메이션 없이 바로 끝냄
+const wait=ms=>REPLAY?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const easeOut=t=>1-Math.pow(1-t,3);
 const easeIn=t=>t*t;
 let SPEED=.75; // 애니메이션 속도 (작을수록 빠름)
 function tween(d,fn,e=ease){
+  if(REPLAY){fn(e(1));return Promise.resolve();}
   return new Promise(res=>{
     const t0=performance.now();d*=SPEED;
     const f=now=>{const p=Math.max(0,Math.min(1,(now-t0)/d));fn(e(p));p<1?requestAnimationFrame(f):res();};
@@ -457,7 +464,7 @@ $('#goLab').onclick=()=>{
   const t=$('#predText').value.trim();
   if(!t){$('#predMsg').textContent='실험을 시작하기 전에 나의 예측을 써 보세요.';$('#predText').focus();return;}
   prediction=t;
-  $('#intro').classList.remove('on');$('#lab').classList.add('on');startLab();
+  $('#intro').classList.remove('on');$('#lab').classList.add('on');startLab();saveProgress();
 };
 
 /* ================= 상수 ================= */
@@ -520,7 +527,7 @@ function showRingAt(cx,base,w,h,text='끌어서 옮겨 보세요!'){
 }
 function hideHint(){$('#hint').style.display='none';}
 let toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+function toast(msg){if(REPLAY)return;const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2400);}
 
 function setClock(p,mins){
   const a=6*mins*p*Math.PI/180;
@@ -642,14 +649,21 @@ function pick(zones,x,y){return zones.find(z=>inZone(z,x,y));}
 const TAP_MSG='꾹 누른 채로 끌어서 옮겨 보세요!';
 
 /* 스포이트 끌기 공통: zones()가 놓을 자리 목록, drop(zone)이 놓았을 때 할 일 */
+const zoneKey=z=>['c','r','i','kind'].map(k=>z[k]??'').join('|');
 function dropperDrag(name,{can,zones,onLift,drop,miss}){
   let off, zs=[];
   DRAG[name]={
     can,
+    async replay(key){   // 저장된 조작 다시 실행
+      const d=D[name];await homeOthers(name);d.lift();onLift&&onLift(d);
+      const z=zones(d).find(z=>zoneKey(z)===key&&z.ok!==false);if(!z)throw new Error('replay '+name+' '+key);
+      await drop(d,z);
+    },
     start(p){
       const d=D[name];homeOthers(name);
       const tip=d.atHome?d.homeWorld():{x:d.x,y:d.y};
       off={dx:tip.x-p.x,dy:Math.max(70,Math.min(130,tip.y-p.y))};   // 손가락은 고무 꼭지 쪽, 끝은 그 아래
+      if(Math.hypot(tip.x-p.x,tip.y-p.y)>170)off={dx:0,dy:90};   // 들고 있던 스포이드가 멀리 있으면 손가락으로 끌어옴
       d.lift();onLift&&onLift(d);
       zs=zones(d);drawTargets(zs);
       follow(d,p.x+off.dx,p.y+off.dy);
@@ -657,7 +671,7 @@ function dropperDrag(name,{can,zones,onLift,drop,miss}){
     move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverTargets(zs,p.x+off.dx,p.y+off.dy);},
     async end(p,moved){
       const d=D[name], z=pick(zs,d.x,d.y);
-      if(z&&z.ok!==false){busy=true;await drop(d,z);busy=false;return;}
+      if(z&&z.ok!==false){busy=true;logAct(['d',name,zoneKey(z)]);await drop(d,z);busy=false;return;}
       if(z&&z.msg)toast(z.msg);else if(!moved)toast(TAP_MSG);
       busy=true;await (miss?miss(d):d.goHome());busy=false;
     },
@@ -761,7 +775,8 @@ async function hideReagent(){
 function liftReagent(d){tween(200,p=>{d.fluid=60*p;d.render();});}
 
 /* ================= 실험실 시작 ================= */
-function startLab(){
+function startLab(fresh=true){
+  if(fresh)clearProgress();
   closeReport();$('#celebrate').classList.remove('on');$('#reportBtn').classList.remove('attn');
   state={phase:'1a',lv:[70,70],sb:0,
     tube:[{x:TX[0],dy:0,lv:0,c:STARCH.slice(),starch:0,other:0,where:'rack',iod:0,bene:0},
@@ -811,6 +826,9 @@ const CHIN_ZONE={ellipse:true,cx:566,cy:300,rx:95,ry:60};     // 비커 입구�
       busy=true;
       if(!inZone(MOUTH_ZONE,cup.x,cup.y-70)){if(!moved)toast(TAP_MSG);else toast('컵을 입까지 가져가 보세요!');
         await cup.moveTo(400,430,0,450);busy=false;showRingAt(400,436,96,124);return;}
+      logAct(['cup']);await this.place();
+    },
+    async place(){
       await cup.moveTo(500,290,25,300);
       mouth('P');
       await tween(700,p=>{setAttrs($('#cupW'),{y:-52+40*p,height:52-40*p});puff(p);});
@@ -832,13 +850,16 @@ const CHIN_ZONE={ellipse:true,cx:566,cy:300,rx:95,ry:60};     // 비커 입구�
       busy=true;
       if(!inZone(CHIN_ZONE,sbk.x,sbk.y-120)){if(!moved)toast(TAP_MSG);else toast('비커를 입 바로 아래까지 가져가 보세요!');
         await sbk.moveTo(560,480,450);busy=false;showRingAt(560,486,124,150);return;}
+      logAct(['sb']);await this.place();
+    },
+    async place(){
       await sbk.moveTo(566,418,250);
       await spitOut();
       await sbk.moveTo(560,480,500);
       await tween(300,p=>$('#sbCk').setAttribute('opacity',p));
       toast('침 용액이 만들어졌어요!');
       await wait(900);
-      startStep2();
+      await startStep2();
     },
   };
 }
@@ -939,6 +960,11 @@ function hintTube(i){const t=state.tube[i];showRingAt(t.x,TB+t.dy+16,58,258);}
         if(!moved)toast(TAP_MSG);else toast('시험관을 비커 안에 놓아 보세요!');
         await tw(off.x0,off.y0,450);busy=false;hintTube(i);return;
       }
+      logAct(['t',i]);await this.place();
+    },
+    async place(){   // 비커 속 자리로 넣기 (다시 실행할 때도 사용)
+      const tw=(x,y,d,e)=>{const x0=obj.x,y0=obj.y;return tween(d,q=>{obj.x=lerp(x0,x,q);obj.y=lerp(y0,y,q);obj.render();},e);};
+      const slot={x:(state.phase==='4b'?HOT_X:WARM_X)[i],dy:IN_DY};
       await tw(slot.x,Math.min(obj.y,-200),300);await tw(slot.x,slot.dy,420,easeOut);
       state.tube[i].where=state.phase==='4b'?'hot':'warm';
       const other=1-i, need=state.phase==='4b'?'hot':'warm';
@@ -1121,8 +1147,8 @@ function renderReport(){
     body.querySelectorAll('.opt.bad').forEach(o=>o.classList.remove('bad'));$('#m1').textContent='';
   }));
   if($('#g1'))$('#g1').onclick=grade1;
-  if($('#n1'))$('#n1').onclick=()=>{state.phase='6';renderReport();placeReport('center');$('#report').scrollTop=0;};
-  if($('#exp'))$('#exp').addEventListener('input',e=>{state.explain=e.target.value;$('#note').classList.remove('no');$('#m2').textContent='';});
+  if($('#n1'))$('#n1').onclick=()=>{logAct(['b','n1',state.pick]);state.phase='6';renderReport();placeReport('center');$('#report').scrollTop=0;};
+  if($('#exp'))$('#exp').addEventListener('input',e=>{state.explain=e.target.value;DRAFT.explain=state.explain;saveProgress();$('#note').classList.remove('no');$('#m2').textContent='';});
   if($('#g2'))$('#g2').onclick=grade2;
   if($('#done'))$('#done').onclick=finish;
   if($('#saveBtn'))$('#saveBtn').onclick=()=>saveImage();
@@ -1140,7 +1166,7 @@ function grade1(){
 function grade2(){
   const t=$('#exp').value.trim();state.explain=t;
   const ok=!!t&&EXPLAIN_KEYS.every(ws=>ws.some(w=>t.replace(/\s/g,'').includes(w)));
-  if(ok){state.expOk=true;renderReport();$('#report').scrollTop=$('#report').scrollHeight;return;}
+  if(ok){state.expOk=true;logAct(['b','g2',t]);renderReport();$('#report').scrollTop=$('#report').scrollHeight;return;}
   const n=$('#note');n.classList.remove('no');void n.offsetWidth;n.classList.add('no');
   const m=$('#m2');m.className='msg no';
   m.textContent=t?'다시 생각해 보세요! 침이 녹말을 어떻게 바꾸었는지 설명해 보세요.':'빈칸을 클릭해 설명을 입력해 보세요.';
@@ -1149,8 +1175,10 @@ function grade2(){
 /* ================= 완료 · 보고서 이미지 ================= */
 let lastImg=null;
 async function finish(){
+  logAct(['b','finish']);
   state.phase='7';closeReport();
   setPanel('🎉 탐구 완료!',['침이 녹말을 분해한다는','사실을 밝혀냈어요!','']);setProgress(5);
+  if(REPLAY)return;
   $('#saveMsg').textContent='보고서를 이미지로 저장하는 중이에요…';$('#repPreview').removeAttribute('src');
   $('#celebrate').classList.add('on');confetti();
   await saveImage();
@@ -1234,7 +1262,44 @@ $('#howBtn').onclick=()=>$('#howModal').classList.add('on');
 $('#howClose').onclick=()=>$('#howModal').classList.remove('on');
 $('#howModal').onclick=e=>{if(e.target.id==='howModal')$('#howModal').classList.remove('on');};
 addEventListener('keydown',e=>{if(e.key==='Escape'){$('#howModal').classList.remove('on');closeReport();}});
-$('#hubBtn').onclick=e=>{if(state&&state.phase!=='7'&&!confirm('실험실 목록으로 돌아갈까요?\n지금까지의 진행 상황은 저장되지 않아요.'))e.preventDefault();};
+// 처음부터: 저장을 지우고 예측 쓰기부터 다시
+$('#restartLab').onclick=()=>{if(confirm('처음부터 다시 할까요?\n지금까지의 진행 상황과 예측이 지워져요.')){prediction='';clearProgress();location.reload();}};
+
+/* ================= 이어서 하기: 이 태블릿(브라우저)에 진행 상황 저장 =================
+   학생이 한 조작(끌어서 놓기, 다음·확인 버튼)을 차례대로 기록해 두었다가,
+   다시 접속하면 그 조작을 애니메이션 없이 순식간에 다시 실행해서 같은 자리로 돌아간다. */
+const SAVE_KEY='saliva-digestion-progress-v1';
+let LOG=[], DRAFT={};
+function saveProgress(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({prediction,log:LOG,draft:DRAFT,t:Date.now()}));}catch(e){}}
+function logAct(a){if(REPLAY)return;LOG.push(a);saveProgress();}
+function clearProgress(){LOG=[];DRAFT={};try{if(prediction)saveProgress();else localStorage.removeItem(SAVE_KEY);}catch(e){}}
+async function replayAct(a){
+  if(a[0]==='d')return DRAG[a[1]].replay(a[2]);
+  if(a[0]==='cup')return DRAG.cup.place();
+  if(a[0]==='sb')return DRAG.sbeaker.place();
+  if(a[0]==='t')return DRAG['t'+a[1]].place();
+  const k=a[1];
+  if(k==='n1'){state.pick=a[2];state.graded=true;state.phase='6';return;}
+  if(k==='g2'){state.explain=a[2];state.expOk=true;return;}
+  if(k==='finish')return finish();
+}
+(async function resume(){
+  let data=null;try{data=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
+  if(!data||!data.prediction)return;
+  prediction=data.prediction;$('#predText').value=prediction;
+  $('#intro').classList.remove('on');$('#lab').classList.add('on');
+  const ov=$('#resumeCover');ov.classList.add('on');
+  startLab(false);
+  LOG=(data.log||[]).slice();DRAFT=data.draft||{};
+  REPLAY=true;busy=true;
+  try{for(const a of LOG)await replayAct(a);}
+  catch(e){REPLAY=false;LOG=[];DRAFT={};saveProgress();startLab(false);ov.classList.remove('on');return;}
+  REPLAY=false;busy=false;
+  if(state.phase==='6'&&!state.expOk&&DRAFT.explain)state.explain=DRAFT.explain;
+  if(state.phase==='5')$('#reportBtn').classList.add('attn');
+  ov.classList.remove('on');
+  if(LOG.length)toast("지난번에 하던 곳부터 이어서 해요. (새로 하려면 '처음부터' 버튼)");
+})();
 </script>
 </body>
 </html>

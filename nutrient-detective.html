@@ -253,6 +253,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .rep-panel{-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .rt-f.sticky{position:sticky;bottom:-16px;z-index:2;background:#fffdf6;margin:8px -20px -16px;padding:8px 20px 12px;
   box-shadow:0 -10px 14px -12px rgba(0,0,0,.35);}
+#resumeCover{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(240,226,196,.96);
+  font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;color:#3d2b17;}
+#resumeCover.on{display:flex;}
 </style>
 </head>
 <body>
@@ -314,6 +317,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
       영양소 탐정 <small>· 실험실</small>
     </div>
     <div class="hbtns">
+      <button class="dict" id="restartLab" title="처음부터 다시 하기" aria-label="처음부터 다시 하기" style="padding:6px 12px;font-size:15px"><span style="font-family:'Noto Sans KR',sans-serif;font-weight:700">↺</span> 처음부터</button>
       <button class="dict rep" id="reportBtn" title="실험 보고서 보기">
         <svg viewBox="0 0 40 40" aria-hidden="true">
           <rect x="7" y="6" width="26" height="31" rx="3" fill="#2f5d50"/>
@@ -447,6 +451,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
     </svg>
   </div>
   <div id="toast"></div>
+  <div id="resumeCover"><div>⏳ 지난번에 하던 곳을 불러오는 중이에요…</div></div>
 
   <div class="overlay" id="dictModal">
     <div class="modal" role="dialog" aria-label="영양소 검출 방법">
@@ -488,13 +493,15 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 
 <script>
 const $=s=>document.querySelector(s);
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let REPLAY=false;   // 저장된 진행을 다시 실행하는 중이면 애니메이션 없이 바로 끝냄
+const wait=ms=>REPLAY?Promise.resolve():new Promise(r=>setTimeout(r,ms));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const easeOut=t=>1-Math.pow(1-t,3);
 const easeIn=t=>t*t;
 let SPEED=.75; // 애니메이션 속도 (작을수록 빠름)
 function tween(d,fn,e=ease){
+  if(REPLAY){fn(e(1));return Promise.resolve();}
   return new Promise(res=>{
     const t0=performance.now();d*=SPEED;
     const f=now=>{const p=Math.max(0,Math.min(1,(now-t0)/d));fn(e(p));p<1?requestAnimationFrame(f):res();};
@@ -733,9 +740,9 @@ function showHint(i){showRingAt(COLX[i],BASE,120,214);}
 function showReagentHint(){showRingAt(SX,SY,112,198);}
 
 let toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2000);}
+function toast(msg){if(REPLAY)return;const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2000);}
 
-function startLab(){buildLab();busy=false;showHint(0);}
+function startLab(fresh=true){if(fresh)clearProgress();buildLab();busy=false;showHint(0);}
 
 /* ================= 스포이드 =================
    tip(끝)이 원점. 집에 있을 때는 용기 안 slot(용기 좌표)에, 들고 있을 때는 dragLayer(화면 좌표)에 있음 */
@@ -822,14 +829,21 @@ function clearTargets(){$('#targets').innerHTML='';}
 const TAP_MSG='꾹 누른 채로 끌어서 옮겨 보세요!';
 
 /* 스포이드 끌기 공통: zones()가 놓을 자리 목록, drop(zone)이 놓았을 때 할 일 */
+const zoneKey=z=>['c','r','i'].map(k=>z[k]??'').join('|');
 function dropperDrag(name,{can,zones,onLift,drop}){
   let off, zs=[];
   DRAG[name]={
     can,
+    async replay(key){   // 저장된 조작 다시 실행
+      const d=D[name];await homeOthers(name);d.lift();onLift&&onLift(d);
+      const z=zones(d).find(z=>zoneKey(z)===key&&z.ok!==false);if(!z)throw new Error('replay '+name+' '+key);
+      await drop(d,z);
+    },
     start(p){
       const d=D[name];homeOthers(name);
       const tip=d.atHome?d.homeWorld():{x:d.x,y:d.y};
       off={dx:tip.x-p.x,dy:Math.max(70,Math.min(130,tip.y-p.y))};   // 손가락은 고무 꼭지 쪽, 끝은 그 아래
+      if(Math.hypot(tip.x-p.x,tip.y-p.y)>170)off={dx:0,dy:90};   // 들고 있던 스포이드가 멀리 있으면 손가락으로 끌어옴
       d.lift();onLift&&onLift(d);
       zs=zones(d);drawTargets(zs);
       follow(d,p.x+off.dx,p.y+off.dy);
@@ -837,7 +851,7 @@ function dropperDrag(name,{can,zones,onLift,drop}){
     move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverTargets(zs,p.x+off.dx,p.y+off.dy);},
     async end(p,moved){
       const d=D[name], z=zs.find(z=>inZone(z,d.x,d.y));
-      if(z&&z.ok!==false){busy=true;await drop(d,z);busy=false;return;}
+      if(z&&z.ok!==false){busy=true;logAct(['d',name,zoneKey(z)]);await drop(d,z);busy=false;return;}
       if(z&&z.msg)toast(z.msg);else if(!moved)toast(TAP_MSG);
       busy=true;await d.goHome();busy=false;
     },
@@ -927,7 +941,7 @@ function highlightRowLabel(r,on){
 async function startReagents(){
   busy=true;
   state.phase=2;
-  setPanel('단계 ② 검출 시약 넣기',['시약병의 스포이드를 끌어서','홈판의 가로줄 홈마다','2방울씩 떨어뜨려요.']);
+  setPanel('단계 ② 검출 시약 넣기',['시약병의 스포이드를 끌어서','그 시약의 가로줄 위에 놓으면','홈마다 2방울씩 떨어져요.']);
   $('#rowHead').textContent='검출 시약';
   setProgress(REAGENTS.map(r=>r.short),state.r.done,0);
   await tween(800,p=>$('#labsvg').setAttribute('viewBox',`0 0 ${lerp(1000,VBW2,p)} 650`));
@@ -1015,7 +1029,7 @@ async function startRecord(){
     $('#rtMsg').textContent='';
   }));
   $('#gradeBtn').addEventListener('click',grade);
-  $('#rtNext').addEventListener('click',()=>{if(!busy)toReport();});
+  $('#rtNext').addEventListener('click',()=>{if(busy)return;logAct(['b','rtNext',state.marks]);toReport();});
   busy=false;
 }
 
@@ -1039,6 +1053,7 @@ function grade(){
 /* 표가 '보고서' 버튼 속으로 날아 들어가는 애니메이션 */
 async function toReport(){
   busy=true;
+  if(REPLAY){show($('#rtFO'),false);$('#reportBadge').classList.add('on');return goExp2();}
   const src=$('#rtBox .rtpop'), r1=src.getBoundingClientRect(), btn=$('#reportBtn').getBoundingClientRect();
   const w=src.offsetWidth, h=src.offsetHeight, s0=r1.width/w, s1=.04;
   const clone=src.cloneNode(true);
@@ -1131,10 +1146,11 @@ function renderReportBody(){
     body.querySelectorAll('.mk.bad').forEach(x=>x.classList.remove('bad'));$('#bMsg').textContent='';
   }));
   if($('#bGrade'))$('#bGrade').onclick=gradeBene;
-  if($('#bNext'))$('#bNext').onclick=()=>{state.phase=9;renderReportBody();placeReport('center');$('#report').scrollTop=0;};
+  if($('#bNext'))$('#bNext').onclick=()=>{logAct(['b','bNext',state.bmarks]);state.phase=9;renderReportBody();placeReport('center');$('#report').scrollTop=0;};
   // 영양소 쓰기
   body.querySelectorAll('textarea').forEach((t,k)=>t.addEventListener('input',()=>{
     state.nut[k]=t.value;state.nutSt[k]=null;$('#nc'+k).classList.remove('ok','no');$('#nMsg').textContent='';
+    DRAFT.nut=state.nut.slice();saveProgress();
   }));
   if($('#nCheck'))$('#nCheck').onclick=checkNutrients;
   if($('#nDone'))$('#nDone').onclick=finish;
@@ -1158,7 +1174,7 @@ function checkNutrients(){
   const vals=[0,1,2].map(k=>$('#nt'+k).value.trim());state.nut=vals;
   const res=vals.map((v,k)=>checkNut(v,NUT_ANS[k]));
   state.nutSt=res.map(r=>r?'ok':'no');
-  if(res.every(r=>r)){state.nutOk=true;renderReportBody();return;}
+  if(res.every(r=>r)){state.nutOk=true;logAct(['b','nOk',vals]);renderReportBody();return;}
   res.forEach((r,k)=>{const el=$('#nc'+k);el.classList.remove('ok','no');void el.offsetWidth;el.classList.add(r?'ok':'no');});
   const msg=$('#nMsg');msg.className='msg no';
   msg.textContent=vals.some(v=>v)?'다시 생각해 보세요! 실험 결과표를 보고 각 음식에 들어 있는 영양소를 모두 써야 해요.':'빈칸을 클릭해 영양소를 입력해 보세요.';
@@ -1167,9 +1183,11 @@ function checkNutrients(){
 /* ---- 완료: 축하 + 보고서 이미지 저장 ---- */
 let lastImg=null;
 async function finish(){
+  logAct(['b','finish']);
   state.phase=10;closeReport();
   setPanel('🎉 탐구 완료!',['영양소를 완벽하게','검출해 냈어요!','']);
   setProgress(E2_STEPS,[1,1,1,1],4);
+  if(REPLAY)return;
   $('#saveMsg').textContent='보고서를 이미지로 저장하는 중이에요…';
   $('#repPreview').removeAttribute('src');
   $('#celebrate').classList.add('on');confetti();
@@ -1377,12 +1395,10 @@ dropperDrag('dReag',{
   onLift(d){if(d.fluid>0)return;fillDropper(d,(state.phase===5?BENEDICT:REAGENTS[state.r.next]).color,60);},
   zones(){
     if(state.phase===5)return TX.map((_,t)=>({...tubeZone(t),ok:!state.tbene[t],msg:`'${NAMES[t]}' 시험관에는 이미 넣었어요.`}));
+    // 가로줄 위에 한 번 놓으면 그 가로줄의 홈 4개에 2방울씩 떨어뜨림
     const cur=state.r.next;
-    return ROWY.flatMap((_,r)=>COLX.map((_,c)=>{
-      const z=wellZone(r,c);
-      if(r!==cur)return {...z,ok:false,msg:`이 시약은 '${REAGENTS[cur].short}' 가로줄의 홈에 떨어뜨려요.`};
-      return {...z,ok:!state.wd[r][c],msg:'이미 시약을 떨어뜨린 홈이에요.'};
-    }));
+    return ROWY.map((y,r)=>({x:COLX[0]-66,y:y-62,w:COLX[3]-COLX[0]+132,h:72,r,ok:r===cur,
+      msg:`이 시약은 '${REAGENTS[cur].short}' 가로줄에 떨어뜨려요.`}));
   },
   async drop(d,z){
     if(state.phase===5){
@@ -1394,13 +1410,15 @@ dropperDrag('dReag',{
       await wait(400);await hideReagent();
       return toHeat();
     }
-    const r=z.r,c=z.c;
-    await d.moveTo(COLX[c],ROWY[r]-20,240);
-    for(let k=0;k<2;k++){await reagentDrop(d,r,c);await wait(80);}
-    react(r,c);
-    state.wd[r][c]=1;
-    await d.moveTo(COLX[c],ROWY[r]-46,180);
-    if(state.wd[r].every(v=>v))await rowDone(r);
+    const r=z.r;
+    for(let c=0;c<4;c++){
+      await d.moveTo(COLX[c],ROWY[r]-20,c?300:240);
+      for(let k=0;k<2;k++){await reagentDrop(d,r,c);await wait(80);}
+      react(r,c);
+      state.wd[r][c]=1;
+      await d.moveTo(COLX[c],ROWY[r]-46,160);
+    }
+    await rowDone(r);
   },
 });
 
@@ -1431,6 +1449,9 @@ TX.forEach((_,i)=>{
         if(!moved)toast(TAP_MSG);else toast('시험관을 비커 안에 놓아 보세요!');
         await tw(off.x0,off.y0,450);busy=false;hintTube(state.inBk.findIndex(v=>!v));return;
       }
+      logAct(['t',i]);await this.place();
+    },
+    async place(){   // 비커 속 자리로 넣기 (다시 실행할 때도 사용)
       await tw(IN_X[i],Math.min(obj.y,LIFT),300);await tw(IN_X[i],IN_DY,420,easeOut);
       state.inBk[i]=1;
       if(!state.inBk.every(v=>v)){hintTube(state.inBk.findIndex(v=>!v));busy=false;return;}
@@ -1485,10 +1506,45 @@ function openDone(kind){
   $('#againBtn').style.display=$('#closeDone').style.display=one?'none':'';
   $('#doneModal').classList.add('on');
 }
-$('#phase2Btn').onclick=()=>{$('#doneModal').classList.remove('on');startReagents();};
+$('#phase2Btn').onclick=()=>{logAct(['b','phase2']);$('#doneModal').classList.remove('on');startReagents();};
 
 /* ---- 실험실 목록으로 (진행 중이면 확인) ---- */
-$('#hubBtn').onclick=e=>{if(state&&state.phase<10&&!confirm('실험실 목록으로 돌아갈까요?\n지금까지의 진행 상황은 저장되지 않아요.'))e.preventDefault();};
+$('#restartLab').onclick=()=>{if(confirm('처음부터 다시 할까요?\n지금까지의 진행 상황은 지워져요.')){closeReport();$('#doneModal').classList.remove('on');startLab();}};
+
+/* ================= 이어서 하기: 이 태블릿(브라우저)에 진행 상황 저장 =================
+   학생이 한 조작(끌어서 놓기, 다음·채점 버튼)을 차례대로 기록해 두었다가,
+   다시 접속하면 그 조작을 애니메이션 없이 순식간에 다시 실행해서 같은 자리로 돌아간다. */
+const SAVE_KEY='nutrient-detective-progress-v1';
+let LOG=[], DRAFT={};
+function saveProgress(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({log:LOG,draft:DRAFT,t:Date.now()}));}catch(e){}}
+function logAct(a){if(REPLAY)return;LOG.push(a);saveProgress();}
+function clearProgress(){LOG=[];DRAFT={};try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+async function replayAct(a){
+  if(a[0]==='d')return DRAG[a[1]].replay(a[2]);
+  if(a[0]==='t')return DRAG['tb'+a[1]].place();
+  const k=a[1];
+  if(k==='phase2'){$('#doneModal').classList.remove('on');return startReagents();}
+  if(k==='rtNext'){state.marks=a[2];state.graded=true;return toReport();}
+  if(k==='bNext'){state.bmarks=a[2];state.bgraded=true;state.phase=9;return;}
+  if(k==='nOk'){state.nut=a[2];state.nutSt=[0,1,2].map(()=>'ok');state.nutOk=true;return;}
+  if(k==='finish')return finish();
+}
+(async function resume(){
+  let data=null;try{data=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
+  if(!data||!Array.isArray(data.log)||!data.log.length)return;
+  $('#intro').classList.remove('on');$('#lab').classList.add('on');
+  const ov=$('#resumeCover');ov.classList.add('on');
+  startLab(false);
+  LOG=data.log.slice();DRAFT=data.draft||{};
+  REPLAY=true;busy=true;
+  try{for(const a of LOG)await replayAct(a);}
+  catch(e){REPLAY=false;clearProgress();startLab();ov.classList.remove('on');return;}
+  REPLAY=false;busy=false;
+  if(state.phase===9&&!state.nutOk&&DRAFT.nut)state.nut=DRAFT.nut.slice();
+  if(state.phase===8)$('#reportBtn').classList.add('attn');
+  ov.classList.remove('on');
+  toast("지난번에 하던 곳부터 이어서 해요. (새로 하려면 '처음부터' 버튼)");
+})();
 
 /* ---- 사전(검출 방법) ---- */
 $('#dictBtn').onclick=()=>$('#dictModal').classList.add('on');
