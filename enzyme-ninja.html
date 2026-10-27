@@ -122,7 +122,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
     <ol class="rules">
       <li>왼쪽에 이번 판의 <b>소화 효소 닌자</b>가 나타나요.</li>
       <li>화면에 던져지는 영양소 중 <b>그 효소가 소화하는 영양소</b>만 손가락으로 그어 베어요. <b>+10점</b></li>
-      <li>다른 영양소를 베면 <b>−5점</b>! 한 판은 20초, 모두 3판이에요.</li>
+      <li>다른 영양소를 베면 <b>−5점</b>! 한 판은 20초, 모두 4판이에요.</li>
     </ol>
     <button class="btn" id="playBtn">시작하기</button>
   </div>
@@ -156,6 +156,7 @@ const NUTRIENTS={
 const ENZYMES=[
   {name:'아밀레이스',target:'starch',where:'침, 이자액',product:'엿당'},
   {name:'펩신',target:'protein',where:'위액',product:'작은 단백질 조각'},
+  {name:'트립신',target:'protein',where:'이자액',product:'작은 단백질 조각'},
   {name:'라이페이스',target:'fat',where:'이자액',product:'지방산과 모노글리세리드'},
 ];
 const ROUND_SEC=20, GOOD=10, BAD=-5;
@@ -177,7 +178,8 @@ let items=[], pieces=[], drops=[], texts=[], trail=[];
 let G=null;   // {order, round, score, roundScore[], good[], bad[], t0, playing}
 function newGame(){
   const order=ENZYMES.slice().sort(()=>Math.random()-.5);
-  G={order,round:-1,score:0,rs:[0,0,0],good:[0,0,0],bad:[0,0,0],playing:false,spawnT:0,left:ROUND_SEC};
+  const z=()=>order.map(()=>0);   // 판마다 점수·횟수
+  G={order,round:-1,score:0,rs:z(),good:z(),bad:z(),playing:false,spawnT:0,left:ROUND_SEC};
   items=[];pieces=[];drops=[];texts=[];trail=[];
   setScore();
 }
@@ -339,7 +341,7 @@ function showResult(){
   $('#hud').classList.add('hide');
   $('#totalN').textContent=`${G.score}점`;
   const max=G.good.reduce((a,b)=>a+b,0);
-  $('#rank').textContent=G.score>=200?'🏆 전설의 소화 효소 닌자!':G.score>=120?'🥇 훌륭한 닌자예요!':G.score>=60?'🥈 수련을 조금만 더 해 볼까요?':'🥉 소화 효소가 어떤 영양소를 소화하는지 다시 확인해 봐요.';
+  $('#rank').textContent=G.score>=260?'🏆 전설의 소화 효소 닌자!':G.score>=160?'🥇 훌륭한 닌자예요!':G.score>=80?'🥈 수련을 조금만 더 해 볼까요?':'🥉 소화 효소가 어떤 영양소를 소화하는지 다시 확인해 봐요.';
   $('#resT').innerHTML=G.order.map((en,k)=>`<tr><td>${en.name}</td><td>${josa(NUTRIENTS[en.target].name,'을','를')} 소화</td>
     <td>바르게 ${G.good[k]}번 · 잘못 ${G.bad[k]}번</td><td>${G.rs[k]}점</td></tr>`).join('');
   $('#endP').classList.add('on');
