@@ -106,8 +106,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .labwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
 #labsvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none;touch-action:none;}
 .grab{cursor:grab;}
-.tg{fill:rgba(43,182,115,.08);stroke:#2bb673;stroke-width:3;stroke-dasharray:9 6;pointer-events:none;animation:march .9s linear infinite;}
-.tg.on{fill:rgba(43,182,115,.28);stroke-width:4;}
+/* 놓을 자리: 움직이지 않는 점선, 스포이드가 올라오면 부드럽게 진해짐 */
+.tg{fill:rgba(43,182,115,.07);stroke:#2bb673;stroke-width:3;stroke-dasharray:10 7;pointer-events:none;transition:fill .15s,stroke .15s;}
+.tg.on{fill:rgba(43,182,115,.24);stroke:#1f9a5c;}
 .bottle{cursor:pointer;}
 .hint{animation:pulse 1.1s ease-in-out infinite;pointer-events:none;}
 .hint rect.ring{animation:march .9s linear infinite;}
@@ -825,11 +826,18 @@ function hoverTargets(zones,x,y){
   const hit=zones.find(z=>z.ok!==false&&inZone(z,x,y));
   $('#targets').querySelectorAll('.tg').forEach(el=>el.classList.toggle('on',hit&&zones[+el.dataset.k]===hit));
 }
+function hoverZone(zones,hit){
+  if(hit&&hit.ok===false)hit=null;
+  $('#targets').querySelectorAll('.tg').forEach(el=>el.classList.toggle('on',!!hit&&zones[+el.dataset.k]===hit));
+}
 function clearTargets(){$('#targets').innerHTML='';}
 const TAP_MSG='꾹 누른 채로 끌어서 옮겨 보세요!';
 
 /* 스포이드 끌기 공통: zones()가 놓을 자리 목록, drop(zone)이 놓았을 때 할 일 */
 const zoneKey=z=>['c','r','i'].map(k=>z[k]??'').join('|');
+const LOOK=46;   // 스포이드 끝에서 방울이 떨어질 곳까지(아래로). 놓을 자리는 실제 홈·시험관에 맞춰 그리고, 이 지점으로 판단함
+// 방울이 떨어질 곳(끝 아래)을 먼저 보고, 없으면 스포이드 끝이 닿은 자리
+const hitZone=(zs,x,y)=>zs.find(z=>inZone(z,x,y+LOOK))||zs.find(z=>inZone(z,x,y));
 function dropperDrag(name,{can,zones,onLift,drop}){
   let off, zs=[];
   DRAG[name]={
@@ -848,9 +856,9 @@ function dropperDrag(name,{can,zones,onLift,drop}){
       zs=zones(d);drawTargets(zs);
       follow(d,p.x+off.dx,p.y+off.dy);
     },
-    move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverTargets(zs,p.x+off.dx,p.y+off.dy);},
+    move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverZone(zs,hitZone(zs,p.x+off.dx,p.y+off.dy));},
     async end(p,moved){
-      const d=D[name], z=zs.find(z=>inZone(z,d.x,d.y));
+      const d=D[name], z=hitZone(zs,d.x,d.y);
       if(z&&z.ok!==false){busy=true;logAct(['d',name,zoneKey(z)]);await drop(d,z);busy=false;return;}
       if(z&&z.msg)toast(z.msg);else if(!moved)toast(TAP_MSG);
       busy=true;await d.goHome();busy=false;
@@ -859,7 +867,6 @@ function dropperDrag(name,{can,zones,onLift,drop}){
 }
 // 용기에서 꺼낼 때 용액을 빨아들임
 function fillDropper(d,color,amount){d.color=color.slice();return tween(260,p=>{d.fluid=amount*p;d.bulb=1-.25*Math.sin(Math.PI*p);d.render();});}
-const wellZone=(r,c)=>({ellipse:true,cx:COLX[c],cy:ROWY[r]-24,rx:56,ry:35,r,c});
 
 /* ================= 실험 1 · 단계 ①: 시료 넣기 ================= */
 // 홈 하나에 시료 넣기
@@ -889,7 +896,7 @@ COLX.forEach((x,i)=>dropperDrag('d'+i,{
   can:()=>state.phase===1&&!state.s.done[i],
   onLift(d){if(d.fluid>0)return;fillDropper(d,WELL_RGBA[i],54);setLevel('',i,(state.lv[''+i]??LV0)-9);},
   // 세로줄 위에 한 번 놓으면 그 세로줄의 홈 3개를 차례대로 채움
-  zones:()=>COLX.map((cx,c)=>({x:cx-64,y:ROWY[0]-72,w:128,h:ROWY[2]-ROWY[0]+104,c,ok:c===i,
+  zones:()=>COLX.map((cx,c)=>({x:cx-64,y:ROWY[0]-36,w:128,h:ROWY[2]-ROWY[0]+72,c,ok:c===i,
     msg:`${NAMES[i]}는 '${NAMES[i]}' 세로줄에 넣어요.`})),
   async drop(d,z){
     for(let r=0;r<3;r++){await fillWell(d,i,r);state.wf[r][i]=1;}
@@ -1348,7 +1355,7 @@ async function fillTube(d,i){
   st.setAttribute('opacity',0);
   await tween(180,p=>{d.bulb=.7+.3*p;d.render();});
 }
-const tubeZone=i=>({x:state.tpos[i].x-40,y:TT+state.tpos[i].dy-130,w:80,h:200,i});
+const tubeZone=i=>({x:state.tpos[i].x-34,y:TT+state.tpos[i].dy-24,w:68,h:TB-TT+40,i});
 COLX.forEach((x,i)=>dropperDrag('ed'+i,{
   can:()=>state.phase===4&&!state.e.done[i],
   onLift(d){if(d.fluid>0)return;fillDropper(d,WELL_RGBA[i],56);setLevel('e',i,(state.lv['e'+i]??LV0)-9);},
@@ -1397,7 +1404,7 @@ dropperDrag('dReag',{
     if(state.phase===5)return TX.map((_,t)=>({...tubeZone(t),ok:!state.tbene[t],msg:`'${NAMES[t]}' 시험관에는 이미 넣었어요.`}));
     // 가로줄 위에 한 번 놓으면 그 가로줄의 홈 4개에 2방울씩 떨어뜨림
     const cur=state.r.next;
-    return ROWY.map((y,r)=>({x:COLX[0]-66,y:y-62,w:COLX[3]-COLX[0]+132,h:72,r,ok:r===cur,
+    return ROWY.map((y,r)=>({x:COLX[0]-66,y:y-34,w:COLX[3]-COLX[0]+132,h:68,r,ok:r===cur,
       msg:`이 시약은 '${REAGENTS[cur].short}' 가로줄에 떨어뜨려요.`}));
   },
   async drop(d,z){

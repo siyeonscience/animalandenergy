@@ -74,8 +74,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .labwrap{flex:1;min-height:0;}
 #labsvg{width:100%;height:100%;display:block;user-select:none;-webkit-user-select:none;touch-action:none;}
 .grab{cursor:grab;}
-.tg{fill:rgba(43,182,115,.08);stroke:#2bb673;stroke-width:3;stroke-dasharray:9 6;pointer-events:none;animation:march .9s linear infinite;}
-.tg.on{fill:rgba(43,182,115,.28);stroke-width:4;}
+/* 놓을 자리: 움직이지 않는 점선, 스포이드가 올라오면 부드럽게 진해짐 */
+.tg{fill:rgba(43,182,115,.07);stroke:#2bb673;stroke-width:3;stroke-dasharray:10 7;pointer-events:none;transition:fill .15s,stroke .15s;}
+.tg.on{fill:rgba(43,182,115,.24);stroke:#1f9a5c;}
 .click{cursor:pointer;}
 .hint{animation:pulse 1.1s ease-in-out infinite;pointer-events:none;}
 .hint rect.ring{animation:march .9s linear infinite;}
@@ -644,11 +645,18 @@ function hoverTargets(zones,x,y){
   $('#targets').querySelectorAll('.tg').forEach(el=>el.classList.toggle('on',hit&&zones[+el.dataset.k]===hit));
   return hit;
 }
+function hoverZone(zones,hit){
+  if(hit&&hit.ok===false)hit=null;
+  $('#targets').querySelectorAll('.tg').forEach(el=>el.classList.toggle('on',!!hit&&zones[+el.dataset.k]===hit));
+}
 function clearTargets(){$('#targets').innerHTML='';}
 function pick(zones,x,y){return zones.find(z=>inZone(z,x,y));}
 const TAP_MSG='꾹 누른 채로 끌어서 옮겨 보세요!';
 
 /* 스포이트 끌기 공통: zones()가 놓을 자리 목록, drop(zone)이 놓았을 때 할 일 */
+const LOOK=46;   // 스포이드 끝에서 방울이 떨어질 곳까지(아래로). 놓을 자리는 실제 홈·시험관에 맞춰 그리고, 이 지점으로 판단함
+// 방울이 떨어질 곳(끝 아래)을 먼저 보고, 없으면 스포이드 끝이 닿은 자리
+const hitZone=(zs,x,y)=>zs.find(z=>inZone(z,x,y+LOOK))||zs.find(z=>inZone(z,x,y));
 const zoneKey=z=>['c','r','i','kind'].map(k=>z[k]??'').join('|');
 function dropperDrag(name,{can,zones,onLift,drop,miss}){
   let off, zs=[];
@@ -668,9 +676,9 @@ function dropperDrag(name,{can,zones,onLift,drop,miss}){
       zs=zones(d);drawTargets(zs);
       follow(d,p.x+off.dx,p.y+off.dy);
     },
-    move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverTargets(zs,p.x+off.dx,p.y+off.dy);},
+    move(p){follow(D[name],p.x+off.dx,p.y+off.dy);hoverZone(zs,hitZone(zs,p.x+off.dx,p.y+off.dy));},
     async end(p,moved){
-      const d=D[name], z=pick(zs,d.x,d.y);
+      const d=D[name], z=hitZone(zs,d.x,d.y);
       if(z&&z.ok!==false){busy=true;logAct(['d',name,zoneKey(z)]);await drop(d,z);busy=false;return;}
       if(z&&z.msg)toast(z.msg);else if(!moved)toast(TAP_MSG);
       busy=true;await (miss?miss(d):d.goHome());busy=false;
@@ -917,7 +925,7 @@ for(const name of Object.keys(SRC)){
       if(S.bottle!==undefined){state.lv[S.bottle]-=8;setBottleLevel(S.bottle,state.lv[S.bottle]);}
       else{state.sb-=12;setAttrs($('#sbL'),{y:-state.sb,height:state.sb});}
     },
-    zones:()=>[0,1].map(i=>({x:TX[i]-44,y:TT-130,w:88,h:200,i,ok:S.ok(i),msg:S.ok(i)?null:S.why(i)})),
+    zones:()=>[0,1].map(i=>({x:TX[i]-34,y:TT-24,w:68,h:TB-TT+40,i,ok:S.ok(i),msg:S.ok(i)?null:S.why(i)})),
     async drop(d,z){
       await pourIntoTube(d,z.i,S.color,35,Math.min(d.fluid,28));
       S.mark(z.i);
@@ -991,12 +999,12 @@ async function startStep3(){
   showRingAt(TRAY_X,TRAY_Y+6,70,176);
   busy=false;
 }
-const PUD_ZONE=i=>({ellipse:true,cx:PUD[i][0],cy:PUD[i][1]-30,rx:78,ry:62,i});
+const PUD_ZONE=i=>({ellipse:true,cx:PUD[i][0],cy:PUD[i][1],rx:72,ry:40,i});
 dropperDrag('dTray',{
   can:()=>state.phase==='3a',
   zones(d){
     if(d.src===undefined||d.src===null)   // 빈 스포이트 → 시험관에서 빨아들이기
-      return [0,1].map(i=>{const t=state.tube[i];return {x:t.x-34,y:TT+t.dy-140,w:68,h:220,i,kind:'tube',ok:!state.pud[i],msg:`시험관 ${'AB'[i]} 용액은 이미 떨어뜨렸어요.`};});
+      return [0,1].map(i=>{const t=state.tube[i];return {x:t.x-34,y:TT+t.dy-24,w:68,h:TB-TT+40,i,kind:'tube',ok:!state.pud[i],msg:`시험관 ${'AB'[i]} 용액은 이미 떨어뜨렸어요.`};});
     return [0,1].map(i=>({...PUD_ZONE(i),kind:'pud',ok:i===d.src,msg:`시험관 ${'AB'[d.src]} 용액은 페트리 접시의 ${'AB'[d.src]} 칸에 떨어뜨려요.`}));
   },
   async drop(d,z){
@@ -1033,7 +1041,7 @@ dropperDrag('dReag',{
   onLift:liftReagent,
   zones(){
     if(state.phase==='3b')return [0,1].map(i=>({...PUD_ZONE(i),ok:!state.tube[i].iod,msg:'이미 떨어뜨렸어요.'}));
-    return [0,1].map(i=>{const t=state.tube[i];return {x:t.x-30,y:TT+t.dy-140,w:60,h:220,i,ok:!t.bene,msg:`시험관 ${'AB'[i]}에는 이미 넣었어요.`};});
+    return [0,1].map(i=>{const t=state.tube[i];return {x:t.x-34,y:TT+t.dy-24,w:68,h:TB-TT+40,i,ok:!t.bene,msg:`시험관 ${'AB'[i]}에는 이미 넣었어요.`};});
   },
   async drop(d,z){
     if(state.phase==='3b'){
