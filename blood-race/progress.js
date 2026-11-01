@@ -4,11 +4,12 @@
    - auditUnlocked : 배송 사고 조사반이 해금되었는지
    - auditDone     : 배송 사고 조사반을 끝까지 마쳤는지
    - raceBest      : 레이스 최고 점수
-   - auditBest     : 감사 미션 최고 점수 */
+   - auditBest     : 감사 미션 최고 점수
+   - tutorialDone  : 연습 주행을 해 봤는지 */
 window.EXP06 = (function(){
   const KEY = 'exp06-progress-v1';
   const AUDIT_PLAY_KEY = 'blood-delivery-progress-v1';   // 감사 미션 진행 중 데이터
-  const blank = () => ({ raceDone:false, auditUnlocked:false, auditDone:false, raceBest:0, auditBest:0 });
+  const blank = () => ({ raceDone:false, auditUnlocked:false, auditDone:false, raceBest:0, auditBest:0, tutorialDone:false });
   function get(){
     try{ return Object.assign(blank(), JSON.parse(localStorage.getItem(KEY)) || {}); }
     catch(e){ return blank(); }

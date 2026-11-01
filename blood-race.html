@@ -81,8 +81,9 @@
       </div>
     </div>
     <p class="scoreline">갈림길 정답 +100 · 상자 수집 +50 · 배송 임무 +100 · 구역 완주 +100</p>
-    <div class="center"><button class="btn orange" id="startRace" type="button">좌심실에서 출발!</button>
+    <div class="center"><button class="btn orange" id="startRace" type="button">연습 주행부터 시작!</button>
       <button class="btn ghost" id="howBack" type="button">뒤로</button></div>
+    <div class="center"><button class="linkbtn dark" id="tutAgain" type="button" hidden>연습 주행 다시 하기</button></div>
   </div>
 </section>
 
@@ -104,6 +105,7 @@
       <div class="score"><span>점수</span> <b id="hudScore">0</b></div>
       <div class="hearts" id="hudHearts" aria-label="배송 안정도"></div>
       <div class="prog"><span class="bar"><i id="hudBar"></i></span><span id="hudPct">0%</span></div>
+      <button class="pausebtn" id="btnPause" type="button" aria-label="일시정지">Ⅱ<span> 일시정지</span></button>
     </div>
   </header>
   <div class="cargo" aria-label="트럭 적재량">
@@ -115,12 +117,17 @@
   <div class="toast" id="toast"></div>
   <button class="tbtn left" id="btnL" type="button" aria-label="왼쪽으로">◀</button>
   <button class="tbtn right" id="btnR" type="button" aria-label="오른쪽으로">▶</button>
-  <button class="pausebtn" id="btnPause" type="button">Ⅱ 일시정지</button>
+  <button class="skipbtn" id="btnSkip" type="button" hidden>연습 건너뛰기 ▶▶</button>
 
   <div class="overlay" id="pauseOv">
     <div class="ovcard"><h2>일시정지</h2>
       <div class="row"><button class="btn orange" id="resume" type="button">계속 달리기</button>
         <button class="btn ghost" id="quit" type="button">레이스 그만두기</button></div></div>
+  </div>
+  <div class="overlay" id="tutOv">
+    <div class="ovcard"><h2>🎉 연습 주행 완료!</h2>
+      <p>차선 바꾸기, 상자 싣기, 터널 고르기를 모두 해 봤어요.<br>이제 좌심실 물류센터에서 진짜 배송을 시작해요!</p>
+      <div class="row"><button class="btn orange" id="goReal" type="button">좌심실에서 출발!</button></div></div>
   </div>
   <div class="overlay" id="failOv">
     <div class="ovcard"><h2>💔 배송 안정도가 모두 떨어졌어요!</h2>
