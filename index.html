@@ -164,18 +164,19 @@ const THUMBS={
     <path d="M96 98 C96 112 104 118 116 114 C126 110 124 100 118 98 C112 96 110 92 110 86" stroke="#f3b26a" stroke-width="6" fill="none" stroke-linecap="round"/>
     <path d="M192 98 C192 112 200 118 212 114 C222 110 220 100 214 98 C208 96 206 92 206 86" stroke="#f3b26a" stroke-width="6" fill="none" stroke-linecap="round"/>
     <text x="160" y="186" text-anchor="middle" font-family="Jua, sans-serif" font-size="24" fill="#6c4fa0">VR</text>`,
-  blood:`<rect width="320" height="200" fill="#1d3557"/>
-    <rect x="0" y="0" width="320" height="10" fill="#f76707"/>
-    <rect x="150" y="40" width="140" height="120" rx="10" fill="#fffdf7"/>
-    <text x="220" y="66" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#f76707">배송 사고 보고서</text>
-    <path d="M166 84h108M166 104h80M166 124h96" stroke="#c9d4e0" stroke-width="6" stroke-linecap="round"/>
-    <circle cx="258" cy="134" r="20" fill="none" stroke="#2b9348" stroke-width="5" transform="rotate(-14 258 134)"/>
-    <text x="258" y="139" text-anchor="middle" font-family="Jua, sans-serif" font-size="13" fill="#2b9348" transform="rotate(-14 258 134)">해결</text>
-    <ellipse cx="88" cy="122" rx="54" ry="48" fill="#e5383b"/><ellipse cx="88" cy="124" rx="30" ry="24" fill="#c1121f" opacity=".45"/>
-    <circle cx="74" cy="116" r="6" fill="#1d1d1d"/><circle cx="100" cy="116" r="6" fill="#1d1d1d"/>
-    <path d="M80 132 Q88 138 96 132" stroke="#1d1d1d" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M42 90 Q88 46 134 90 Z" fill="#14213d"/><rect x="36" y="86" width="104" height="10" rx="5" fill="#14213d"/>
-    <rect x="112" y="128" width="44" height="38" rx="5" fill="#d9a066" stroke="#9c6b3c" stroke-width="3"/>`,
+  race:`<rect width="320" height="200" fill="#2a0509"/>
+    <path d="M0 200 L130 78 L190 78 L320 200 Z" fill="#e8a0a3"/>
+    <path d="M0 200 L130 78 L0 78 Z M320 200 L190 78 L320 78 Z" fill="#a4161a"/>
+    <path d="M160 80 L160 92 M160 104 L160 122 M160 138 L160 166" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="160" cy="80" rx="96" ry="58" fill="none" stroke="#ffb3b3" stroke-width="5" opacity=".4"/>
+    <rect x="122" y="92" width="22" height="20" rx="3" fill="#d62828"/><text x="133" y="106" text-anchor="middle" font-family="Jua, sans-serif" font-size="10" fill="#fff">O₂</text>
+    <rect x="196" y="100" width="24" height="22" rx="3" fill="#2f6fde"/><text x="208" y="115" text-anchor="middle" font-family="Jua, sans-serif" font-size="10" fill="#fff">CO₂</text>
+    <rect x="118" y="120" width="84" height="34" rx="6" fill="#2f6fde"/><rect x="128" y="125" width="64" height="18" rx="4" fill="#d0ebff"/>
+    <rect x="104" y="146" width="112" height="40" rx="6" fill="#fffdf7" stroke="#1d3557" stroke-width="3"/>
+    <rect x="104" y="146" width="112" height="8" fill="#d62828"/>
+    <text x="160" y="176" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#1d3557">혈액 택배</text>
+    <rect x="106" y="184" width="22" height="12" rx="3" fill="#1b1b1b"/><rect x="192" y="184" width="22" height="12" rx="3" fill="#1b1b1b"/>
+    <rect x="108" y="164" width="10" height="5" fill="#ff6b6b"/><rect x="202" y="164" width="10" height="5" fill="#ff6b6b"/>`,
   circ:`<rect width="320" height="200" fill="#fde3e3"/>
     <path d="M40 60 H110 M40 140 H110 M210 60 H280 M210 140 H280" stroke="#e05a5a" stroke-width="10" stroke-linecap="round"/>
     <path d="M40 100 H110 M210 100 H280" stroke="#5a7fe0" stroke-width="10" stroke-linecap="round"/>
@@ -204,7 +205,7 @@ const LABS=[
   {id:'ninja',title:'소화 효소 닌자',desc:'소화 효소가 분해하는 영양소만 골라 베는 게임이에요.',href:'enzyme-ninja.html'},
   {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.',href:'https://filest.edunet.net/360vr/webvr/m220001034/m220001034.html',ext:true},
   {id:'circ',title:'순환계',desc:'심장과 혈관이 하는 일을 탐구해요.'},
-  {id:'blood',title:'배송 사고 조사반',desc:'혈액 택배의 잘못된 배송 기록을 찾아 바로잡는 순환계 추리 게임이에요.',href:'blood-delivery.html'},
+  {id:'race',title:'혈액 택배 레이스',desc:'산소를 배송하고 이산화 탄소를 수거하며 혈액순환을 완주하세요!',href:'blood-race.html'},
   {id:'resp',title:'호흡계',desc:'숨을 쉴 때 폐에서 일어나는 일을 알아봐요.'},
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];

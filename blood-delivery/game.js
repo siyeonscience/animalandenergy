@@ -72,10 +72,10 @@ function go(){
 function renderStart(){
   app.innerHTML=`<section class="screen start"><div class="start-in">
     ${courier()}
-    <div><span class="tape">혈액 택배회사 · 감사팀</span></div>
+    <div><span class="tape">실험 06 · 긴급 감사 미션</span></div>
     <h1>배송 사고 조사반</h1>
-    <div class="sub">잘못된 배송을 찾아라!</div>
-    <p class="desc">혈액 택배회사의 배송 시스템에 오류가 발생했습니다. 사고 보고서를 확인하고 잘못된 배송을 바로잡아 주세요!</p>
+    <div class="sub">감사팀이 오기 전에 잘못된 배송 기록을 찾아라!</div>
+    <p class="desc">레이스를 마친 배송기사님, 이제는 <b>배송 감사관</b>이 될 차례예요! 혈액 택배회사의 배송 기록에 오류가 있을 수 있습니다. 본사 감사팀이 도착하기 전에 사고 보고서를 확인하고 잘못된 배송을 바로잡아 주세요!</p>
     <button class="btn orange" id="startBtn" type="button">조사 시작하기</button>
   </div></section>`;
   $('#startBtn').onclick=()=>{S.screen='guide';go();};
@@ -381,18 +381,30 @@ function pickAnswerText(m){
 }
 function renderResult(){
   const g=gradeOf(S.score), wrongs=wrongList();
+  if(!S.recorded){S.recorded=true;window.EXP06&&EXP06.auditFinished(S.score);save();}   // 실험 06 기록(최고 점수·완료)
+  const meta=window.EXP06?EXP06.get():{raceBest:0};
+  const master=g.badge==='gold';
   app.innerHTML=`<section class="screen result"><div class="card">
     <h1>혈액 택배 시스템 감사 완료!</h1>
     <p class="desc">모든 배송 사고를 해결했습니다. 혈액 택배 시스템이 정상적으로 복구되었습니다!</p>
     ${BADGES[g.badge]}
+    ${master?'<div class="cert master">🏅 <b>순환 시스템 마스터</b> 인증</div>':''}
     <div class="grade ${g.badge}">${esc(g.name)}</div>
-    <div class="total">${S.score}<small> / ${MAX}점</small></div>
-    <p class="desc">${esc(g.msg)}</p>
-    <div class="row">
-      <button class="btn orange" id="retry" type="button">다시 도전하기</button>
-      <button class="btn" id="toReview" type="button"${wrongs.length?'':' disabled style="opacity:.5"'}>${wrongs.length?'내가 틀린 문제 확인하기':'틀린 문제가 없어요!'}</button>
+    <div class="stats">
+      <div>레이스 최고 점수<b>${meta.raceBest}점</b></div>
+      <div>감사 미션 점수<b>${S.score} / ${MAX}점</b></div>
+      <div>해결한 사고 건수<b>${M.length+1}건</b></div>
+      <div>최종 감사 등급<b>${esc(g.name)}</b></div>
     </div>
-    <div class="row"><a class="btn ghost" href="index.html#list">실험실 목록으로</a></div>
+    <p class="desc">${esc(g.msg)}${master?'':' 17점 이상이면 ‘순환 시스템 마스터’ 인증을 받아요!'}</p>
+    <div class="row">
+      <button class="btn orange" id="retry" type="button">배송 사고 조사반 다시 도전</button>
+      <a class="btn" href="blood-race.html?play=1">혈액 택배 레이스 다시 도전</a>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="toReview" type="button"${wrongs.length?'':' disabled style="opacity:.5"'}>${wrongs.length?'내가 틀린 문제 확인하기':'틀린 문제가 없어요!'}</button>
+      <a class="btn ghost" href="index.html#list">실험 선택 화면으로 돌아가기</a>
+    </div>
   </div></section>`;
   $('#retry').onclick=()=>{reset();S.screen='guide';go();};
   if(wrongs.length)$('#toReview').onclick=()=>{S.screen='review';go();};
@@ -422,6 +434,14 @@ function renderReview(){
 
 /* 시작: 저장된 진행이 있으면 그 화면에서 이어서 */
 shownPct=progressPct();
+// 레이스를 완주하기 전에는 잠겨 있음
+if(window.EXP06&&!EXP06.get().auditUnlocked){
+  app.innerHTML=`<section class="screen guide"><div class="card center">
+    <h2 style="justify-content:center">🔒 아직 잠겨 있어요</h2>
+    <p class="note" style="margin:16px 0">배송 사고 조사반은 <b>혈액 택배 레이스</b>를 한 번 완주하면 열리는 후속 미션이에요.</p>
+    <a class="btn orange" href="blood-race.html?play=1">혈액 택배 레이스 하러 가기</a></div></section>`;
+  return;
+}
 go();
 if(S.screen==='mission'||S.screen==='final')toast('지난번에 하던 조사부터 이어서 해요. (새로 하려면 ‘처음부터’)');
 // 테스트·점검용
