@@ -31,6 +31,26 @@ function award(key){
 }
 function missed(key){S.tried[key]=true;}
 
+/* 선택지 순서 섞기: 데이터는 원래 순서 그대로 두고 화면에서만 섞음.
+   한 판 안에서 정답 위치가 ①②③에 고르게 나뉘도록 정하고, 정한 순서는 저장해서 새로고침해도 같음 */
+function shuffled(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function order(key,q){
+  S.perm=S.perm||{};
+  if(!S.perm[key]){
+    const n=q.options.length;
+    if(!S.pool||!S.pool.length)S.pool=shuffled([0,1,2,0,1,2]).filter(p=>p<n);
+    const at=Math.min(S.pool.shift(),n-1);
+    const rest=shuffled([...Array(n).keys()].filter(i=>i!==q.answer));
+    rest.splice(at,0,q.answer);
+    S.perm[key]=rest;save();
+  }
+  return S.perm[key];
+}
+// 섞인 순서대로 선택지 버튼 (data-i는 원래 번호)
+function optsHTML(key,q,answered){
+  return order(key,q).map((i,k)=>`<button class="opt${answered&&i===q.answer?' yes':''}" data-i="${i}" type="button"${answered?' disabled':''}><span class="k">${KLABEL[k]}</span><span>${esc(q.options[i])}</span></button>`).join('');
+}
+
 /* ================= 공통 화면 조각 ================= */
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200);}
@@ -210,7 +230,7 @@ function drawStep(){
     body=`<p class="howto">👈 왼쪽 사고 보고서에서 ${multi?'잘못된 기록을 <b>모두</b> 눌러 고른 뒤 확인을 누르세요.':'잘못된 기록을 직접 눌러 고르세요.'}</p>
       ${multi&&!S.answered?'<div class="actions" style="justify-content:flex-start"><button class="btn ghost" id="confirmPick" type="button">확인</button></div>':''}`;
   }else{
-    body=`<div class="opts">${st.options.map((o,i)=>`<button class="opt${S.answered&&i===st.answer?' yes':''}" data-i="${i}" type="button"${S.answered?' disabled':''}><span class="k">${KLABEL[i]}</span><span>${esc(o)}</span></button>`).join('')}</div>`;
+    body=`<div class="opts">${optsHTML(`M${S.mi}-${k}`,st,S.answered)}</div>`;
   }
   card.innerHTML=`${bar}<h3>STEP ${k+1}. ${esc(st.q)}</h3>${body}<div class="fb" id="fb"></div>
     <div class="actions" id="next"></div>`;
@@ -316,7 +336,7 @@ function drawFinalStep(justFound){
   const q=finalQuestion();
   card.innerHTML=`${bar}<h3>${esc(q.q)}</h3>
     ${f.phase==='fix'?`<p class="howto">잘못된 기록: “${esc(F.lines[F.errors[f.fix]])}”</p>`:''}
-    <div class="opts">${q.options.map((o,i)=>`<button class="opt" data-i="${i}" type="button"><span class="k">${KLABEL[i]}</span><span>${esc(o)}</span></button>`).join('')}</div>
+    <div class="opts">${optsHTML(q.key,q,false)}</div>
     <div class="fb" id="fb"></div><div class="actions" id="next"></div>`;
   if(justFound&&f.phase==='fix'&&f.fix===0)showFb('good','오류 2개를 모두 찾았어요! 이제 하나씩 올바르게 고쳐 볼까요?');
   $$('.opt',card).forEach(b=>b.onclick=()=>{
