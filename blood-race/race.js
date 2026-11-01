@@ -326,7 +326,8 @@ function draw(dt){
     ctx.beginPath();ctx.moveTo(cx-w0,y0);ctx.lineTo(cx+w0,y0);ctx.lineTo(cx+w1,y1);ctx.lineTo(cx-w1,y1);ctx.fill();
     // 차선
     if(band){ctx.fillStyle='rgba(255,255,255,.85)';
-      for(const s of [-1/3,1/3]){const a=cx+s*w0*2,b=cx+s*w1*2,lw0=Math.max(1,w0*.018),lw1=Math.max(1,w1*.018);
+      for(const s of [-1/3,1/3]){const a=cx+s*w0,b=cx+s*w1,   // 세 차선 너비가 같도록 ±w/3
+        lw0=Math.max(1,w0*.018),lw1=Math.max(1,w1*.018);
         ctx.beginPath();ctx.moveTo(a-lw0,y0);ctx.lineTo(a+lw0,y0);ctx.lineTo(b+lw1,y1);ctx.lineTo(b-lw1,y1);ctx.fill();}}
     ctx.fillStyle='rgba(255,255,255,.6)';
     for(const s of [-1,1]){ctx.beginPath();ctx.moveTo(cx+s*w0,y0);ctx.lineTo(cx+s*w0*.985,y0);ctx.lineTo(cx+s*w1*.985,y1);ctx.lineTo(cx+s*w1,y1);ctx.fill();}
@@ -430,9 +431,10 @@ function drawSign(o,d){
   label(o.ev.text,x,y-s*1.3,Math.max(10,s*.28),'#ffd43b','#14213d');
 }
 function truckScreen(){
-  const d=1.2,lw=(2/3)*halfW(d);
-  if(NARROW){const tw=Math.min(W*.34,H*.2);return {x:cx+G.tx*lw,y:H-84,w:tw,h:tw*.95};}   // ◀ ▶ 버튼 위
-  const tw=Math.min(lw*1.05,W*.3);return {x:cx+G.tx*lw,y:H-8,w:tw,h:tw*.95};
+  const y=NARROW?H-84:H-8;                          // 휴대폰은 ◀ ▶ 버튼 위
+  const lw=(2/3)*RW*(y-hy)/(H-hy);                  // 그 높이에서의 차선 폭
+  const tw=Math.min(lw*.9,NARROW?H*.2:W*.3);
+  return {x:cx+G.tx*lw,y,w:tw,h:tw*.95};
 }
 function drawTruck(){
   const T=truckScreen(),{x,y,w,h}=T, tilt=(G.lane-G.tx)*.06, bob=Math.sin(G.pos*.9)*Math.min(2,G.v*.05);

@@ -95,7 +95,7 @@ kbd{display:inline-block;background:#fff;border:2px solid #b8c4d4;border-bottom-
 .tbtn:active{background:rgba(77,171,247,.7);}
 .tbtn.left{left:18px;} .tbtn.right{right:18px;}
 .pausebtn{pointer-events:auto;margin-top:6px;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;}
-.skipbtn{position:absolute;right:14px;bottom:118px;background:rgba(255,253,247,.92);color:var(--navy);border:none;border-radius:999px;padding:8px 16px;
+.skipbtn{position:absolute;right:14px;top:calc(var(--hudH,140px) + 8px);background:rgba(255,253,247,.92);color:var(--navy);border:none;border-radius:999px;padding:8px 16px;
   font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3);}
 .linkbtn.dark{color:#52606d;margin-top:10px;}
 .banner{top:44%;}
