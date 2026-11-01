@@ -71,7 +71,7 @@ const TOTAL_EVENTS=STAGES.reduce((n,s)=>n+s.events.length,0);
 function newRace(){
   G={si:0,ei:-1,pos:0,v:0,lane:0,tx:0,hearts:C.hearts,score:0,cargo:{...C.start},objs:[],ev:null,hold:false,
     paused:false,over:false,theme:'artery',baseTheme:'artery',roomUntil:-1,done:0,fx:[],anim:null,tunnel:0,
-    stats:{forkFirst:0,forks:0,items:0,wrongs:0},cp:null,log:[],timeScale:G0.timeScale};
+    stats:{forkFirst:0,forks:0,items:0,wrongs:0},cp:null,log:[],pend:{o2:0,co2:0},squash:0,landT:0,timeScale:G0.timeScale};
   setPalette('artery',true);
   hud();start();startStage(0);
 }
@@ -155,6 +155,7 @@ function update(dt){
   if(ev&&(ev.type==='deliver'||ev.type==='return')&&ev.state!=='done')np=Math.min(np,ev.at-4);
   G.pos=np;
   if(G.tunnel>0)G.tunnel-=dt;
+  if(G.squash>0)G.squash-=dt;if(G.landT>0)G.landT-=dt;
 
   if(!G.ev){if(G.pos>=G.wait)nextEvent();}
   else if(G.ev.type==='gap'){if(G.pos>=G.next){G.ev=null;startStage(G.si+1);}}
@@ -218,6 +219,7 @@ function pickItem(o){
   const sx=laneX(o.lane,1),sy=yAt(1);
   if(ok){
     G.cargo[o.item]++;ev.got++;G.stats.items++;bumpCargo(o.item);
+    loadBox(o.item,laneX(o.lane,1.2),yAt(1.2)-(2/3)*halfW(1.2)*.3);
     addScore(C.score.item,null,sx,sy);
     if(ev.got>=ev.need){
       G.objs.forEach(x=>{if(x.ev===ev&&x.kind==='item'&&!x.hit)x.gone=true;});
@@ -245,7 +247,7 @@ function loseHeart(why){
 $('#retryStage').onclick=()=>{
   $('#failOv').classList.remove('on');
   const cp=G.cp;Object.assign(G,{score:cp.score,cargo:{...cp.cargo},done:cp.done,stats:{...cp.stats},hearts:C.hearts,lane:0,tx:0,v:0,paused:false,roomUntil:-1});
-  G.fx=[];startStage(G.si,true);
+  G.fx=[];G.pend={o2:0,co2:0};startStage(G.si,true);
 };
 
 /* 배송·반납 정류장: 상자가 하나씩 트럭에서 내려감 */
@@ -260,8 +262,9 @@ function runAnim(dt){
   while(A.i<A.n&&A.t>=A.i*step+.3){
     A.i++;G.cargo[A.k]--;bumpCargo(A.k);
     const s=stationScreen(A.ev), tr=truckScreen();
-    G.fx.push({kind:'box',item:A.k,x0:tr.x,y0:tr.y-tr.h*.7,x1:s.x,y1:s.y,t:0,dur:.6});
-    if(A.ev.type==='deliver')G.fx.push({kind:'box',item:'food',x0:tr.x,y0:tr.y-tr.h*.7,x1:s.x,y1:s.y+10,t:-.15,dur:.6});
+    const from=slotPos(A.k,Math.min(4,G.cargo[A.k]));
+    G.fx.push({kind:'box',item:A.k,x0:from.x,y0:from.y,x1:s.x,y1:s.y,t:0,dur:.6});
+    if(A.ev.type==='deliver')G.fx.push({kind:'box',item:'food',x0:from.x,y0:from.y,x1:s.x,y1:s.y+10,t:-.15,dur:.6});
   }
   if(A.i>=A.n&&A.t>=A.n*step+1){
     const ev=A.ev;G.anim=null;ev.state='done';
@@ -395,8 +398,40 @@ function drawSign(o,d){
   ctx.fillStyle='#5c4033';ctx.fillRect(x-s*.04,y-s*1.2,s*.08,s*1.2);
   label(o.ev.text,x,y-s*1.3,Math.max(10,s*.28),'#ffd43b','#14213d');
 }
-function truckScreen(){const d=1.2,lw=(2/3)*halfW(d);const tw=Math.min(lw*1.05,W*.3);return {x:cx+G.tx*lw,y:H-8,w:tw,h:tw*.95};}
+/* 플레이어 차량 이미지 (원본 파일 그대로, 투명 여백만 빼고 그림)
+   SRC: 원본 1536×1024 안에서 차량이 있는 영역, BED: 그 안에서 짐칸(상자가 놓이는 곳)의 위치 비율 */
+const TRUCK_IMG=new Image();
+TRUCK_IMG.src='blood-race/assets/blood-express-truck.png';
+const SRC={x:300,y:73,w:935,h:903};
+const BED={top:(424-73)/903, left:(450-300)/935, right:(1090-300)/935};
+function truckScreen(){
+  const d=1.2,lw=(2/3)*halfW(d), narrow=W<700, tw=narrow?Math.min(W*.44,H*.3*SRC.w/SRC.h):Math.min(lw*1.12,W*.32,H*.42*SRC.w/SRC.h);
+  return {x:cx+G.tx*lw*(narrow?.85:1),y:H-(narrow?60:6),w:tw,h:tw*SRC.h/SRC.w};   // 원본 비율 그대로 (좁은 화면은 버튼 위로)
+}
+// 짐칸 안 상자 자리(화면 좌표). O₂는 아랫줄, CO₂는 그 위 줄
+function slotPos(k,i){
+  const T=truckScreen(), bs=T.w*.12, l=-T.w/2+T.w*BED.left, span=T.w*(BED.right-BED.left);
+  return {x:T.x+l+span*(i+.5)/5, y:T.y-T.h+T.h*BED.top-(k==='co2'?bs*.92:0), s:bs};
+}
 function drawTruck(){
+  if(!(TRUCK_IMG.complete&&TRUCK_IMG.naturalWidth))return drawTruckFallback();
+  const T=truckScreen(),{x,y,w,h}=T, tilt=(G.lane-G.tx)*.05, bob=Math.sin(G.pos*.9)*Math.min(2,G.v*.05);
+  const sq=G.squash>0?Math.sin(G.squash/.25*Math.PI)*.035:0;   // 상자가 실릴 때 살짝 눌림
+  ctx.save();ctx.translate(x,y+bob);ctx.rotate(tilt);ctx.scale(1+sq*.5,1-sq);
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,-h*.02,w*.5,h*.05,0,0,Math.PI*2);ctx.fill();
+  ctx.drawImage(TRUCK_IMG,SRC.x,SRC.y,SRC.w,SRC.h,-w/2,-h,w,h);
+  // 짐칸에 실린 상자 (날아오는 중인 상자는 도착한 뒤에 보임)
+  const bs=w*.12, l=-w/2+w*BED.left, span=w*(BED.right-BED.left), base=-h+h*BED.top;
+  [['o2',0],['co2',1]].forEach(([k,r])=>{
+    const n=Math.min(5,G.cargo[k]-(G.pend[k]||0));
+    for(let i=0;i<n;i++){
+      const land=G.landed&&G.landed[k]===i?Math.max(0,G.landT):0;
+      drawBox(l+span*(i+.5)/5,base-r*bs*.92-Math.sin(land/.3*Math.PI)*bs*.25,bs*.95,k);
+    }
+  });
+  ctx.restore();
+}
+function drawTruckFallback(){
   const T=truckScreen(),{x,y,w,h}=T, tilt=(G.lane-G.tx)*.06, bob=Math.sin(G.pos*.9)*Math.min(2,G.v*.05);
   ctx.save();ctx.translate(x,y+bob);ctx.rotate(tilt);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,0,w*.56,h*.06,0,0,Math.PI*2);ctx.fill();
@@ -422,12 +457,22 @@ function drawTruck(){
   ctx.fillStyle='#555';ctx.fillRect(-w*.3,-h*.12,w*.6,h*.05);
   ctx.restore();
 }
+function loadBox(k,x0,y0){
+  G.pend[k]=(G.pend[k]||0)+1;
+  G.fx.push({kind:'load',item:k,x0,y0,idx:Math.min(4,G.cargo[k]-1),t:0,dur:.55});
+}
 function fxText(s,x,y,color){G.fx.push({kind:'text',s,x,y,color,t:0,dur:1});}
 function drawFx(dt){
   for(const f of G.fx){
     f.t+=dt;const q=Math.max(0,Math.min(1,f.t/f.dur));
     if(f.t<0)continue;
-    if(f.kind==='box'){const x=f.x0+(f.x1-f.x0)*q,y=f.y0+(f.y1-f.y0)*q-Math.sin(Math.PI*q)*80;drawBox(x,y,34,f.item);}
+    if(f.kind==='load'){
+      const to=slotPos(f.item,f.idx), x=f.x0+(to.x-f.x0)*q, y=f.y0+(to.y-f.y0)*q-Math.sin(Math.PI*q)*90;
+      ctx.globalAlpha=.35;drawBox(x,y+to.s*.15,to.s*(1.9-.95*q)*1.08,f.item);ctx.globalAlpha=1;   // 잔상
+      drawBox(x,y,to.s*(1.9-.95*q),f.item);
+      if(f.t+dt>=f.dur&&!f.done){f.done=true;G.pend[f.item]=Math.max(0,G.pend[f.item]-1);G.squash=.25;G.landed={[f.item]:f.idx};G.landT=.3;}
+    }
+    else if(f.kind==='box'){const x=f.x0+(f.x1-f.x0)*q,y=f.y0+(f.y1-f.y0)*q-Math.sin(Math.PI*q)*80;drawBox(x,y,34,f.item);}
     else{ctx.globalAlpha=1-q;ctx.font='32px Jua, sans-serif';ctx.textAlign='center';ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.6)';
       ctx.strokeText(f.s,f.x,f.y-q*60);ctx.fillStyle=f.color;ctx.fillText(f.s,f.x,f.y-q*60);ctx.globalAlpha=1;}
   }
