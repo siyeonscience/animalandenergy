@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>소화 효소 닌자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:#1d2b3a;color:#fff;font-family:'Noto Sans KR','Malgun Gothic',sans-serif;
+  user-select:none;-webkit-user-select:none;touch-action:none;overscroll-behavior:none;}
+.jua{font-family:'Jua','Malgun Gothic',sans-serif;}
+#stage{position:fixed;inset:0;background:radial-gradient(ellipse at 60% 30%,#3c5a78 0%,#22374d 55%,#15212e 100%);}
+#stage::after{content:'';position:absolute;left:0;right:0;bottom:0;height:24%;pointer-events:none;
+  background:linear-gradient(to top,rgba(10,16,24,.55),rgba(10,16,24,0));}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.back-hub{position:fixed;left:14px;top:12px;z-index:20;font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;color:#f6d98a;
+  text-decoration:none;background:rgba(0,0,0,.35);padding:6px 14px;border-radius:999px;}
+
+/* 왼쪽 닌자 자리 */
+#side{position:fixed;left:0;top:0;bottom:0;width:var(--side,280px);z-index:5;pointer-events:none;
+  background:linear-gradient(to right,rgba(8,14,22,.55),rgba(8,14,22,.15));border-right:2px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 14px 20px;}
+#ninja{width:min(78%,210px);aspect-ratio:1;opacity:0;transform:translateY(120vh);}
+#ninja.rise{animation:rise 1s cubic-bezier(.2,1.4,.4,1) forwards;}
+#ninja.shown{opacity:1;transform:none;}
+#ninja.shown.hit{animation:hit .35s;}
+@keyframes rise{0%{opacity:1;transform:translateY(120vh) rotate(-12deg);}70%{transform:translateY(-14px) rotate(4deg);}100%{opacity:1;transform:translateY(0) rotate(0);}}
+@keyframes hit{0%,100%{transform:translateX(0);}25%{transform:translateX(-10px);}75%{transform:translateX(10px);}}
+#nname{font-family:'Jua','Malgun Gothic',sans-serif;font-size:clamp(26px,3.4vw,40px);color:#ffd43b;text-shadow:0 3px 0 #000;opacity:0;transition:opacity .4s;text-align:center;}
+#nname small{display:block;font-size:.5em;color:#cfe3f5;text-shadow:none;margin-bottom:2px;}
+#nname.on{opacity:1;}
+#nmission{font-size:15px;line-height:1.5;color:#e6eef6;text-align:center;opacity:0;transition:opacity .4s;word-break:keep-all;}
+#nmission.on{opacity:1;}
+#nmsg{min-height:52px;font-size:15px;font-weight:700;color:#ff8b8b;text-align:center;line-height:1.45;word-break:keep-all;}
+
+/* 위쪽 점수판 */
+#hud{position:fixed;top:12px;right:16px;left:calc(var(--side,280px) + 16px);z-index:6;display:flex;align-items:center;gap:14px;pointer-events:none;}
+#score{font-family:'Jua','Malgun Gothic',sans-serif;font-size:32px;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);min-width:120px;}
+#score small{font-size:16px;color:#cfe3f5;margin-right:6px;}
+#timebar{flex:1;height:16px;background:rgba(255,255,255,.15);border-radius:999px;overflow:hidden;}
+#timefill{height:100%;width:100%;background:linear-gradient(90deg,#ffd43b,#ff922b);border-radius:999px;}
+#round{font-family:'Jua','Malgun Gothic',sans-serif;font-size:18px;color:#cfe3f5;white-space:nowrap;}
+#hud.hide{visibility:hidden;}
+
+#center{position:fixed;left:var(--side,280px);right:0;top:0;bottom:0;z-index:7;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#big{font-family:'Jua','Malgun Gothic',sans-serif;font-size:clamp(40px,7vw,80px);color:#fff;text-shadow:0 5px 0 rgba(0,0,0,.45);opacity:0;}
+#big.pop{animation:big 1s ease-out forwards;}
+@keyframes big{0%{opacity:0;transform:scale(.5);}25%{opacity:1;transform:scale(1.1);}70%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(1.05);}}
+#flash{position:fixed;inset:0;z-index:4;pointer-events:none;background:rgba(255,60,60,.0);transition:background .25s;}
+#flash.on{background:rgba(255,60,60,.25);transition:none;}
+
+/* 시작·결과 화면 */
+.panel{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,16,24,.72);}
+.panel.on{display:flex;}
+.card{background:#fffdf6;color:#2f2a24;border-radius:22px;padding:26px 30px;max-width:620px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4);
+  max-height:100%;overflow:auto;}
+.card h1{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:clamp(38px,6vw,56px);color:#1d2b3a;margin:4px 0 6px;}
+.card h2{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:32px;color:#1d2b3a;margin-bottom:8px;}
+.card p{font-size:15.5px;line-height:1.7;color:#4a3e30;word-break:keep-all;margin-bottom:14px;}
+.card .logo{width:120px;height:120px;}
+.rules{text-align:left;background:#f4efe4;border-radius:14px;padding:12px 16px 12px 34px;margin:0 0 18px;font-size:15px;line-height:1.8;color:#4a3e30;}
+.btn{font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;padding:12px 46px;border:none;border-radius:999px;
+  background:linear-gradient(#ff9d45,#f06e28);color:#fff;cursor:pointer;box-shadow:0 6px 0 #c4541b,0 12px 22px rgba(0,0,0,.25);}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c4541b;}
+.btn.sub{background:linear-gradient(#5aa9e6,#2f7fc4);box-shadow:0 6px 0 #22609a,0 12px 22px rgba(0,0,0,.25);font-size:20px;padding:10px 30px;}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.res{width:100%;border-collapse:separate;border-spacing:0 6px;margin:6px 0 16px;font-size:15px;}
+.res td{background:#f4efe4;padding:8px 10px;}
+.res td:first-child{border-radius:10px 0 0 10px;font-family:'Jua','Malgun Gothic',sans-serif;font-size:18px;color:#1d2b3a;}
+.res td:last-child{border-radius:0 10px 10px 0;font-weight:700;}
+.total{font-family:'Jua','Malgun Gothic',sans-serif;font-size:46px;color:#f06e28;margin:2px 0 4px;}
+.test-tag{display:inline-block;background:#e5484d;color:#fff;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="ninjaArt" viewBox="0 0 200 200">
+    <!-- 등 뒤의 칼 -->
+    <path d="M22 18 L34 14 L66 132 L56 136 Z" fill="#c9ced6" stroke="#8a929e" stroke-width="2"/>
+    <path d="M24 20 L32 17 L60 122" stroke="#fff" stroke-width="2" opacity=".6" fill="none"/>
+    <rect x="46" y="128" width="30" height="9" rx="3" fill="#c98a2b" transform="rotate(-16 61 132)"/>
+    <rect x="52" y="136" width="10" height="26" rx="3" fill="#2b2b2b" transform="rotate(-16 57 149)"/>
+    <!-- 몸 -->
+    <path d="M38 200 Q42 150 100 146 Q158 150 162 200 Z" fill="#1c1c1e"/>
+    <path d="M78 150 L100 182 L122 150" fill="none" stroke="#3a3a3e" stroke-width="5"/>
+    <!-- 머리 -->
+    <circle cx="100" cy="92" r="64" fill="#151517"/>
+    <path d="M150 64 Q176 52 186 66 Q170 70 160 74 Q176 84 172 100 Q156 88 148 80 Z" fill="#1c1c1e"/>
+    <path d="M38 70 Q100 52 162 70 L162 80 Q100 62 38 80 Z" fill="#26262a"/>
+    <rect x="50" y="80" width="100" height="40" rx="20" fill="#ffcf3a"/>
+    <path d="M62 92 Q74 84 88 92" stroke="#3a2a10" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M112 92 Q126 84 138 92" stroke="#3a2a10" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="78" cy="104" rx="8" ry="9" fill="#2b1d0a"/><circle cx="80" cy="101" r="2.6" fill="#fff"/>
+    <ellipse cx="122" cy="104" rx="8" ry="9" fill="#2b1d0a"/><circle cx="124" cy="101" r="2.6" fill="#fff"/>
+    <path d="M44 118 Q100 128 156 118 Q152 150 100 156 Q48 150 44 118Z" fill="#151517"/>
+</symbol></defs></svg>
+<a class="back-hub" href="index.html#list">← 실험실 목록</a>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div id="flash"></div>
+
+<div id="side">
+  <svg id="ninja" viewBox="0 0 200 200" aria-hidden="true"><use href="#ninjaArt"/></svg>
+  <div id="nname"></div>
+  <div id="nmission"></div>
+  <div id="nmsg"></div>
+</div>
+
+<div id="hud" class="hide">
+  <div id="score"><small>점수</small><span id="scoreN">0</span></div>
+  <div id="timebar"><div id="timefill"></div></div>
+  <div id="round"></div>
+</div>
+<div id="center"><div id="big"></div></div>
+
+<div class="panel on" id="startP">
+  <div class="card">
+    <svg class="logo" viewBox="0 0 200 200" aria-hidden="true"><use href="#ninjaArt"/></svg>
+    <h1>소화 효소 닌자 <span class="test-tag">테스트</span></h1>
+    <p>나는 어떤 소화 효소 닌자일까? 내가 소화하는 영양소만 골라서 베어라!</p>
+    <ol class="rules">
+      <li>왼쪽에 이번 판의 <b>소화 효소 닌자</b>가 나타나요.</li>
+      <li>화면에 던져지는 영양소 중 <b>그 효소가 소화하는 영양소</b>만 손가락으로 그어 베어요. <b>+10점</b></li>
+      <li>다른 영양소를 베면 <b>−5점</b>! 한 판은 20초, 모두 4판이에요.</li>
+    </ol>
+    <button class="btn" id="playBtn">시작하기</button>
+  </div>
+</div>
+
+<div class="panel" id="endP">
+  <div class="card">
+    <h2>🥷 수련 결과</h2>
+    <div class="total" id="totalN">0점</div>
+    <p id="rank"></p>
+    <table class="res" id="resT"></table>
+    <div class="row">
+      <button class="btn" id="againBtn">다시 하기</button>
+      <a class="btn sub" href="index.html#list" style="text-decoration:none">실험실 목록</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+// 받침에 따라 조사 고르기: josa('펩신','은','는') → '펩신은'
+const josa=(w,a,b)=>{const c=w.charCodeAt(w.length-1)-0xac00;return w+(c>=0&&c<=11171&&c%28?a:b);};
+
+/* 소화 효소와 영양소 */
+const NUTRIENTS={
+  starch:{name:'녹말',col:'#f1e2b8',edge:'#c9a965',juice:'#f6ecd0'},
+  protein:{name:'단백질',col:'#e8737a',edge:'#b8474f',juice:'#f19aa0'},
+  fat:{name:'지방',col:'#ffd43b',edge:'#d19a12',juice:'#ffe58a'},
+};
+const ENZYMES=[
+  {name:'아밀레이스',target:'starch',where:'침, 이자액',product:'엿당'},
+  {name:'펩신',target:'protein',where:'위액',product:'작은 단백질 조각'},
+  {name:'트립신',target:'protein',where:'이자액',product:'작은 단백질 조각'},
+  {name:'라이페이스',target:'fat',where:'이자액',product:'지방산과 모노글리세리드'},
+];
+const ROUND_SEC=20, GOOD=10, BAD=-5;
+
+/* ================= 화면 크기 ================= */
+const cv=$('#cv'), ctx=cv.getContext('2d');
+let W=0,H=0,SIDE=280,DPR=1;
+function resize(){
+  DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;
+  SIDE=Math.round(Math.max(160,Math.min(300,W*.26)));
+  document.documentElement.style.setProperty('--side',SIDE+'px');
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener('resize',resize);resize();
+const R=()=>Math.max(34,Math.min(54,Math.min(W-SIDE,H)*.075));   // 영양소 크기
+
+/* ================= 게임 상태 ================= */
+let items=[], pieces=[], drops=[], texts=[], trail=[];
+let G=null;   // {order, round, score, roundScore[], good[], bad[], t0, playing}
+function newGame(){
+  const order=ENZYMES.slice().sort(()=>Math.random()-.5);
+  const z=()=>order.map(()=>0);   // 판마다 점수·횟수
+  G={order,round:-1,score:0,rs:z(),good:z(),bad:z(),playing:false,spawnT:0,left:ROUND_SEC};
+  items=[];pieces=[];drops=[];texts=[];trail=[];
+  setScore();
+}
+function setScore(){$('#scoreN').textContent=G?G.score:0;}
+const enzyme=()=>G.order[G.round];
+
+/* 영양소 던지기: 화면 아래 밖에서 위로 */
+function spawn(){
+  const r=R(), en=enzyme();
+  // 이번 판 정답 영양소가 약 45% 나오게
+  const types=Object.keys(NUTRIENTS);
+  const type=Math.random()<.45?en.target:types.filter(t=>t!==en.target)[Math.random()*2|0];
+  const x=SIDE+r+Math.random()*(W-SIDE-2*r);
+  const g=H*1.5, h=H*(.45+Math.random()*.35);
+  const vy=-Math.sqrt(2*g*h);
+  const cx=SIDE+(W-SIDE)/2, vx=(cx-x)*(.25+Math.random()*.5)+(Math.random()-.5)*80;
+  items.push({type,x,y:H+r,vx,vy,g,r,rot:Math.random()*6,vr:(Math.random()-.5)*4});
+}
+
+/* ================= 그리기 ================= */
+function drawNutrient(it,clip){
+  const N=NUTRIENTS[it.type], r=it.r;
+  ctx.save();ctx.translate(it.x,it.y);ctx.rotate(it.rot);
+  if(clip)clip();
+  if(it.type==='fat'){   // 기름방울 모양
+    ctx.beginPath();ctx.moveTo(0,-r*1.15);ctx.bezierCurveTo(r*.9,-r*.2,r,r*.25,r*.92,r*.45);
+    ctx.arc(0,r*.25,r*.95,.21,Math.PI-.21);ctx.bezierCurveTo(-r,r*.25,-r*.9,-r*.2,0,-r*1.15);
+  }else{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);}
+  ctx.fillStyle=N.col;ctx.fill();ctx.lineWidth=4;ctx.strokeStyle=N.edge;ctx.stroke();
+  // 무늬
+  if(it.type==='starch'){ctx.fillStyle='rgba(255,255,255,.75)';[[-.35,-.3],[.3,-.35],[.05,.05],[-.3,.35],[.38,.3]].forEach(([a,b])=>{ctx.beginPath();ctx.ellipse(a*r,b*r,r*.16,r*.1,.6,0,Math.PI*2);ctx.fill();});}
+  if(it.type==='protein'){ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=3;for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(-r*.6,k*r*.32);ctx.quadraticCurveTo(0,k*r*.32-r*.2,r*.6,k*r*.32);ctx.stroke();}}
+  if(it.type==='fat'){ctx.fillStyle='rgba(255,255,255,.6)';ctx.beginPath();ctx.ellipse(-r*.35,-r*.1,r*.14,r*.26,.4,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+  // 이름(회전하지 않게)
+  ctx.save();ctx.translate(it.x,it.y);if(clip){ctx.rotate(it.rot);clip();ctx.rotate(-it.rot);}
+  ctx.font=`${Math.round(r*.46)}px Jua, 'Malgun Gothic', sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.lineWidth=5;ctx.strokeStyle='rgba(40,30,20,.85)';ctx.strokeText(N.name,0,r*.05);ctx.fillStyle='#fff';ctx.fillText(N.name,0,r*.05);
+  ctx.restore();
+}
+function render(){
+  ctx.clearRect(0,0,W,H);
+  drops.forEach(d=>{ctx.globalAlpha=Math.max(0,d.life);ctx.fillStyle=d.col;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill();});
+  ctx.globalAlpha=1;
+  items.forEach(it=>drawNutrient(it));
+  // 반으로 잘린 조각
+  pieces.forEach(p=>{
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.life*1.5));
+    drawNutrient(p,()=>{ctx.rotate(p.cut-p.rot);ctx.beginPath();ctx.rect(-200,p.side>0?0:-200,400,200);ctx.rotate(p.rot-p.cut);ctx.clip();});
+  });
+  ctx.globalAlpha=1;
+  // 칼 자국
+  const now=performance.now();
+  trail=trail.filter(t=>now-t.t<160);
+  if(trail.length>1){
+    ctx.lineCap='round';ctx.lineJoin='round';
+    for(let k=1;k<trail.length;k++){
+      const a=1-(now-trail[k].t)/160;
+      ctx.strokeStyle=`rgba(255,255,255,${.9*a})`;ctx.lineWidth=2+9*a;
+      ctx.beginPath();ctx.moveTo(trail[k-1].x,trail[k-1].y);ctx.lineTo(trail[k].x,trail[k].y);ctx.stroke();
+    }
+  }
+  // 점수 글자
+  texts.forEach(t=>{ctx.globalAlpha=Math.max(0,t.life);ctx.font=`${t.size}px Jua, 'Malgun Gothic', sans-serif`;ctx.textAlign='center';
+    ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(t.s,t.x,t.y);ctx.fillStyle=t.col;ctx.fillText(t.s,t.x,t.y);});
+  ctx.globalAlpha=1;
+}
+
+/* ================= 움직임 ================= */
+let last=performance.now();
+function loop(now){
+  const dt=Math.min(.033,(now-last)/1000);last=now;
+  if(G&&G.playing){
+    G.left-=dt;
+    $('#timefill').style.width=Math.max(0,G.left/ROUND_SEC*100)+'%';
+    G.spawnT-=dt;
+    if(G.spawnT<=0&&G.left>1){
+      const n=Math.random()<.35?2:1;for(let k=0;k<n;k++)spawn();
+      G.spawnT=.55+Math.random()*.45-.012*(ROUND_SEC-G.left);   // 시간이 갈수록 조금씩 빨라짐
+    }
+    if(G.left<=0){G.playing=false;endRound();}
+  }
+  items.forEach(it=>{it.vy+=it.g*dt;it.x+=it.vx*dt;it.y+=it.vy*dt;it.rot+=it.vr*dt;});
+  items=items.filter(it=>!(it.vy>0&&it.y>H+it.r*2));
+  pieces.forEach(p=>{p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;p.life-=dt*.9;});
+  pieces=pieces.filter(p=>p.life>0&&p.y<H+p.r*3);
+  drops.forEach(d=>{d.vy+=900*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.life-=dt*1.8;});
+  drops=drops.filter(d=>d.life>0);
+  texts.forEach(t=>{t.y-=50*dt;t.life-=dt*1.1;});
+  texts=texts.filter(t=>t.life>0);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ================= 베기 ================= */
+function segDist(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;let t=l2?((px-ax)*dx+(py-ay)*dy)/l2:0;t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));
+}
+let down=false, prev=null;
+addEventListener('pointerdown',e=>{if(!G||!G.playing)return;down=true;prev={x:e.clientX,y:e.clientY};trail.push({...prev,t:performance.now()});});
+addEventListener('pointermove',e=>{
+  if(!down||!G||!G.playing)return;
+  const cur={x:e.clientX,y:e.clientY};trail.push({...cur,t:performance.now()});
+  const ang=Math.atan2(cur.y-prev.y,cur.x-prev.x);
+  for(const it of items.slice()){
+    if(segDist(it.x,it.y,prev.x,prev.y,cur.x,cur.y)<it.r*.95)slice(it,ang);
+  }
+  prev=cur;
+});
+addEventListener('pointerup',()=>{down=false;});addEventListener('pointercancel',()=>{down=false;});
+
+let msgT;
+function slice(it,ang){
+  items.splice(items.indexOf(it),1);
+  const N=NUTRIENTS[it.type], en=enzyme(), ok=it.type===en.target, k=G.round;
+  // 두 조각으로 갈라져 날아감
+  const nx=-Math.sin(ang), ny=Math.cos(ang);
+  [1,-1].forEach(side=>pieces.push({...it,side,cut:ang,vx:it.vx*.5+nx*side*140,vy:Math.min(it.vy,0)*.4+ny*side*140-80,vr:it.vr+side*3,life:1}));
+  for(let j=0;j<14;j++){const a=Math.random()*Math.PI*2,s=120+Math.random()*260;drops.push({x:it.x,y:it.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-120,r:2+Math.random()*4,col:N.juice,life:1});}
+  if(ok){G.score+=GOOD;G.rs[k]+=GOOD;G.good[k]++;texts.push({s:'+'+GOOD,x:it.x,y:it.y-it.r,col:'#ffe066',size:34,life:1});}
+  else{
+    G.score+=BAD;G.rs[k]+=BAD;G.bad[k]++;texts.push({s:String(BAD),x:it.x,y:it.y-it.r,col:'#ff6b6b',size:34,life:1});
+    const f=$('#flash');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),90);
+    const nj=$('#ninja');nj.classList.remove('hit');void nj.offsetWidth;nj.classList.add('hit');
+    $('#nmsg').textContent=`앗! ${josa(en.name,'은','는')} ${josa(N.name,'을','를')} 소화하지 않아요.`;
+    clearTimeout(msgT);msgT=setTimeout(()=>$('#nmsg').textContent='',1600);
+  }
+  setScore();
+}
+
+/* ================= 판 진행 ================= */
+function bigText(s){const b=$('#big');b.textContent=s;b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');}
+async function startRound(k){
+  G.round=k;G.left=ROUND_SEC;G.spawnT=.6;items=[];
+  const en=enzyme();
+  $('#round').textContent=`${k+1} / ${G.order.length}판`;$('#timefill').style.width='100%';
+  $('#nname').classList.remove('on');$('#nmission').classList.remove('on');$('#nmsg').textContent='';
+  // 닌자가 아래에서 위로 휙
+  const nj=$('#ninja');nj.classList.remove('rise','hit','shown');void nj.offsetWidth;nj.classList.add('rise');
+  setTimeout(()=>{nj.classList.add('shown');nj.classList.remove('rise');},1050);   // 떠오른 뒤에는 그 자리에 그대로
+  await wait(800);
+  $('#nname').innerHTML=`<small>나는</small>${en.name} 닌자!`;$('#nname').classList.add('on');
+  await wait(500);
+  $('#nmission').innerHTML='내가 소화하는 영양소만<br>골라서 베어라!';$('#nmission').classList.add('on');
+  await wait(600);bigText('준비…');await wait(900);bigText('시작!');await wait(300);
+  G.playing=true;
+}
+async function endRound(){
+  bigText('그만!');
+  await wait(1100);
+  items=[];
+  const k=G.round;
+  if(k+1<G.order.length){await wait(300);return startRound(k+1);}
+  showResult();
+}
+function showResult(){
+  $('#hud').classList.add('hide');
+  $('#totalN').textContent=`${G.score}점`;
+  const max=G.good.reduce((a,b)=>a+b,0);
+  $('#rank').textContent=G.score>=260?'🏆 전설의 소화 효소 닌자!':G.score>=160?'🥇 훌륭한 닌자예요!':G.score>=80?'🥈 수련을 조금만 더 해 볼까요?':'🥉 소화 효소가 어떤 영양소를 소화하는지 다시 확인해 봐요.';
+  $('#resT').innerHTML=G.order.map((en,k)=>`<tr><td>${en.name}</td><td>${josa(NUTRIENTS[en.target].name,'을','를')} 소화</td>
+    <td>바르게 ${G.good[k]}번 · 잘못 ${G.bad[k]}번</td><td>${G.rs[k]}점</td></tr>`).join('');
+  $('#endP').classList.add('on');
+}
+async function play(){
+  $('#startP').classList.remove('on');$('#endP').classList.remove('on');
+  newGame();$('#hud').classList.remove('hide');
+  await startRound(0);
+}
+$('#playBtn').onclick=play;
+$('#againBtn').onclick=play;
+</script>
+</body>
+</html>
