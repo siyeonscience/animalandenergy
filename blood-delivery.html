@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배송 사고 조사반: 잘못된 배송을 찾아라!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="blood-delivery/style.css">
+</head>
+<body>
+<!-- 혈액 택배기사 캐릭터 (여러 화면에서 다시 씀) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="courier" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="186" rx="62" ry="9" fill="rgba(0,0,0,.15)"/>
+      <!-- 택배 상자 -->
+      <rect x="112" y="112" width="62" height="54" rx="6" fill="#d9a066" stroke="#9c6b3c" stroke-width="4"/>
+      <path d="M112 128 H174 M143 112 V166" stroke="#9c6b3c" stroke-width="4"/>
+      <rect x="124" y="140" width="22" height="14" rx="2" fill="#fff"/>
+      <!-- 적혈구 몸 -->
+      <ellipse cx="88" cy="112" rx="66" ry="60" fill="#e5383b"/>
+      <ellipse cx="88" cy="114" rx="38" ry="30" fill="#c1121f" opacity=".45"/>
+      <ellipse cx="62" cy="86" rx="16" ry="10" fill="#fff" opacity=".35"/>
+      <!-- 얼굴 -->
+      <circle cx="72" cy="108" r="7" fill="#1d1d1d"/><circle cx="74" cy="105" r="2.4" fill="#fff"/>
+      <circle cx="104" cy="108" r="7" fill="#1d1d1d"/><circle cx="106" cy="105" r="2.4" fill="#fff"/>
+      <path d="M78 126 Q88 134 98 126" stroke="#1d1d1d" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="58" cy="122" rx="8" ry="5" fill="#ff8fa3" opacity=".7"/><ellipse cx="118" cy="122" rx="8" ry="5" fill="#ff8fa3" opacity=".7"/>
+      <!-- 택배 모자 -->
+      <path d="M36 74 Q88 22 140 74 Z" fill="#1d3557"/>
+      <rect x="30" y="70" width="118" height="12" rx="6" fill="#1d3557"/>
+      <path d="M140 76 Q164 78 168 86 Q150 88 136 82 Z" fill="#14213d"/>
+      <circle cx="88" cy="56" r="10" fill="#4dabf7"/><path d="M84 56 L88 51 L92 56 L88 61 Z" fill="#fff"/>
+      <!-- 팔 -->
+      <path d="M140 124 Q156 126 158 136" stroke="#c1121f" stroke-width="10" stroke-linecap="round" fill="none"/>
+    </symbol>
+    <symbol id="lens" viewBox="0 0 40 40">
+      <circle cx="16" cy="16" r="11" fill="#e7f5ff" stroke="currentColor" stroke-width="4"/>
+      <path d="M24 24 L36 36" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<a class="back-hub" href="index.html#list">← 실험실 목록</a>
+<div id="app" aria-live="polite"></div>
+<div id="toast" role="status"></div>
+<div id="fx" aria-hidden="true"></div>
+
+<script src="blood-delivery/missions.js"></script>
+<script src="blood-delivery/game.js"></script>
+</body>
+</html>
