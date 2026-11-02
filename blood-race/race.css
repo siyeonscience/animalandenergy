@@ -94,10 +94,11 @@ kbd{display:inline-block;background:#fff;border:2px solid #b8c4d4;border-bottom-
   color:#fff;font-size:34px;cursor:pointer;touch-action:none;}
 .tbtn:active{background:rgba(77,171,247,.7);}
 .tbtn.left{left:18px;} .tbtn.right{right:18px;}
-.pausebtn{position:absolute;right:14px;top:136px;background:rgba(20,33,61,.7);color:#fff;border:none;border-radius:999px;padding:6px 14px;font-size:14px;cursor:pointer;}
+.pausebtn{pointer-events:auto;margin-top:6px;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer;}
+.skipbtn{position:absolute;right:14px;top:calc(var(--hudH,140px) + 8px);background:rgba(255,253,247,.92);color:var(--navy);border:none;border-radius:999px;padding:8px 16px;
+  font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.3);}
+.linkbtn.dark{color:#52606d;margin-top:10px;}
 .banner{top:44%;}
-@media (max-width:700px){.toast{top:200px;}.hud{grid-template-columns:1fr 1fr;}.hud-c{grid-column:1 / -1;grid-row:2;}.tbtn{width:70px;height:70px;font-size:28px;}
-  .cargo{bottom:96px;}.pausebtn{top:auto;bottom:150px;right:auto;left:14px;}}
 .xpanel{position:absolute;left:14px;top:46%;transform:translateY(-50%);background:rgba(255,253,247,.95);color:var(--navy);border-radius:16px;padding:10px 12px;
   font-size:15px;font-weight:700;display:none;box-shadow:0 6px 16px rgba(0,0,0,.35);min-width:230px;}
 .xpanel.on{display:block;animation:fadeIn .4s;}
@@ -106,7 +107,7 @@ kbd{display:inline-block;background:#fff;border:2px solid #b8c4d4;border-bottom-
 .xpanel .who{border-radius:8px;padding:1px 8px;color:#fff;font-size:13px;}
 .xpanel .who.b{background:var(--red);} .xpanel .who.c{background:#6c757d;} .xpanel .who.l{background:#e599a8;color:#4a1c27;}
 .xpanel .ar{color:var(--ok);font-weight:900;}
-@media (max-width:900px){.xpanel{top:auto;bottom:170px;transform:none;min-width:0;font-size:13px;}}
+@media (min-width:701px) and (max-width:900px){.xpanel{top:auto;bottom:170px;transform:none;min-width:0;font-size:13px;}}
 .banner{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;width:90%;}
 .banner.on{animation:banner 2.4s ease-out forwards;}
 .banner b{display:block;font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:clamp(34px,6vw,64px);text-shadow:0 5px 0 rgba(0,0,0,.45);}
@@ -178,3 +179,25 @@ kbd{display:inline-block;background:#fff;border:2px solid #b8c4d4;border-bottom-
 .unlock{margin:0 20px 12px;background:#e6f6ea;border-radius:10px;padding:8px 14px;color:#1f6e35;font-size:17px;animation:fadeIn .5s 2.2s both;}
 .notice .row{padding:0 20px 20px;}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-delay:0s!important;transition-duration:.01s!important;}}
+/* 휴대폰 세로: 위쪽 안내판(높이 --hudH) 아래로 적재량 → 물질 이동 안내 → 알림이 차례로 놓임 */
+@media (max-width:700px){
+  .hud{grid-template-columns:1fr auto;gap:6px;padding:8px 8px 4px;}
+  .hud-c{grid-column:1 / -1;grid-row:2;}
+  .hud-l,.hud-r{padding:6px 10px;font-size:12px;line-height:1.35;border-radius:12px;}
+  .hud-l .stage{font-size:15px;} .hud-l b{font-size:13px;}
+  .hud-l .loc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .hud-r .score b{font-size:20px;} .hearts{font-size:14px;letter-spacing:0;}
+  .bar{width:64px;} .prog{font-size:12px;}
+  .pausebtn span{display:none;} .pausebtn{padding:3px 10px;font-size:13px;}
+  .hud-c .q{font-size:14px;padding:6px 10px;border-radius:12px;}
+  .hud-c .opts span{font-size:16px;padding:2px 12px;}
+  .cargo{top:calc(var(--hudH,150px) + 2px);bottom:auto;gap:6px;}
+  .cargo .chip{font-size:13px;padding:3px 8px;} .cargo b{font-size:17px;}
+  .xpanel{left:50%;right:auto;top:calc(var(--hudH,150px) + 40px);bottom:auto;transform:translateX(-50%);min-width:0;width:max-content;max-width:calc(100% - 16px);
+    padding:6px 10px;font-size:12px;border-radius:12px;}
+  .xpanel h4{font-size:14px;margin-bottom:0;} .xpanel .xr{margin:2px 0;gap:4px;} .xpanel .who{font-size:11px;padding:0 6px;}
+  .toast{top:calc(var(--hudH,150px) + 40px);bottom:auto;font-size:14px;padding:8px 12px;width:calc(100% - 24px);z-index:3;}
+  .banner{top:52%;}
+  .tbtn{width:62px;height:62px;font-size:26px;bottom:12px;border-width:3px;} .tbtn.left{left:12px;} .tbtn.right{right:12px;}
+  .skipbtn{bottom:22px;top:auto;right:auto;left:50%;transform:translateX(-50%);font-size:13px;padding:6px 12px;white-space:nowrap;}
+}

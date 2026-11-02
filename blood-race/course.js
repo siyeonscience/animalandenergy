@@ -30,6 +30,22 @@ window.BR_CONFIG = {
   gap: 70,            // 이벤트 사이 거리
 };
 
+/* ■ 연습 주행(튜토리얼): 처음 한 번 실제 레이스 전에 해요. 하트·점수는 줄거나 쌓이지 않아요.
+   - { type:'steer', q }  왼쪽·오른쪽으로 한 번씩 움직이면 끝
+   - collect의 practice:true → 엉뚱한 상자 없이 맞는 상자만 나옴 */
+window.BR_TUTORIAL = {
+  no: 0, title: '연습 주행', theme: 'artery', where: '물류센터 연습장', dest: '출발선',
+  intro: '본격적인 배송 전에 운전 연습을 해 봐요!', start: { o2: 0, co2: 0 },
+  events: [
+    { type: 'steer', q: '① ◀ ▶ 버튼(PC는 ← → 키)으로 트럭을 왼쪽, 오른쪽으로 옮겨 보세요!' },
+    { type: 'collect', item: 'o2', need: 2, practice: true, q: '② 상자가 있는 차선으로 옮겨 빨간 O₂ 상자 2개를 실어 보세요!' },
+    { type: 'fork', q: '③ 갈림길 연습! 넌센스 퀴즈: 왕이 넘어지면 무엇이 될까요? 답이 적힌 터널로 들어가 보세요.',
+      options: ['킹콩', '왕자'], where: '출발선',
+      hint: '왕(King)이 넘어지면 “콩!” 하는 소리가 나겠죠? 연습이라 하트는 줄지 않아요!',
+      ok: '정답! 킹(King)이 콩! 넘어지면 킹콩이에요. 실제 레이스에서는 혈관 이름 터널을 골라요.' },
+  ],
+};
+
 window.BR_STAGES = [
   {
     no: 1, title: '좌심실 출발! 온몸 배송을 시작하라', theme: 'artery',
