@@ -41,10 +41,11 @@
   <aside class="panel" id="autoPanel">
     <h2>자동 호흡</h2>
     <div class="seg" role="group" aria-label="빠르기">
-      <button type="button" data-period="6">느리게</button>
-      <button type="button" data-period="4" class="on">보통</button>
-      <button type="button" data-period="2.8">빠르게</button>
+      <button type="button" data-period="8" data-rate="1분에 약 8번 · 깊고 느린 숨">느리게</button>
+      <button type="button" data-period="4.5" data-rate="1분에 약 13번 · 편안한 숨" class="on">보통</button>
+      <button type="button" data-period="2.4" data-rate="1분에 약 25번 · 운동 후 가쁜 숨">빠르게</button>
     </div>
+    <p class="rate" id="rateTxt">1분에 약 13번 · 편안한 숨</p>
     <button type="button" class="wide" id="pauseBtn">❚❚ 멈추기</button>
   </aside>
 

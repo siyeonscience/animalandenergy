@@ -5,7 +5,7 @@ const ease = x => (1 - Math.cos(Math.PI * Math.min(1, Math.max(0, x)))) / 2;
 
 /* 자동 호흡: 들숨 40%, 날숨 60% (날숨이 조금 더 김) */
 export class AutoMode {
-  constructor() { this.period = 4; this.t = 0; this.paused = false; this.follow = 14; }
+  constructor() { this.period = 4.5; this.t = 0; this.paused = false; this.follow = 14; }
   start() { this.t = 0; }
   update(dt) {
     if (!this.paused) this.t = (this.t + dt / this.period) % 1;

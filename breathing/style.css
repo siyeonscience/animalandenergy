@@ -56,7 +56,9 @@ button:focus-visible,.slider:focus-visible{outline:3px solid var(--accent);outli
 
 /* 아래쪽 상태 */
 .status{display:flex;align-items:center;gap:14px;padding:10px 14px;background:rgba(8,18,30,.8);border-top:1px solid var(--line);z-index:5;}
-.state{min-width:130px;text-align:center;border-radius:14px;padding:6px 12px;background:rgba(116,192,252,.15);border:2px solid var(--exhale);transition:background .3s,border-color .3s;}
+.state{min-width:130px;text-align:center;border-radius:14px;padding:6px 12px;background:rgba(116,192,252,.15);border:2px solid var(--exhale);}
+.state.pop{animation:pop .35s ease-out;}
+@keyframes pop{0%{transform:scale(1.08);}100%{transform:scale(1);}}
 .state b{display:block;font-family:'Jua','Noto Sans KR',sans-serif;font-weight:400;font-size:30px;line-height:1.1;color:var(--exhale);}
 .state small{font-size:12px;color:var(--muted);}
 .state.inhale{background:rgba(255,135,135,.15);border-color:var(--inhale);} .state.inhale b{color:var(--inhale);}
@@ -94,3 +96,5 @@ button:focus-visible,.slider:focus-visible{outline:3px solid var(--accent);outli
 .credit{position:absolute;left:10px;bottom:8px;font-size:11px;color:var(--muted);opacity:.8;z-index:2;}
 .credit a{color:inherit;}
 @media (max-width:900px),(orientation:portrait){.credit{bottom:auto;top:40px;}}
+.rate{font-size:12px;color:var(--muted);margin:-2px 0 8px;text-align:center;}
+@media (max-width:900px),(orientation:portrait){#autoPanel .rate{display:none;}}

@@ -23,7 +23,7 @@ const MAT = {
   spine: () => new THREE.MeshPhysicalMaterial({ color: 0xd9ccb2, roughness: 0.55 }),
   cartilage: () => new THREE.MeshPhysicalMaterial({ color: 0x9fc3d1, roughness: 0.3, clearcoat: 0.5, clearcoatRoughness: 0.3, transparent: true, opacity: 0.95 }),
   lung: () => new THREE.MeshPhysicalMaterial({ color: 0xe0837f, roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.35,
-    sheen: 0.6, sheenColor: new THREE.Color(0xffc9c9), transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }),
+    sheen: 0.6, sheenColor: new THREE.Color(0xffc9c9), transparent: true, opacity: 0.9, depthWrite: false }),
   diaphragm: () => new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.4, side: THREE.DoubleSide }),
   airway: () => new THREE.MeshPhysicalMaterial({ color: 0xe7d9c4, roughness: 0.4, clearcoat: 0.4 }),
   heart: () => new THREE.MeshPhysicalMaterial({ color: 0xa8423b, roughness: 0.45, clearcoat: 0.3, transparent: true, opacity: 0.55, depthWrite: false }),
@@ -71,7 +71,16 @@ export async function loadAnatomy(url) {
   const ribcage = createRibcage(take, body);
   const lungRight = createLung(take('lung_R', MAT.lung(), { deform: true }), -1, diaphragm);
   const lungLeft = createLung(take('lung_L', MAT.lung(), { deform: true }), 1, diaphragm);
-  lungRight.mesh.renderOrder = lungLeft.mesh.renderOrder = 2;
+  // 반투명 폐는 '가장 바깥 겉면'만 그려요: 먼저 깊이만 기록(보이지 않음) → 그다음 같은 깊이의 면만 색칠.
+  // 이렇게 해야 폐 안쪽의 엽 경계면(틈새)이나 뒷면이 비쳐 '갈라진 것처럼' 보이지 않아요.
+  const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false, transparent: true });
+  for (const L of [lungRight, lungLeft]) {
+    L.mesh.renderOrder = 2;
+    L.mesh.material.depthFunc = THREE.LessEqualDepth;
+    const pre = new THREE.Mesh(L.mesh.geometry, depthOnly);
+    pre.renderOrder = 1; pre.name = L.mesh.name + '_depth';
+    body.add(pre);
+  }
   const heart = createHeart(take('heart', MAT.heart()), diaphragm);
   take('spine', MAT.spine());
   take('clavicle_L', MAT.bone()); take('clavicle_R', MAT.bone());

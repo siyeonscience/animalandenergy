@@ -11,7 +11,7 @@ export function applyBreath(organs, phase) {
    - value: 실제로 화면에 쓰는 값
    - velocity: 1초당 변화량(+면 들숨, -면 날숨) */
 export class BreathState {
-  constructor() { this.value = 0; this.target = 0; this.velocity = 0; this.direction = 'exhale'; }
+  constructor() { this.reset(); }
   update(dt, follow = 8) {
     const prev = this.value;
     this.value += (this.target - this.value) * (1 - Math.exp(-follow * dt));
@@ -19,9 +19,11 @@ export class BreathState {
     const v = dt > 0 ? (this.value - prev) / dt : 0;
     this.velocity += (v - this.velocity) * Math.min(1, dt * 10);
     // 움직이는 방향으로 들숨/날숨을 정함 (거의 멈추면 마지막 상태 유지)
-    if (this.velocity > 0.04) this.direction = 'inhale';
-    else if (this.velocity < -0.04) this.direction = 'exhale';
+    // 반대 방향 움직임이 0.12초 넘게 이어질 때만 바꿔서, 손 떨림 등으로 들숨/날숨 표시가 깜빡이지 않게
+    const want = this.velocity > 0.04 ? 'inhale' : this.velocity < -0.04 ? 'exhale' : this.direction;
+    this.hold = want !== this.direction ? (this.hold || 0) + dt : 0;
+    if (this.hold > 0.12) { this.direction = want; this.hold = 0; }
     return this.value;
   }
-  reset() { this.value = this.target = this.velocity = 0; this.direction = 'exhale'; }
+  reset() { this.value = this.target = this.velocity = 0; this.direction = 'exhale'; this.hold = 0; }
 }

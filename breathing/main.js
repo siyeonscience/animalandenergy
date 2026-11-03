@@ -14,7 +14,7 @@ const view = $('#view');
 
 /* ================= 3D 장면 ================= */
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.setPixelRatio(Math.min(1.5, devicePixelRatio || 1));   // 태블릿에서 부드럽게
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 view.prepend(renderer.domElement);
@@ -87,6 +87,7 @@ document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () =
 document.querySelectorAll('#autoPanel [data-period]').forEach(b => b.addEventListener('click', () => {
   const a = modes.auto, keep = a.t;
   a.period = +b.dataset.period; a.t = keep;
+  $('#rateTxt').textContent = b.dataset.rate;
   document.querySelectorAll('#autoPanel [data-period]').forEach(x => x.classList.toggle('on', x === b));
 }));
 $('#pauseBtn').addEventListener('click', () => {
@@ -162,7 +163,9 @@ function updateStatus() {
   const dir = breath.direction, moving = Math.abs(breath.velocity) > 0.04;
   if (dir !== shownDir) {
     shownDir = dir;
-    $('#state').className = 'state ' + dir;
+    const st = $('#state');
+    st.className = 'state ' + dir;
+    st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');   // 바뀌는 순간 한 번만 톡
     $('#stateName').textContent = dir === 'inhale' ? '들숨' : '날숨';
     $('#facts').innerHTML = FACTS[dir].map(([k, v]) => `<li><b>${k}</b>${v}</li>`).join('');
   }
@@ -177,7 +180,8 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 /* ================= 반복 ================= */
 let last = performance.now(), lastApplied = -1;
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  // 실제 흐른 시간을 써요: 화면이 느리게 그려지는 기기에서도 호흡 빠르기가 그대로 유지되도록
+  const dt = Math.min(0.25, (now - last) / 1000); last = now;
   const m = modes[modeName];
   breath.target = m.update(dt);
   const p = breath.update(dt, m.follow);
