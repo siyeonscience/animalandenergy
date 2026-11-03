@@ -120,6 +120,13 @@ body.focus .where { padding-right: clamp(198px, 46vw, 310px); }
 .gate h1 { font-family: var(--display); font-weight: 400; font-size: clamp(42px, 8vw, 72px); line-height: 1.05; margin: 0; text-wrap: balance; }
 .gate p { margin: 0; font-size: 17px; line-height: 1.6; word-break: keep-all; }
 .gate .note { font-size: 14px; color: var(--muted); }
+/* 실험 선택 화면으로 돌아가기 (실험실 공통) */
+.gate .back-hub {
+  position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: 14px; z-index: 2;
+  font: 500 15px var(--body); color: var(--plasma); text-decoration: none;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px;
+}
+a.tool { text-decoration: none; }
 @media (max-width: 560px) {
   .rail span { font-size: 11px; }
   .card { padding: 13px 14px; }
@@ -141,6 +148,7 @@ body.focus .where { padding-right: clamp(198px, 46vw, 310px); }
         <span class="chip"><i id="o2Dot" class="dot o2"></i><span id="o2Text">산소 많은 혈액</span></span>
       </div>
       <div class="chips tools">
+        <a class="tool hub-link" href="index.html#list" aria-label="실험 선택 화면으로">⌂ 실험 선택</a>
         <button id="back" class="tool">뒤로 가기</button>
         <button id="slow" class="tool" aria-pressed="false">천천히</button>
         <button id="fast" class="tool" aria-pressed="false">빠르게</button>
@@ -164,6 +172,7 @@ body.focus .where { padding-right: clamp(198px, 46vw, 310px); }
 <div id="introUi" class="intro-ui" hidden><p id="introText">심장은 쉬지 않고 뛰어요</p><button id="skip" class="tool">건너뛰기</button></div>
 
 <div id="gate" class="gate">
+  <a class="back-hub" href="index.html#list">← 실험 선택 화면</a>
   <div class="gate-in">
     <h1>적혈구 순환 여행</h1>
     <p>여러분은 폐에서 산소를 가득 받고 심장으로 돌아온 적혈구입니다. 좌심실에서 출발해 대동맥을 따라 온몸으로 떠나 보세요.</p>

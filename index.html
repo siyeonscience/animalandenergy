@@ -230,7 +230,7 @@ const LABS=[
   {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.',href:'https://filest.edunet.net/360vr/webvr/m220001034/m220001034.html',ext:true},
   {id:'circ',added:'2026-11-03',title:'적혈구 순환 여행',desc:'심장과 혈관이 하는 일을 탐구해요.',href:'rbc-journey.html'},
   {id:'race',added:'2026-11-01',title:'혈액 택배 레이스',desc:'산소를 배송하고 이산화 탄소를 수거하며 혈액순환을 완주하세요!',href:'blood-race.html'},
-  {id:'airway',title:'호흡기관의 구조',desc:'코에서 허파꽈리까지, 공기가 지나가는 길을 살펴봐요.'},
+  {id:'airway',added:'2026-11-03',title:'호흡기관의 구조',desc:'코에서 허파꽈리까지, 공기가 지나가는 길을 살펴봐요.',href:'https://file.douclass.com/c2/sci/mi-sci2/interani/i-ch621/index.html',ext:true,tag:'시작하기 ▶'},
   {id:'resp',added:'2026-11-03',title:'호흡운동의 원리',desc:'가로막과 갈비뼈가 움직여 숨을 쉬는 원리를 3D 모형으로 살펴봐요.',href:'breathing.html'},
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];
@@ -238,14 +238,14 @@ const LABS=[
 /* 'NEW' 표시: 활동을 추가한 날(added)부터 NEW_DAYS일 동안만 보여요 */
 const NEW_DAYS=7;
 function isNew(l){
-  if(!l.added||!l.href||l.ext)return false;
+  if(!l.added||!l.href)return false;
   const [y,m,d]=l.added.split('-').map(Number);
   return Date.now()<new Date(y,m-1,d+NEW_DAYS).getTime();
 }
 $('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}${isNew(l)?' new':''}" data-i="${i}" aria-label="${l.title}${l.href?'':' (준비 중)'}">
   <span class="thumb"><svg viewBox="0 0 320 200" aria-hidden="true">${THUMBS[l.id]}</svg></span>
   <span class="body"><span class="no">실험 ${String(i+1).padStart(2,'0')}</span><span class="ct">${l.title}</span><span class="cd">${l.desc}</span>
-  <span class="tag ${l.href?'go':'wait'}">${l.href?(l.ext?'VR 열기 ▶':'시작하기 ▶'):'준비 중'}</span></span></button>`).join('');
+  <span class="tag ${l.href?'go':'wait'}">${l.href?(l.tag||(l.ext?'VR 열기 ▶':'시작하기 ▶')):'준비 중'}</span></span></button>`).join('');
 
 document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{
   const l=LABS[+c.dataset.i];
