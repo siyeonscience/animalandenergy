@@ -47,7 +47,7 @@ body{background:radial-gradient(ellipse at 50% 30%,#fff8e8 0%,#f2e4c6 60%,#e2cfa
 .wrap{max-width:1080px;margin:0 auto;}
 .wrap h2{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;font-size:clamp(26px,4vw,36px);color:#3d2b17;margin:18px 0 4px;}
 .wrap .lead{color:#6b5638;margin-bottom:22px;font-size:15px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
 @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:560px){.grid{grid-template-columns:1fr;}}
 .card{position:relative;display:flex;flex-direction:column;text-align:left;background:#fffdf6;border:2px solid #e2d3b0;border-radius:20px;
@@ -199,6 +199,22 @@ const THUMBS={
     <path d="M104 120 Q100 136 104 150" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".6"/>
     <circle cx="262" cy="56" r="16" fill="#fff" opacity=".8"/><text x="262" y="62" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#3a8a6a">O₂</text>
     <circle cx="58" cy="60" r="16" fill="#fff" opacity=".8"/><text x="58" y="66" text-anchor="middle" font-family="Jua, sans-serif" font-size="14" fill="#8a6a3a">CO₂</text>`,
+  airway:`<rect width="320" height="200" fill="#e7eefb"/>
+    <path d="M130 38 Q118 30 112 44 Q108 58 122 62 L134 62" fill="#f6c9a8" stroke="#c98f6a" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M134 50 V70" stroke="#d98c8c" stroke-width="7" stroke-linecap="round"/>
+    <path d="M134 70 V104" stroke="#d98c8c" stroke-width="11" stroke-linecap="round"/>
+    <path d="M134 74 h-7 M134 82 h-7 M134 90 h-7 M134 98 h-7 M134 74 h7 M134 82 h7 M134 90 h7 M134 98 h7" stroke="#f3dada" stroke-width="2"/>
+    <path d="M122 104 C92 92 70 116 70 146 C70 172 92 182 112 172 C124 164 126 134 126 112Z" fill="#f4a6ad" opacity=".9"/>
+    <path d="M146 104 C176 92 198 116 198 146 C198 172 176 182 156 172 C144 164 142 134 142 112Z" fill="#f4a6ad" opacity=".9"/>
+    <path d="M134 104 L112 122 L98 140 M112 122 L114 146 M134 104 L156 122 L170 140 M156 122 L154 146 M98 140 L88 152 M98 140 L104 156 M170 140 L180 152 M170 140 L164 156"
+      stroke="#c0606a" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="180" cy="152" r="7" fill="none" stroke="#3d5a8a" stroke-width="2.5"/>
+    <path d="M186 148 L222 112" stroke="#3d5a8a" stroke-width="2.5" stroke-dasharray="4 4"/>
+    <circle cx="258" cy="86" r="44" fill="#fff" stroke="#3d5a8a" stroke-width="3"/>
+    <path d="M258 128 V100" stroke="#c0606a" stroke-width="5" stroke-linecap="round"/>
+    ${[[258,72],[240,82],[276,82],[246,100],[270,100],[258,90]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="11" fill="#f7b8bd" stroke="#c0606a" stroke-width="2"/>`).join('')}
+    <path d="M232 64 Q258 48 284 64" stroke="#7aa6d8" stroke-width="2.5" fill="none" stroke-dasharray="3 4"/>
+    <text x="258" y="146" text-anchor="middle" font-family="Jua, sans-serif" font-size="13" fill="#3d5a8a">허파꽈리</text>`,
   excr:`<rect width="320" height="200" fill="#fff1dc"/>
     <path d="M112 34 C78 34 72 82 86 104 C100 124 128 114 128 92 C128 80 120 76 124 64 C128 46 124 34 112 34Z" fill="#c9705c"/>
     <path d="M208 34 C242 34 248 82 234 104 C220 124 192 114 192 92 C192 80 200 76 196 64 C192 46 196 34 208 34Z" fill="#c9705c"/>
@@ -214,6 +230,7 @@ const LABS=[
   {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.',href:'https://filest.edunet.net/360vr/webvr/m220001034/m220001034.html',ext:true},
   {id:'circ',added:'2026-11-03',title:'적혈구 순환 여행',desc:'심장과 혈관이 하는 일을 탐구해요.',href:'rbc-journey.html'},
   {id:'race',added:'2026-11-01',title:'혈액 택배 레이스',desc:'산소를 배송하고 이산화 탄소를 수거하며 혈액순환을 완주하세요!',href:'blood-race.html'},
+  {id:'airway',title:'호흡기관의 구조',desc:'코에서 허파꽈리까지, 공기가 지나가는 길을 살펴봐요.'},
   {id:'resp',added:'2026-11-03',title:'호흡운동의 원리',desc:'가로막과 갈비뼈가 움직여 숨을 쉬는 원리를 3D 모형으로 살펴봐요.',href:'breathing.html'},
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];
