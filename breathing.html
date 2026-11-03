@@ -23,6 +23,7 @@
     <button type="button" class="mode" data-mode="manual" aria-pressed="false">✋ 수동 호흡</button>
   </nav>
   <div class="tools">
+    <button type="button" class="tool" id="boneBtn" aria-pressed="false">뼈 투명하게</button>
     <button type="button" class="tool" id="labelsBtn" aria-pressed="true">이름표 켜짐</button>
     <button type="button" class="tool" id="resetBtn">↺ 초기화</button>
   </div>
@@ -31,8 +32,11 @@
 <main class="stage">
   <div id="view" aria-label="3D 호흡 기관 모형. 손가락으로 돌려 볼 수 있어요.">
     <div id="labels" aria-hidden="true"></div>
+    <p class="loading" id="loading" hidden>3D 인체 모형을 불러오는 중…</p>
     <p class="hint" id="hint">손가락(마우스)으로 끌면 모형을 돌려 볼 수 있어요</p>
   </div>
+
+  <p class="credit">3D 모형: <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> · BodyParts3D © DBCLS · <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ko" target="_blank" rel="noopener">CC BY-SA 4.0</a> (가슴 부위만 골라 사용)</p>
 
   <aside class="panel" id="autoPanel">
     <h2>자동 호흡</h2>

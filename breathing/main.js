@@ -2,7 +2,8 @@
    anatomy.js(3D 기관) + respiration.js(호흡 상태, 공통 애니메이션) + modes.js(모드) + airflow.js + labels.js */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { createAnatomy } from './anatomy.js';
+import { loadAnatomy } from './anatomy.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyBreath, BreathState } from './respiration.js';
 import { AutoMode, ManualMode, CameraMode } from './modes.js';
 import { createAirflow } from './airflow.js';
@@ -14,14 +15,19 @@ const view = $('#view');
 /* ================= 3D 장면 ================= */
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
 view.prepend(renderer.domElement);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
-const HOME = { pos: new THREE.Vector3(4.6, 0.6, 15), target: new THREE.Vector3(0, 0.7, 0) };
+const HOME = { pos: new THREE.Vector3(4.2, 1.2, 14.5), target: new THREE.Vector3(0, 0.1, 0) };
 camera.position.copy(HOME.pos);
 
-scene.add(new THREE.HemisphereLight(0xdfefff, 0x2a1c22, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(5, 8, 9); scene.add(key);
+// 실제 조직처럼 보이도록 주변 반사광(환경광) + 조명
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
+scene.environmentIntensity = 0.55;
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x2a1c22, 0.5));
+const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(5, 8, 9); scene.add(key);
 const rim = new THREE.DirectionalLight(0x9ccfff, 0.7); rim.position.set(-6, 3, -6); scene.add(rim);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -32,9 +38,14 @@ controls.minDistance = 8; controls.maxDistance = 24;
 controls.minPolarAngle = 0.35; controls.maxPolarAngle = 2.3;
 controls.update();
 
-const { root, organs } = createAnatomy();
+$('#loading').hidden = false;
+let anatomy;
+try { anatomy = await loadAnatomy('breathing/models/thorax.glb'); }
+catch (e) { $('#loading').textContent = '3D 모형을 불러오지 못했어요. 새로고침해 주세요.'; throw e; }
+$('#loading').hidden = true;
+const { root, organs } = anatomy;
 scene.add(root);
-const airflow = createAirflow();
+const airflow = createAirflow(anatomy.airwayPaths, anatomy.airflowArrowAt);
 scene.add(airflow.group);
 
 function fit() {
@@ -126,6 +137,12 @@ $('#labelsBtn').addEventListener('click', () => {
   $('#labelsBtn').setAttribute('aria-pressed', labels.visible);
   $('#labelsBtn').textContent = labels.visible ? '이름표 켜짐' : '이름표 꺼짐';
 });
+let seeThrough = false;
+$('#boneBtn').addEventListener('click', () => {
+  seeThrough = !seeThrough; anatomy.setBonesSeeThrough(seeThrough);
+  $('#boneBtn').setAttribute('aria-pressed', seeThrough);
+  $('#boneBtn').textContent = seeThrough ? '뼈 투명 켜짐' : '뼈 투명하게';
+});
 $('#resetBtn').addEventListener('click', () => {
   camera.position.copy(HOME.pos); controls.target.copy(HOME.target); controls.update();
   breath.reset(); modes.auto.t = 0; modes.auto.paused = false; $('#pauseBtn').textContent = '❚❚ 멈추기';
@@ -177,4 +194,4 @@ setMode('auto');
 requestAnimationFrame(frame);
 
 // 점검·테스트용
-window.BREATH = { breath, organs, modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
+window.BREATH = { breath, organs, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };

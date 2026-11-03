@@ -2,13 +2,12 @@
    들숨(호흡 상태가 커질 때)에는 폐 안으로, 날숨에는 폐 밖으로 움직이고,
    빨리 숨쉴수록 빨리, 멈추면 사라져요. */
 import * as THREE from 'three';
-import { AIRWAY } from './anatomy.js';
 
-export function createAirflow() {
+export function createAirflow(airwayPaths, arrowAt) {
   const group = new THREE.Group(); group.name = 'airflow';
-  const paths = [AIRWAY.right, AIRWAY.left].map(b => new THREE.CatmullRomCurve3([...AIRWAY.trachea.slice(0, -1), ...b]));
+  const paths = airwayPaths.map(pts => new THREE.CatmullRomCurve3(pts));
   const mat = new THREE.MeshBasicMaterial({ color: 0x7fd3ff, transparent: true, opacity: 0, depthTest: false });
-  const geo = new THREE.SphereGeometry(0.075, 10, 8);
+  const geo = new THREE.SphereGeometry(0.06, 10, 8);
   const dots = Array.from({ length: 26 }, (_, i) => {
     const m = new THREE.Mesh(geo, mat); m.renderOrder = 5;
     m.userData = { path: paths[i % 2], u: (i / 26) % 1 };
@@ -20,7 +19,7 @@ export function createAirflow() {
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.7, 12), aMat);
   const head = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.36, 16), aMat);
   head.position.y = -0.5; head.rotation.x = Math.PI;
-  arrow.add(shaft, head); arrow.position.set(0, 5.35, 0.25); arrow.renderOrder = 6;
+  arrow.add(shaft, head); arrow.position.copy(arrowAt); arrow.renderOrder = 6;
   shaft.renderOrder = head.renderOrder = 6;
   group.add(arrow);
 
@@ -35,7 +34,7 @@ export function createAirflow() {
         d.userData.path.getPointAt(d.userData.u, d.position);
       }
       arrow.rotation.z = velocity >= 0 ? 0 : Math.PI;              // 날숨이면 위로 뒤집힘
-      arrow.position.y = 5.35 + (velocity >= 0 ? 0 : -0.35);
+      arrow.position.y = arrowAt.y + (velocity >= 0 ? 0 : -0.35);
     },
   };
 }
