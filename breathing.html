@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>호흡운동의 원리 · 호흡 역학 탐구</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="breathing/style.css">
+<!-- three.js는 vendor 폴더에 들어 있어 외부 링크 없이 동작해요 -->
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="index.html#list" aria-label="실험실 목록으로">←</a>
+  <h1>호흡 역학 탐구</h1>
+  <nav class="modes" aria-label="호흡 모드">
+    <button type="button" class="mode" data-mode="camera" aria-pressed="false">📷 카메라 연동<span class="soon">준비 중</span></button>
+    <button type="button" class="mode on" data-mode="auto" aria-pressed="true">⟳ 자동 호흡</button>
+    <button type="button" class="mode" data-mode="manual" aria-pressed="false">✋ 수동 호흡</button>
+  </nav>
+  <div class="tools">
+    <button type="button" class="tool" id="labelsBtn" aria-pressed="true">이름표 켜짐</button>
+    <button type="button" class="tool" id="resetBtn">↺ 초기화</button>
+  </div>
+</header>
+
+<main class="stage">
+  <div id="view" aria-label="3D 호흡 기관 모형. 손가락으로 돌려 볼 수 있어요.">
+    <div id="labels" aria-hidden="true"></div>
+    <p class="hint" id="hint">손가락(마우스)으로 끌면 모형을 돌려 볼 수 있어요</p>
+  </div>
+
+  <aside class="panel" id="autoPanel">
+    <h2>자동 호흡</h2>
+    <div class="seg" role="group" aria-label="빠르기">
+      <button type="button" data-period="6">느리게</button>
+      <button type="button" data-period="4" class="on">보통</button>
+      <button type="button" data-period="2.8">빠르게</button>
+    </div>
+    <button type="button" class="wide" id="pauseBtn">❚❚ 멈추기</button>
+  </aside>
+
+  <aside class="panel" id="manualPanel" hidden>
+    <h2>가로막 움직이기</h2>
+    <div class="slider" id="slider" role="slider" tabindex="0" aria-label="가로막 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span class="end up">위로<br><small>이완 · 날숨</small></span>
+      <div class="track"><div class="fill" id="sliderFill"></div><div class="knob" id="sliderKnob">가로막</div></div>
+      <span class="end down">아래로<br><small>수축 · 들숨</small></span>
+    </div>
+    <p class="tip">손잡이를 끌거나, 3D 화면의 <b>가로막</b>을 직접 위아래로 끌어 보세요.</p>
+  </aside>
+</main>
+
+<footer class="status" aria-live="polite">
+  <div class="state" id="state"><b id="stateName">날숨</b><small id="stateSub">숨을 내쉬는 중</small></div>
+  <ul class="facts" id="facts"></ul>
+  <div class="meter"><span>흉강 부피</span><div class="mbar"><i id="volBar"></i></div><span id="volTxt">작음</span></div>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<noscript><p class="nojs">이 시뮬레이션은 자바스크립트가 필요해요.</p></noscript>
+
+<script type="module" src="breathing/main.js"></script>
+</body>
+</html>
