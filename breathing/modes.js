@@ -22,9 +22,17 @@ export class ManualMode {
   update() { return this.value; }
 }
 
-/* 카메라 연동: 3단계에서 MediaPipe로 어깨 높이를 읽어 value를 넣을 예정 */
+/* 카메라 연동: 입 모양·어깨 인식 결과(camera/controller.js)가 setGoal(1=들숨, 0=날숨)로 목표만 정해요.
+   목표가 바뀌면 순간이동하지 않고 일정한 빠르기(들숨 inhaleSec, 날숨 exhaleSec)로 숨을 쉬듯 이동해요.
+   인식이 안 되면 목표를 바꾸지 않으므로 지금 상태를 그대로 유지해요. */
 export class CameraMode {
-  constructor() { this.value = 0; this.follow = 6; this.ready = false; }
-  start() {}
-  update() { return this.value; }
+  constructor() { this.value = 0; this.goal = 0; this.follow = 10; this.inhaleSec = 1.6; this.exhaleSec = 2; }
+  start(current = 0) { this.value = this.goal = current; }
+  setGoal(g) { this.goal = Math.min(1, Math.max(0, g)); }
+  update(dt) {
+    const d = this.goal - this.value;
+    const step = dt / (d > 0 ? this.inhaleSec : this.exhaleSec);
+    this.value += Math.max(-step, Math.min(step, d));
+    return this.value;
+  }
 }

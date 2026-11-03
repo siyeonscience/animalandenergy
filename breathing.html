@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="breathing/style.css">
+<link rel="stylesheet" href="breathing/camera/camera.css">
 <!-- three.js는 vendor 폴더에 들어 있어 외부 링크 없이 동작해요 -->
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
@@ -18,7 +19,7 @@
   <a class="back" href="index.html#list" aria-label="실험실 목록으로">←</a>
   <h1>호흡 역학 탐구</h1>
   <nav class="modes" aria-label="호흡 모드">
-    <button type="button" class="mode" data-mode="camera" aria-pressed="false">📷 카메라 연동<span class="soon">준비 중</span></button>
+    <button type="button" class="mode" data-mode="camera" aria-pressed="false">📷 카메라 연동</button>
     <button type="button" class="mode on" data-mode="auto" aria-pressed="true">⟳ 자동 호흡</button>
     <button type="button" class="mode" data-mode="manual" aria-pressed="false">✋ 수동 호흡</button>
   </nav>
@@ -31,6 +32,8 @@
 
 <main class="stage">
   <div id="view" aria-label="3D 호흡 기관 모형. 손가락으로 돌려 볼 수 있어요.">
+    <!-- 전면 카메라 영상 (거울처럼 좌우 반전). 3D 화면은 이 위에 투명하게 겹쳐요 -->
+    <video id="camVideo" playsinline muted aria-hidden="true"></video>
     <div id="labels" aria-hidden="true"></div>
     <p class="loading" id="loading" hidden>3D 인체 모형을 불러오는 중…</p>
     <p class="hint" id="hint">손가락(마우스)으로 끌면 모형을 돌려 볼 수 있어요</p>
@@ -48,6 +51,40 @@
     <p class="rate" id="rateTxt">1분에 약 13번 · 편안한 숨</p>
     <button type="button" class="wide" id="pauseBtn">❚❚ 멈추기</button>
   </aside>
+
+  <aside class="panel" id="cameraPanel" hidden>
+    <h2>카메라 연동</h2>
+    <p class="cam-rule"><b class="in">입 다물기</b> → 들숨<br><b class="ex">입 벌리기</b> → 날숨</p>
+    <button type="button" class="wide cam-main" id="camStartBtn">📷 카메라 시작</button>
+    <button type="button" class="wide cam-main" id="camStopBtn" hidden>■ 카메라 종료</button>
+    <button type="button" class="wide" id="camRecalBtn" hidden>↺ 다시 보정</button>
+    <button type="button" class="wide" id="camStatusBtn" aria-pressed="true">인식 정보 숨기기</button>
+    <p class="tip">영상은 이 기기 안에서만 처리되고, 저장하거나 밖으로 보내지 않아요.</p>
+  </aside>
+
+  <!-- 카메라 인식 상태 (개발·수업용, '인식 정보' 버튼이나 camera/config.js로 숨길 수 있어요) -->
+  <div class="cam-status" id="camStatus" hidden aria-live="off">
+    <dl>
+      <dt>카메라</dt><dd id="cs-cam">-</dd>
+      <dt>얼굴</dt><dd id="cs-face">-</dd>
+      <dt>입 모양</dt><dd id="cs-mouth">-</dd>
+      <dt>어깨</dt><dd id="cs-sh">-</dd>
+      <dt>호흡</dt><dd id="cs-breath">-</dd>
+      <dt>인식 방식</dt><dd id="cs-method">-</dd>
+    </dl>
+    <dl class="cs-debug">
+      <dt>jawOpen</dt><dd id="cs-jaw">-</dd>
+      <dt>어깨 이동</dt><dd id="cs-dy">-</dd>
+      <dt>처리</dt><dd id="cs-cost">-</dd>
+    </dl>
+  </div>
+
+  <!-- 카메라 안내 (보정, 오류, 인식 실패) -->
+  <div class="cam-guide" id="camGuide" hidden role="status">
+    <p class="g-title"></p><p class="g-sub"></p>
+    <div class="g-bar" hidden><i></i></div>
+    <div class="g-btns"></div>
+  </div>
 
   <aside class="panel" id="manualPanel" hidden>
     <h2>가로막 움직이기</h2>

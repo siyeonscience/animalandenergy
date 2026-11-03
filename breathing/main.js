@@ -8,6 +8,7 @@ import { applyBreath, BreathState } from './respiration.js';
 import { AutoMode, ManualMode, CameraMode } from './modes.js';
 import { createAirflow } from './airflow.js';
 import { createLabels } from './labels.js';
+import { createCameraController } from './camera/controller.js';
 
 const $ = s => document.querySelector(s);
 const view = $('#view');
@@ -60,26 +61,30 @@ new ResizeObserver(fit).observe(view);
 fit();
 
 /* ================= 이름표 ================= */
+// 이름표 위치는 모형 전체의 이동·크기(카메라 모드에서 사람 몸에 맞출 때)도 따라가요. 평소에는 변화 없음
+const onRoot = fn => p => fn(p).applyMatrix4(root.matrixWorld);
 const labels = createLabels($('#labels'), [
-  { text: '기관', sub: '공기가 지나는 길', anchor: organs.airway.anchor, side: 'right' },
-  { text: '오른쪽 폐', sub: '몸의 오른쪽', anchor: organs.lungRight.anchor, side: 'left' },
-  { text: '왼쪽 폐', sub: '몸의 왼쪽', anchor: organs.lungLeft.anchor, side: 'right' },
-  { text: '갈비뼈', sub: '흉곽', anchor: organs.ribcage.anchor, side: 'left' },
-  { text: '가로막', sub: '횡격막 · 근육', anchor: organs.diaphragm.anchor, side: 'right' },
+  { text: '기관', sub: '공기가 지나는 길', anchor: onRoot(organs.airway.anchor), side: 'right' },
+  { text: '오른쪽 폐', sub: '몸의 오른쪽', anchor: onRoot(organs.lungRight.anchor), side: 'left' },
+  { text: '왼쪽 폐', sub: '몸의 왼쪽', anchor: onRoot(organs.lungLeft.anchor), side: 'right' },
+  { text: '갈비뼈', sub: '흉곽', anchor: onRoot(organs.ribcage.anchor), side: 'left' },
+  { text: '가로막', sub: '횡격막 · 근육', anchor: onRoot(organs.diaphragm.anchor), side: 'right' },
 ]);
 
 /* ================= 모드 ================= */
 const breath = new BreathState();
 const modes = { auto: new AutoMode(), manual: new ManualMode(), camera: new CameraMode() };
 let modeName = 'auto';
+let cam = null;   // 카메라 연동 (아래에서 만듦)
 function setMode(name) {
-  if (name === 'camera') { toast('📷 카메라 연동 모드는 다음 단계에서 추가될 예정이에요. 지금은 자동·수동 호흡으로 살펴보세요!'); return; }
+  if (modeName === 'camera' && name !== 'camera') cam?.deactivate();   // 카메라 모드를 나가면 카메라를 완전히 끔
   modeName = name;
   modes[name].start(breath.value);
   document.querySelectorAll('.mode').forEach(b => { const on = b.dataset.mode === name; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('#autoPanel').hidden = name !== 'auto';
   $('#manualPanel').hidden = name !== 'manual';
   if (name === 'manual') setSlider(breath.value);
+  if (name === 'camera') cam?.activate();
 }
 document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
@@ -207,6 +212,7 @@ function frame(now) {
   const p = breath.update(dt, m.follow);
   if (Math.abs(p - lastApplied) > 1e-4) { applyBreath(organs, p); lastApplied = p; }
   airflow.update(dt, breath.velocity);
+  if (modeName === 'camera') cam.frame(dt);
   controls.update();
   renderer.render(scene, camera);
   labels.update(camera, p, view.clientWidth, view.clientHeight);
@@ -214,8 +220,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 applyBreath(organs, 0); lastApplied = 0;
+cam = createCameraController({ view, root, camera, controls, home: HOME, mode: modes.camera, breath,
+  onFallback: name => setMode(name), toast });
 setMode('auto');
 requestAnimationFrame(frame);
 
 // 점검·테스트용
-window.BREATH = { breath, organs, diaphragmUnder, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
+window.BREATH = { get cam() { return cam; }, breath, organs, diaphragmUnder, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
