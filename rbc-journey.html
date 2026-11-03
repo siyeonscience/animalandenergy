@@ -127,6 +127,7 @@ body.focus .where { padding-right: clamp(198px, 46vw, 310px); }
   background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px;
 }
 a.tool { text-decoration: none; }
+.hub-link { align-self: flex-start; }
 @media (max-width: 560px) {
   .rail span { font-size: 11px; }
   .card { padding: 13px 14px; }
@@ -141,6 +142,7 @@ a.tool { text-decoration: none; }
 <div class="hud">
   <div class="top">
     <div class="where">
+      <a class="tool hub-link" href="index.html#list" aria-label="실험 선택 화면으로">⌂ 실험 선택</a>
       <span id="eyebrow" class="eyebrow">1구간 · 좌심실에서 대동맥까지</span>
       <h2 id="place">좌심실</h2>
       <div class="chips">
@@ -148,7 +150,6 @@ a.tool { text-decoration: none; }
         <span class="chip"><i id="o2Dot" class="dot o2"></i><span id="o2Text">산소 많은 혈액</span></span>
       </div>
       <div class="chips tools">
-        <a class="tool hub-link" href="index.html#list" aria-label="실험 선택 화면으로">⌂ 실험 선택</a>
         <button id="back" class="tool">뒤로 가기</button>
         <button id="slow" class="tool" aria-pressed="false">천천히</button>
         <button id="fast" class="tool" aria-pressed="false">빠르게</button>
