@@ -54,7 +54,10 @@
 
   <aside class="panel" id="cameraPanel" hidden>
     <h2>카메라 연동</h2>
-    <p class="cam-rule"><b class="in">입 다물기</b> → 들숨<br><b class="ex">입 벌리기</b> → 날숨</p>
+    <p class="cam-rule"><small>1순위 · 어깨</small>
+      <b class="in">어깨 올리기</b> → 들숨<br><b class="ex">어깨 내리기</b> → 날숨</p>
+    <p class="cam-rule"><small>2순위 · 손 (상체 옆으로 손을 올리면)</small>
+      <b class="in">✊ 주먹</b> → 가로막 내려감<br><b class="ex">🖐 손바닥 펴기</b> → 가로막 올라감</p>
     <button type="button" class="wide cam-main" id="camStartBtn">📷 카메라 시작</button>
     <button type="button" class="wide cam-main" id="camStopBtn" hidden>■ 카메라 종료</button>
     <button type="button" class="wide" id="camRecalBtn" hidden>↺ 다시 보정</button>
@@ -66,18 +69,20 @@
   <div class="cam-status" id="camStatus" hidden aria-live="off">
     <dl>
       <dt>카메라</dt><dd id="cs-cam">-</dd>
-      <dt>얼굴</dt><dd id="cs-face">-</dd>
-      <dt>입 모양</dt><dd id="cs-mouth">-</dd>
       <dt>어깨</dt><dd id="cs-sh">-</dd>
+      <dt>손</dt><dd id="cs-hand">-</dd>
       <dt>호흡</dt><dd id="cs-breath">-</dd>
       <dt>인식 방식</dt><dd id="cs-method">-</dd>
     </dl>
     <dl class="cs-debug">
-      <dt>jawOpen</dt><dd id="cs-jaw">-</dd>
       <dt>어깨 이동</dt><dd id="cs-dy">-</dd>
+      <dt>손 모양</dt><dd id="cs-gesture">-</dd>
       <dt>처리</dt><dd id="cs-cost">-</dd>
     </dl>
   </div>
+
+  <!-- 손 모양을 알 수 없을 때 (브이 등) -->
+  <div class="cam-notice" id="camNotice" hidden role="alert">인식할 수 없습니다.<small>주먹을 쥐거나, 손가락을 펴서 손바닥을 보여 주세요</small></div>
 
   <!-- 카메라 안내 (보정, 오류, 인식 실패) -->
   <div class="cam-guide" id="camGuide" hidden role="status">

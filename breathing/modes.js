@@ -22,7 +22,7 @@ export class ManualMode {
   update() { return this.value; }
 }
 
-/* 카메라 연동: 입 모양·어깨 인식 결과(camera/controller.js)가 setGoal(1=들숨, 0=날숨)로 목표만 정해요.
+/* 카메라 연동: 어깨(1순위)·손(2순위) 인식 결과(camera/controller.js)가 setGoal(1=들숨, 0=날숨)로 목표만 정해요.
    목표가 바뀌면 순간이동하지 않고 일정한 빠르기(들숨 inhaleSec, 날숨 exhaleSec)로 숨을 쉬듯 이동해요.
    인식이 안 되면 목표를 바꾸지 않으므로 지금 상태를 그대로 유지해요. */
 export class CameraMode {

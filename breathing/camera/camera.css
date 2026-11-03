@@ -5,9 +5,10 @@ body.cam-on #camVideo{display:block;}
 #labels{z-index:2;}
 body.cam-on .hint{display:none;}
 
-#cameraPanel .cam-rule{font-size:14px;line-height:1.6;margin-bottom:8px;background:rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;}
+#cameraPanel .cam-rule{font-size:13px;line-height:1.55;margin-bottom:6px;background:rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;}
 #cameraPanel .cam-rule .in{color:var(--inhale);} #cameraPanel .cam-rule .ex{color:var(--exhale);}
 .mode[data-mode=camera]{opacity:1;}
+#cameraPanel .cam-rule small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px;}
 #cameraPanel .wide{margin-bottom:6px;}
 #cameraPanel .cam-main{background:var(--accent);color:#06233d;border-color:transparent;font-size:15px;}
 #camStopBtn{background:#e03131 !important;color:#fff !important;}
@@ -35,3 +36,7 @@ body.cam-on .hint{display:none;}
   .cam-status{min-width:0;max-width:62%;font-size:11px;top:40px;}
   #cameraPanel .tip{display:none;}
 }
+
+.cam-notice{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:7;background:rgba(224,49,49,.94);color:#fff;border-radius:14px;
+  padding:10px 22px;font-family:'Jua','Noto Sans KR',sans-serif;font-size:26px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;}
+.cam-notice small{display:block;font-family:'Noto Sans KR',sans-serif;font-size:13px;opacity:.9;margin-top:2px;}

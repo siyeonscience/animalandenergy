@@ -1,6 +1,6 @@
 /* MediaPipe Tasks Vision 불러오기 (프로젝트 안 vendor/mediapipe 파일만 사용)
-   - 얼굴: Face Landmarker (얼굴 랜드마크 + Blendshapes의 jawOpen)
    - 몸: Pose Landmarker lite (이 앱은 양쪽 어깨만 사용)
+   - 손: Gesture Recognizer (손 랜드마크 + 주먹/손바닥/브이 등 손 모양)
    카메라 모드를 처음 고를 때만 불러와서, 다른 모드의 시작 속도에는 영향이 없어요. */
 
 import { CAMERA_CONFIG } from './config.js';
@@ -26,7 +26,7 @@ export function loadVision(onProgress = () => {}) {
     blockTelemetry();
     onProgress('인식 엔진 불러오는 중…');
     const vision = await import(BASE + 'vision_bundle.mjs');
-    const { FilesetResolver, FaceLandmarker, PoseLandmarker } = vision;
+    const { FilesetResolver, GestureRecognizer, PoseLandmarker } = vision;
     if (!(await FilesetResolver.isSimdSupported())) {
       const e = new Error('이 브라우저는 인식 엔진(WebAssembly SIMD)을 지원하지 않아요. 최신 Chrome이나 Safari로 열어 주세요.'); e.name = 'NoSimd'; throw e;
     }
@@ -37,19 +37,19 @@ export function loadVision(onProgress = () => {}) {
       try { return await Cls.createFromOptions(fileset, { ...opts, baseOptions: { ...opts.baseOptions, delegate: first } }); }
       catch (e) { console.warn(first + ' 사용 불가, ' + second + '로 전환', e); return Cls.createFromOptions(fileset, { ...opts, baseOptions: { ...opts.baseOptions, delegate: second } }); }
     }
-    onProgress('얼굴 인식 모델 불러오는 중…');
-    const face = await create(FaceLandmarker, {
-      baseOptions: { modelAssetPath: BASE + 'models/face_landmarker.task' },
-      runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true,
-      minFaceDetectionConfidence: 0.5, minFacePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
-    });
     onProgress('어깨 인식 모델 불러오는 중…');
     const pose = await create(PoseLandmarker, {
       baseOptions: { modelAssetPath: BASE + 'models/pose_landmarker_lite.task' },
       runningMode: 'VIDEO', numPoses: 1,
       minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
     });
-    return { face, pose };
+    onProgress('손 인식 모델 불러오는 중…');
+    const hand = await create(GestureRecognizer, {
+      baseOptions: { modelAssetPath: BASE + 'models/gesture_recognizer.task' },
+      runningMode: 'VIDEO', numHands: 2,
+      minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    });
+    return { pose, hand };
   })().catch(e => { loading = null; throw e; });
   return loading;
 }

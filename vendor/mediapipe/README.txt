@@ -4,7 +4,7 @@ https://github.com/google-ai-edge/mediapipe
 이 폴더의 파일은 수정하지 않고 그대로 복사했어요.
 - vision_bundle.mjs                 : 자바스크립트 라이브러리
 - wasm/vision_wasm_internal.js/.wasm : 브라우저에서 돌아가는 인식 엔진 (SIMD 지원 브라우저용)
-- models/face_landmarker.task        : 얼굴 랜드마크 + Blendshapes(jawOpen 등) 모델
+- models/gesture_recognizer.task     : 손 랜드마크 + 손 모양(주먹, 손바닥, 브이 등) 모델
 - models/pose_landmarker_lite.task   : 자세 랜드마크(가벼운 버전) 모델 — 이 앱은 양쪽 어깨(11, 12번)만 사용
   모델 출처: https://storage.googleapis.com/mediapipe-models/ (MediaPipe 공식 배포, Apache 2.0)
 
