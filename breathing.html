@@ -58,6 +58,11 @@
       <b class="in">어깨 올리기</b> → 들숨<br><b class="ex">어깨 내리기</b> → 날숨</p>
     <p class="cam-rule"><small>2순위 · 손 (상체 옆으로 손을 올리면)</small>
       <b class="in">✊ 주먹</b> → 가로막 내려감<br><b class="ex">🖐 손바닥 펴기</b> → 가로막 올라감</p>
+    <label class="cam-zoom">카메라 배율 <b id="camZoomTxt">1배</b>
+      <input type="range" id="camZoom" min="0.5" max="1" step="0.05" value="1" aria-label="카메라 배율 0.5배에서 1배">
+      <span class="z-ends"><span>0.5배 (넓게)</span><span>1배</span></span>
+      <small id="camZoomInfo">카메라를 켜면 적용돼요</small>
+    </label>
     <button type="button" class="wide cam-main" id="camStartBtn">📷 카메라 시작</button>
     <button type="button" class="wide cam-main" id="camStopBtn" hidden>■ 카메라 종료</button>
     <button type="button" class="wide" id="camRecalBtn" hidden>↺ 다시 보정</button>

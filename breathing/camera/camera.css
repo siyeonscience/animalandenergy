@@ -1,5 +1,7 @@
 /* 카메라 연동 화면 */
-#camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;z-index:0;background:#000;}
+/* 위치·크기는 zoom.js가 배율에 맞춰 정해요 (값이 없을 때는 화면을 꽉 채움) */
+#camVideo{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:fill;transform:scaleX(-1);display:none;z-index:0;background:#000;}
+body.cam-on #view{background:#0b1622;}
 body.cam-on #camVideo{display:block;}
 #view canvas{position:relative;z-index:1;}
 #labels{z-index:2;}
@@ -40,3 +42,12 @@ body.cam-on .hint{display:none;}
 .cam-notice{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:7;background:rgba(224,49,49,.94);color:#fff;border-radius:14px;
   padding:10px 22px;font-family:'Jua','Noto Sans KR',sans-serif;font-size:26px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;}
 .cam-notice small{display:block;font-family:'Noto Sans KR',sans-serif;font-size:13px;opacity:.9;margin-top:2px;}
+
+.cam-zoom{display:block;font-size:13px;margin:2px 0 8px;background:rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;}
+.cam-zoom b{float:right;color:var(--accent);}
+.cam-zoom input{width:100%;margin:6px 0 0;accent-color:var(--accent);height:28px;}
+.cam-zoom .z-ends{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
+.cam-zoom small{display:block;font-size:11px;color:var(--muted);margin-top:2px;min-height:1em;word-break:keep-all;}
+/* 화면이 낮은 태블릿에서도 조작판이 아래 상태 막대에 가리지 않게: 넘치면 조작판 안에서 스크롤 */
+#cameraPanel{max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain;}
+@media (max-width:900px),(orientation:portrait){#cameraPanel{max-height:calc(100% - 20px);}}

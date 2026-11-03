@@ -12,6 +12,7 @@ import { ShoulderTracker } from './shoulders.js';
 import { HandTracker } from './hand.js';
 import { fuse, METHOD } from './fusion.js';
 import { createAligner } from './align.js';
+import { createZoom, ZOOM_MIN, ZOOM_MAX } from './zoom.js';
 
 const STATUS_KEY = 'breath.camStatus';
 const SHAPE_TEXT = { fist: '주먹 → 가로막 내려감', open: '손바닥 → 가로막 올라감', unknown: '인식할 수 없음', none: '-' };
@@ -30,6 +31,20 @@ export function createCameraController({ view, root, camera, controls, home, mod
   let lastPose = 0, lastHand = 0, lastTs = 0, cost = 0, poseEvery = 1000 / CFG.poseHz, handEvery = 1000 / CFG.handHz;
   let noneSince = -1, lastStatus = 0, failCount = 0, lastMethod = '';
   let statusOn = loadStatusPref();
+
+  // 카메라 배율 (0.5~1배): 기기 카메라 배율 → 안 되면 화면 배율
+  const zoomInput = $('#camZoom');
+  const showZoom = z => {
+    $('#camZoomTxt').textContent = +z.value.toFixed(2) + '배';
+    const h = z.hardware;
+    $('#camZoomInfo').textContent = !stream ? '카메라를 켜면 적용돼요'
+      : h && h.applied < 1 ? `기기 카메라 배율 ${h.applied.toFixed(2)}배` + (z.screen < 1 ? ` + 화면 배율 ${z.screen.toFixed(2)}배` : '')
+      : z.value < 1 ? (h ? '기기는 1배까지만 지원 → 화면 배율로 줄였어요' : '화면 배율로 줄였어요 (기기 카메라 배율 미지원)') : '';
+  };
+  const zoom = createZoom({ video, view, onChange: showZoom });
+  showZoom(zoom);
+  zoomInput.min = ZOOM_MIN; zoomInput.max = ZOOM_MAX; zoomInput.value = zoom.value;
+  zoomInput.addEventListener('input', () => zoom.set(+zoomInput.value));
 
   /* ---------- 화면 ---------- */
   function setPanel() {
@@ -82,6 +97,7 @@ export function createCameraController({ view, root, camera, controls, home, mod
     const track = stream.getVideoTracks()[0];
     track.addEventListener('ended', () => { if (my === token) fail('카메라 연결이 끊겼어요. 다시 시도하거나 다른 모드를 써 주세요.'); });
     setPanel(); frontView(true);
+    await zoom.attach(stream);
     try { vision = await loadVision(msg => my === token && showGuide(msg, '처음 한 번은 조금 걸릴 수 있어요.')); }
     catch (e) { console.error(e); if (my === token) fail('인식 모델을 불러오지 못했어요. ' + (e.name === 'NoSimd' ? e.message : '인터넷 연결을 확인하고 다시 시도해 주세요.')); return; }
     if (my !== token) return;
@@ -92,7 +108,7 @@ export function createCameraController({ view, root, camera, controls, home, mod
   function stopStream() {
     loopId++;
     if (stream) closeCamera(stream, video);
-    stream = null;
+    stream = null; zoom.detach();
     document.body.classList.remove('cam-on');
   }
 
@@ -244,11 +260,11 @@ export function createCameraController({ view, root, camera, controls, home, mod
     deactivate() { stop(); panel.hidden = true; statusEl.hidden = true; },
     /* 매 렌더 프레임 (main.js): 모형 위치 맞추기 + 상태 표시 */
     frame(dt) {
-      if (stream && phase !== 'idle') aligner.update(shoulder, video, view.clientWidth, view.clientHeight, camera, dt, true);
+      if (stream && phase !== 'idle') aligner.update(shoulder, zoom.rect, view.clientWidth, view.clientHeight, camera, dt, true);
       updateStatus();
     },
     get phase() { return phase; },
     get stream() { return stream; },
-    debug: { shoulder, hand, fused, video },
+    debug: { shoulder, hand, fused, video, zoom },
   };
 }

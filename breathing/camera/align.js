@@ -20,11 +20,10 @@ export function createAligner(root, cfg) {
   return {
     span,
     /* 매 렌더 프레임: 부드럽게 따라가기 */
-    update(sh, video, W, H, camera, dt, mirrored = true) {
-      if (!sh.seen || !video.videoWidth) return false;
-      // 영상은 화면을 꽉 채우도록(object-fit: cover) 그려져요 → 같은 방식으로 좌표 변환
-      const vw = video.videoWidth, vh = video.videoHeight, s = Math.max(W / vw, H / vh);
-      const dw = vw * s, dh = vh * s, ox = (W - dw) / 2, oy = (H - dh) / 2;
+    // rect: 영상이 화면에 놓인 위치·크기(px, camera/zoom.js가 계산 — 배율에 따라 달라짐)
+    update(sh, rect, W, H, camera, dt, mirrored = true) {
+      if (!sh.seen || !rect.ready) return false;
+      const dw = rect.w, dh = rect.h, ox = rect.x, oy = rect.y;
       const mx = ox + (mirrored ? 1 - sh.cx : sh.cx) * dw, my = oy + sh.cy * dh;
       const wpx = sh.width * dh;                                  // 어깨 너비(화면 픽셀)
       // 카메라 정면(0,0,D)에서 z=0 평면 위의 1픽셀 = 몇 장면 단위인지

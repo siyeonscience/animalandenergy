@@ -4,7 +4,8 @@ export async function openFrontCamera(video) {
   if (!window.isSecureContext) throw camErr('insecure');
   if (!navigator.mediaDevices?.getUserMedia) throw camErr('unsupported');
   const tries = [
-    { audio: false, video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } } },
+    // 4:3을 먼저 요청: 대부분의 전면 카메라 센서가 4:3이라, 16:9로 받으면 위아래가 잘려 더 확대돼 보여요
+    { audio: false, video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, aspectRatio: { ideal: 4 / 3 }, frameRate: { ideal: 30, max: 30 } } },
     { audio: false, video: { facingMode: 'user' } },
     { audio: false, video: true },             // 전면 카메라가 없으면 아무 카메라나
   ];
