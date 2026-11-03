@@ -98,3 +98,11 @@ button:focus-visible,.slider:focus-visible{outline:3px solid var(--accent);outli
 @media (max-width:900px),(orientation:portrait){.credit{bottom:auto;top:40px;}}
 .rate{font-size:12px;color:var(--muted);margin:-2px 0 8px;text-align:center;}
 @media (max-width:900px),(orientation:portrait){#autoPanel .rate{display:none;}}
+
+/* 풍선 모형 */
+.bmap{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin-top:10px;font-size:13px;background:rgba(255,255,255,.06);border-radius:10px;padding:8px 10px;}
+.bmap dt{color:var(--muted);} .bmap dd{font-weight:700;}
+.bmap dd::before{content:'= ';color:var(--muted);font-weight:400;}
+#bAutoBtn[aria-pressed=true]{background:var(--accent);color:#06233d;border-color:transparent;}
+@media (max-width:900px),(orientation:portrait){#balloonPanel .bmap,#balloonPanel .tip,#balloonPanel h2{display:none;}#balloonPanel .track{height:24vh;}}
+@media (max-width:560px){#balloonPanel .track{height:16vh;}#balloonPanel{padding:8px;}#bAutoBtn{font-size:13px;padding:6px;}}

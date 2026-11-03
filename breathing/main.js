@@ -5,7 +5,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { loadAnatomy } from './anatomy.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { applyBreath, BreathState } from './respiration.js';
-import { AutoMode, ManualMode, CameraMode } from './modes.js';
+import { AutoMode, ManualMode, CameraMode, BalloonMode } from './modes.js';
+import { createBalloonModel } from './balloon/model.js';
 import { createAirflow } from './airflow.js';
 import { createLabels } from './labels.js';
 import { createCameraController } from './camera/controller.js';
@@ -48,6 +49,10 @@ const { root, organs } = anatomy;
 scene.add(root);
 const airflow = createAirflow(anatomy.airwayPaths, anatomy.airflowArrowAt);
 scene.add(airflow.group);
+// 풍선 모형 (풍선 모형 보기 모드에서만 보여요)
+const balloon = createBalloonModel();
+balloon.group.visible = false;
+scene.add(balloon.group);
 
 function fit() {
   const w = view.clientWidth, h = view.clientHeight;
@@ -70,21 +75,49 @@ const labels = createLabels($('#labels'), [
   { text: '갈비뼈', sub: '흉곽', anchor: onRoot(organs.ribcage.anchor), side: 'left' },
   { text: '가로막', sub: '횡격막 · 근육', anchor: onRoot(organs.diaphragm.anchor), side: 'right' },
 ]);
+// 풍선 모형 이름표: 모형의 각 부분이 우리 몸의 무엇에 해당하는지
+const bLabels = createLabels($('#labels'), [
+  { text: 'Y자 유리관', sub: '= 기관 · 기관지', anchor: balloon.anchors.tube, side: 'right' },
+  { text: '고무풍선', sub: '= 폐', anchor: balloon.anchors.balloon, side: 'left' },
+  { text: '병 속 공간', sub: '= 흉강', anchor: balloon.anchors.jar, side: 'right' },
+  { text: '고무막', sub: '= 가로막', anchor: balloon.anchors.membrane, side: 'right' },
+]);
+bLabels.setVisible(false);
+let labelsOn = true;
 
 /* ================= 모드 ================= */
 const breath = new BreathState();
-const modes = { auto: new AutoMode(), manual: new ManualMode(), camera: new CameraMode() };
+const modes = { auto: new AutoMode(), manual: new ManualMode(), camera: new CameraMode(), balloon: new BalloonMode() };
 let modeName = 'auto';
 let cam = null;   // 카메라 연동 (아래에서 만듦)
+const BALLOON_VIEW = { pos: new THREE.Vector3(3.2, -2.4, 20), target: new THREE.Vector3(0, -0.6, 0) };   // 살짝 아래에서: 당겨진 고무막이 보이게
+/* 풍선 모형 ↔ 인체 모형 바꾸기 */
+function showBalloon(on) {
+  if (balloon.group.visible === on) return;
+  balloon.group.visible = on;
+  root.visible = !on; airflow.group.visible = !on;
+  labels.setVisible(labelsOn && !on); bLabels.setVisible(labelsOn && on);
+  $('#boneBtn').hidden = on;
+  $('#volLabel').textContent = on ? '병 속 부피' : '흉강 부피';
+  const v = on ? BALLOON_VIEW : HOME;
+  camera.position.copy(v.pos); controls.target.copy(v.target);
+  if (on && camera.aspect < 0.9) camera.position.sub(v.target).multiplyScalar(1.4).add(v.target);   // 세로 화면: 조금 더 멀리서
+  controls.update();
+  shownDir = null;                                   // 아래 설명을 모형에 맞게 다시 쓰기
+  if (!on) lastApplied = -1;                         // 인체 모형을 지금 호흡 상태로 다시 맞추기
+}
 function setMode(name) {
   if (modeName === 'camera' && name !== 'camera') cam?.deactivate();   // 카메라 모드를 나가면 카메라를 완전히 끔
+  if (name !== 'balloon') showBalloon(false);
   modeName = name;
   modes[name].start(breath.value);
   document.querySelectorAll('.mode').forEach(b => { const on = b.dataset.mode === name; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('#autoPanel').hidden = name !== 'auto';
   $('#manualPanel').hidden = name !== 'manual';
+  $('#balloonPanel').hidden = name !== 'balloon';
   if (name === 'manual') setSlider(breath.value);
   if (name === 'camera') cam?.activate();
+  if (name === 'balloon') { showBalloon(true); setBSlider(breath.value); toast('🎈 고무막을 아래로 잡아당기면 고무풍선이 부풀어요. 위로 밀어 올리면 줄어들어요.'); }
 }
 document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
@@ -118,6 +151,33 @@ slider.addEventListener('keydown', e => {
   if (d) { e.preventDefault(); setSlider(modes.manual.value + d); }
 });
 
+// 풍선 모형: 고무막 슬라이더 (아래로 끌수록 잡아당김 = 들숨)
+const bSlider = $('#bSlider'), bTrack = bSlider.querySelector('.track');
+function setBSlider(v) {
+  modes.balloon.set(v);
+  showBSlider(modes.balloon.value);
+}
+function showBSlider(v) {
+  const pct = Math.round(v * 100);
+  $('#bSliderKnob').style.top = pct + '%'; $('#bSliderFill').style.height = pct + '%';
+  bSlider.setAttribute('aria-valuenow', pct);
+}
+function stopBAuto() { if (modes.balloon.auto) { modes.balloon.auto = false; $('#bAutoBtn').setAttribute('aria-pressed', false); $('#bAutoBtn').textContent = '▶ 자동으로 움직이기'; } }
+function bSliderFrom(e) { const r = bTrack.getBoundingClientRect(); stopBAuto(); setBSlider((e.clientY - r.top) / r.height); }
+bTrack.addEventListener('pointerdown', e => { e.preventDefault(); bTrack.setPointerCapture(e.pointerId); bSliderFrom(e); bTrack.onpointermove = bSliderFrom; });
+bTrack.addEventListener('pointerup', () => { bTrack.onpointermove = null; });
+bTrack.addEventListener('pointercancel', () => { bTrack.onpointermove = null; });
+bSlider.addEventListener('keydown', e => {
+  const d = { ArrowDown: .05, ArrowUp: -.05, PageDown: .2, PageUp: -.2 }[e.key];
+  if (d) { e.preventDefault(); stopBAuto(); setBSlider(modes.balloon.value + d); }
+});
+$('#bAutoBtn').addEventListener('click', () => {
+  const b = modes.balloon; b.auto = !b.auto;
+  if (b.auto) b.t = b.value >= 0.5 ? 0.45 : 0;        // 지금 위치에서 자연스럽게 이어서
+  $('#bAutoBtn').setAttribute('aria-pressed', b.auto);
+  $('#bAutoBtn').textContent = b.auto ? '❚❚ 자동 멈추기' : '▶ 자동으로 움직이기';
+});
+
 // 3D 화면의 가로막을 직접 위아래로 끌기 → 수동 호흡으로 바뀜
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 /* 손가락 아래에서 '가장 앞에 보이는 것'이 가로막일 때만 끌 수 있어요.
@@ -126,7 +186,17 @@ let seeThrough = false;
 const BONE = /^(rib|cart|manub|stern|xiph|spine|clav)/;
 const pickables = [];
 root.traverse(o => { if (o.isMesh && !o.name.endsWith('_depth')) pickables.push(o); });
+/* 풍선 모형에서는 고무막(또는 손잡이)을 잡아요. 유리병은 투명해서 통과 */
+function membraneUnder(e) {
+  if (!balloon.group.visible) return false;
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  balloon.group.updateMatrixWorld();
+  return ray.intersectObjects([balloon.membrane, balloon.knob, balloon.grab], true).length > 0;
+}
 function diaphragmUnder(e) {
+  if (balloon.group.visible) return false;
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
   ray.setFromCamera(ndc, camera);
@@ -138,6 +208,7 @@ let hoverT = 0;
 renderer.domElement.addEventListener('pointermove', e => {
   if (drag || e.pointerType === 'touch' || performance.now() - hoverT < 60) return;
   hoverT = performance.now();
+  if (balloon.group.visible) { const onM = membraneUnder(e); renderer.domElement.style.cursor = onM ? 'grab' : ''; balloon.membrane.material.emissive.setHex(onM ? 0x331018 : 0); return; }
   const on = diaphragmUnder(e);
   renderer.domElement.style.cursor = on ? 'grab' : '';
   organs.diaphragm.mesh.material.emissive.setHex(on ? 0x331010 : 0x000000);
@@ -146,13 +217,18 @@ let drag = null;
 renderer.domElement.addEventListener('pointerdown', e => {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  if (membraneUnder(e)) {                                // 풍선 모형: 고무막 끌기
+    stopBAuto();
+    drag = { y: e.clientY, v: modes.balloon.value, h: r.height, balloon: true };
+    controls.enabled = false; renderer.domElement.setPointerCapture(e.pointerId); return;
+  }
   if (!diaphragmUnder(e)) return;
   if (modeName !== 'manual') { setMode('manual'); toast('✋ 수동 호흡: 가로막을 아래로 끌면 들숨, 위로 올리면 날숨이에요.'); }
   drag = { y: e.clientY, v: modes.manual.value, h: r.height };
   controls.enabled = false;
   renderer.domElement.setPointerCapture(e.pointerId);
 });
-renderer.domElement.addEventListener('pointermove', e => { if (drag) setSlider(drag.v + (e.clientY - drag.y) / (drag.h * 0.35)); });
+renderer.domElement.addEventListener('pointermove', e => { if (!drag) return; const v = drag.v + (e.clientY - drag.y) / (drag.h * 0.35); drag.balloon ? setBSlider(v) : setSlider(v); });
 const endDrag = () => { if (drag) { drag = null; controls.enabled = true; } };
 renderer.domElement.addEventListener('pointerup', endDrag);
 renderer.domElement.addEventListener('pointercancel', endDrag);
@@ -160,9 +236,10 @@ controls.addEventListener('start', () => { $('#hint').style.opacity = 0; });
 
 /* ================= 이름표·초기화 ================= */
 $('#labelsBtn').addEventListener('click', () => {
-  labels.setVisible(!labels.visible);
-  $('#labelsBtn').setAttribute('aria-pressed', labels.visible);
-  $('#labelsBtn').textContent = labels.visible ? '이름표 켜짐' : '이름표 꺼짐';
+  labelsOn = !labelsOn;
+  labels.setVisible(labelsOn && !balloon.group.visible); bLabels.setVisible(labelsOn && balloon.group.visible);
+  $('#labelsBtn').setAttribute('aria-pressed', labelsOn);
+  $('#labelsBtn').textContent = labelsOn ? '이름표 켜짐' : '이름표 꺼짐';
 });
 $('#boneBtn').addEventListener('click', () => {
   seeThrough = !seeThrough; anatomy.setBonesSeeThrough(seeThrough);
@@ -172,7 +249,7 @@ $('#boneBtn').addEventListener('click', () => {
 $('#resetBtn').addEventListener('click', () => {
   camera.position.copy(HOME.pos); controls.target.copy(HOME.target); controls.update();
   breath.reset(); modes.auto.t = 0; modes.auto.paused = false; $('#pauseBtn').textContent = '❚❚ 멈추기';
-  setSlider(0); setMode('auto');
+  setSlider(0); setBSlider(0); stopBAuto(); setMode('auto');
   toast('처음 상태로 돌아왔어요.');
 });
 
@@ -183,7 +260,14 @@ const FACTS = {
   exhale: [['가로막', '이완 → 위로 올라가 둥근 지붕 모양이 돼요'], ['갈비뼈', '아래쪽·안쪽으로 돌아와요'],
            ['흉강 · 폐', '흉강 부피가 작아지고 폐가 줄어들어요'], ['공기', '폐 안 → 몸 밖으로 나가요']],
 };
-let shownDir = null;
+// 풍선 모형일 때의 설명 (모형의 각 부분 = 우리 몸의 무엇)
+const BFACTS = {
+  inhale: [['고무막 (가로막)', '아래로 잡아당겨져요'], ['병 속 공간 (흉강)', '부피가 커지고 압력이 낮아져요'],
+           ['고무풍선 (폐)', '부풀어요'], ['공기', '바깥 → 유리관 → 고무풍선 안으로']],
+  exhale: [['고무막 (가로막)', '위로 올라가요'], ['병 속 공간 (흉강)', '부피가 작아지고 압력이 높아져요'],
+           ['고무풍선 (폐)', '줄어들어요'], ['공기', '고무풍선 안 → 유리관 → 바깥으로']],
+};
+var shownDir = null;
 function updateStatus() {
   const dir = breath.direction, moving = Math.abs(breath.velocity) > 0.04;
   if (dir !== shownDir) {
@@ -192,7 +276,7 @@ function updateStatus() {
     st.className = 'state ' + dir;
     st.classList.remove('pop'); void st.offsetWidth; st.classList.add('pop');   // 바뀌는 순간 한 번만 톡
     $('#stateName').textContent = dir === 'inhale' ? '들숨' : '날숨';
-    $('#facts').innerHTML = FACTS[dir].map(([k, v]) => `<li><b>${k}</b>${v}</li>`).join('');
+    $('#facts').innerHTML = (balloon.group.visible ? BFACTS : FACTS)[dir].map(([k, v]) => `<li><b>${k}</b>${v}</li>`).join('');
   }
   $('#stateSub').textContent = moving ? (dir === 'inhale' ? '숨을 들이마시는 중' : '숨을 내쉬는 중') : '멈춤';
   $('#volBar').style.width = (45 + 55 * breath.value) + '%';
@@ -210,12 +294,18 @@ function frame(now) {
   const m = modes[modeName];
   breath.target = m.update(dt);
   const p = breath.update(dt, m.follow);
-  if (Math.abs(p - lastApplied) > 1e-4) { applyBreath(organs, p); lastApplied = p; }
-  airflow.update(dt, breath.velocity);
+  if (balloon.group.visible) {                       // 풍선 모형: 인체 모형은 쉬고 풍선 모형만 움직여요
+    balloon.setBreath(p); balloon.update(dt, breath.velocity);
+    if (modes.balloon.auto) showBSlider(modes.balloon.value);
+  } else {
+    if (Math.abs(p - lastApplied) > 1e-4) { applyBreath(organs, p); lastApplied = p; }
+    airflow.update(dt, breath.velocity);
+  }
   if (modeName === 'camera') cam.frame(dt);
   controls.update();
   renderer.render(scene, camera);
   labels.update(camera, p, view.clientWidth, view.clientHeight);
+  bLabels.update(camera, p, view.clientWidth, view.clientHeight);
   updateStatus();
   requestAnimationFrame(frame);
 }
@@ -226,4 +316,4 @@ setMode('auto');
 requestAnimationFrame(frame);
 
 // 점검·테스트용
-window.BREATH = { get cam() { return cam; }, breath, organs, diaphragmUnder, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
+window.BREATH = { get cam() { return cam; }, balloon, setBSlider, membraneUnder, breath, organs, diaphragmUnder, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };

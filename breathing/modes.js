@@ -36,3 +36,19 @@ export class CameraMode {
     return this.value;
   }
 }
+
+/* 풍선 모형: 고무막을 직접 당기거나(슬라이더·3D 화면에서 끌기), '자동으로 움직이기'를 켜면 저절로 당겼다 놓아요.
+   value: 0 = 고무막을 밀어 올림(날숨), 1 = 고무막을 잡아당김(들숨) */
+export class BalloonMode {
+  constructor() { this.value = 0; this.follow = 7; this.auto = false; this.t = 0; this.period = 5; }
+  start(current) { this.value = current; this.t = 0; }
+  set(v) { this.value = Math.min(1, Math.max(0, v)); }
+  update(dt) {
+    if (this.auto) {
+      this.t = (this.t + dt / this.period) % 1;
+      const t = this.t;
+      this.value = t < 0.45 ? ease(t / 0.45) : 1 - ease((t - 0.45) / 0.55);
+    }
+    return this.value;
+  }
+}
