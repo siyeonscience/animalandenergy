@@ -1568,8 +1568,9 @@ a.tool { text-decoration: none; }
     'float h(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}',
     'float n3(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z);}',
     'float fbm(vec3 p){return .55*n3(p)+.3*n3(p*2.1)+.15*n3(p*4.3);}',
-    'void main(){ if(dot(vO,uN)>uClip) discard;',
-    ' float pid=floor(vPart+.5); if(pid>4.5&&pid<5.5&&vO.y>0.440) discard; vec3 N=normalize(vN); vec3 V=normalize(-vP); bool cut=!gl_FrontFacing;',
+    'void main(){ float cd=uClip-dot(vO,uN); float edge=clamp(cd/max(fwidth(cd),1e-5)+.5,0.,1.);',
+    ' float pid=floor(vPart+.5); if(pid>4.5&&pid<5.5){ float ct=.440-vO.y; edge*=clamp(ct/max(fwidth(ct),1e-5)+.5,0.,1.); }',
+    ' if(edge<=0.) discard; vec3 N=normalize(vN); vec3 V=normalize(-vP); bool cut=!gl_FrontFacing;',
     ' float nz=fbm(vO*7.); vec3 c;',
     ' if(pid<.5) c=mix(vec3(.60,.13,.12),vec3(.78,.30,.24),nz);',
     ' else if(pid<1.5) c=mix(vec3(.72,.26,.22),vec3(.93,.74,.52),smoothstep(.35,.62,nz+.25*vO.y));',
@@ -1580,14 +1581,14 @@ a.tool { text-decoration: none; }
     ' else if(pid<6.5) c=mix(vec3(.30,.45,.60),vec3(.52,.68,.74),nz);',
     ' else if(pid<7.5) c=vec3(.78,.2,.18);',
     ' else if(pid<8.5) c=vec3(.84,.12,.12); else c=vec3(.2,.34,.7);',
-    ' if(cut){ N=vec3(0.,0.,1.); float st=sin(vO.x*70.+vO.y*30.+nz*6.)*.5+.5;',
-    '  c=pid<2.5?mix(vec3(.72,.2,.18),vec3(.86,.38,.3),st*.5+nz*.5):c*.92; }',
-    ' else N=normalize(N+.25*(vec3(n3(vO*22.),n3(vO*22.+7.),n3(vO*22.+13.))-.5));',
+    ' if(cut){ N=vec3(0.,0.,1.); float st=fbm(vO*3.+3.);',
+    '  c=pid<2.5?mix(vec3(.72,.2,.18),vec3(.86,.38,.3),st*.6+nz*.4):c*.92; }',
+    ' else N=normalize(N+.08*(vec3(n3(vO*10.),n3(vO*10.+7.),n3(vO*10.+13.))-.5));',
     ' vec3 L=normalize(vec3(.35,.65,.85)); float d=max(dot(N,L),0.), f=max(dot(N,normalize(vec3(-.8,-.2,.45))),0.);',
     ' float s=pow(max(dot(N,normalize(L+V)),0.),46.), r=pow(1.-max(dot(N,V),0.),3.);',
     ' vec3 o=c*(.26+.78*d+.22*f)+vec3(1.,.93,.88)*s*(cut?.05:.42)+c*r*.35;',
     ' if(!cut&&uClip<1.){ o*=1.-.62*smoothstep(.02,.42,uClip-dot(vO,uN)); }',
-    ' gl_FragColor=vec4(o,1.); }'].join('\n');
+    ' gl_FragColor=vec4(o,edge); }'].join('\n');
   var VS = 'attribute float aPart; uniform float uV,uA; varying vec3 vO; varying vec3 vN; varying vec3 vP; varying float vPart;' +
     'void main(){ float low=smoothstep(.2,-.45,position.y); vec3 p=position; p.xz*=1.-.085*uV*low-.04*uA*(1.-low); p.y+=.045*uV*low;' +
     ' vO=position; vPart=aPart; vN=normalMatrix*normal; vec4 m=modelViewMatrix*vec4(p,1.); vP=m.xyz; gl_Position=projectionMatrix*m; }';
@@ -1600,7 +1601,8 @@ a.tool { text-decoration: none; }
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aPart', new THREE.BufferAttribute(part, 1));
     g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeVertexNormals();
     heartUni = { uV: { value: 0 }, uA: { value: 0 }, uClip: { value: 9 }, uN: { value: new THREE.Vector3(0, 0.5, 0.866) } };
-    mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ uniforms: heartUni, side: THREE.DoubleSide, vertexShader: VS, fragmentShader: FS }));
+    // 단면 경계를 매끄럽게: 잘린 가장자리 픽셀을 부분적으로 덮도록(alpha-to-coverage) — 계단 모양 방지
+    mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ uniforms: heartUni, side: THREE.DoubleSide, vertexShader: VS, fragmentShader: FS, alphaToCoverage: true, extensions: { derivatives: true } }));
     scene = new THREE.Scene(); scene.background = new THREE.Color(0x101a1e); scene.add(mesh);
     cam = new THREE.PerspectiveCamera(30, 1, 0.02, 40); built = true;
   }
