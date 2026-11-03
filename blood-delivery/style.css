@@ -10,7 +10,9 @@ body{background:#e9eef5 radial-gradient(circle at 20% 10%,#f5f8fc 0,#e2e9f2 60%,
   font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:18px;line-height:1.6;overflow-x:hidden;}
 button{font:inherit;color:inherit;}
 .jua,h1,h2,h3,.btn{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;}
-.back-hub{position:fixed;left:14px;top:12px;z-index:50;font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;color:#fff;
+.back-hubs{position:fixed;left:14px;top:12px;z-index:50;display:flex;gap:6px;}
+.back-hubs .back-hub.sub{opacity:.85;}
+.back-hub{font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;color:#fff;
   text-decoration:none;background:rgba(20,33,61,.75);padding:6px 14px;border-radius:999px;}
 #app{min-height:100%;}
 .screen{min-height:100vh;animation:screenIn .45s ease-out;}
@@ -57,7 +59,7 @@ button{font:inherit;color:inherit;}
 
 /* ===== 상단 진행판 ===== */
 .topbar{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;display:flex;align-items:center;gap:18px;
-  padding:10px 18px 10px 170px;box-shadow:0 3px 12px rgba(0,0,0,.2);flex-wrap:wrap;}
+  padding:10px 18px 10px 240px;box-shadow:0 3px 12px rgba(0,0,0,.2);flex-wrap:wrap;}
 .topbar .mno{font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;color:#ffd43b;white-space:nowrap;}
 .topbar .score{font-size:19px;white-space:nowrap;}
 .topbar .score b{font-size:26px;color:#fff;font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;}
@@ -68,7 +70,7 @@ button{font:inherit;color:inherit;}
 
 /* ===== 미션 화면 ===== */
 .mission{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;padding:20px;max-width:1300px;margin:0 auto;align-items:start;}
-@media (max-width:900px){.mission{grid-template-columns:1fr;padding:14px;}.topbar{padding-left:150px;}}
+@media (max-width:900px){.mission{grid-template-columns:1fr;padding:14px;}.topbar{padding-left:230px;}}
 @media (max-width:560px){.topbar{padding:56px 12px 10px;gap:8px 14px;}body{font-size:17px;}.stamp{width:92px;height:92px;font-size:24px;}.report.done{padding-bottom:104px;}}
 
 /* 사고 보고서 */

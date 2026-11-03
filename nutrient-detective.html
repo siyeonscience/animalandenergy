@@ -246,8 +246,8 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 .back-hub{position:absolute;left:16px;top:14px;z-index:5;font-family:'Jua','Malgun Gothic',sans-serif;font-size:17px;color:#6b5638;
   text-decoration:none;background:rgba(255,255,255,.7);padding:6px 14px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.1);}
 .back-hub:hover{background:#fff;}
-.hub-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin-right:4px;
-  background:rgba(246,217,138,.18);color:#f6d98a;text-decoration:none;font-size:20px;}
+.hub-btn{display:flex;align-items:center;justify-content:center;height:34px;padding:0 14px;border-radius:999px;margin-right:6px;white-space:nowrap;
+  background:rgba(246,217,138,.18);color:#f6d98a;text-decoration:none;font-size:16px;font-family:'Jua','Malgun Gothic',sans-serif;}
 .hub-btn:hover{background:rgba(246,217,138,.32);}
 
 /* 태블릿 화면 키보드 대응: 맨 아래 버튼 줄은 보고서 창 아래에 붙어 있음 */
@@ -257,6 +257,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 #resumeCover{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(240,226,196,.96);
   font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;color:#3d2b17;}
 #resumeCover.on{display:flex;}
+
+/* 휴대폰처럼 좁은 화면: 실험실 위쪽 막대에서는 제목을 숨기고 '실험실 목록'과 도구 버튼만 */
+@media (max-width:640px){.labbar .lt{font-size:0;gap:0;}.labbar .lt svg,.labbar .lt small{display:none;}}
 </style>
 </head>
 <body>
@@ -313,7 +316,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 <section id="lab" class="screen">
   <header class="labbar">
     <div class="lt">
-      <a class="hub-btn" id="hubBtn" href="index.html#list" title="실험실 목록으로" aria-label="실험실 목록으로">←</a>
+      <a class="hub-btn" id="hubBtn" href="index.html#list" title="실험실 목록으로">← 실험실 목록</a>
       <svg width="26" height="26" viewBox="0 0 120 120" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="#f6d98a" stroke-width="12"/><rect x="73" y="70" width="20" height="46" rx="9" fill="#f6d98a" transform="rotate(-45 83 93)"/></svg>
       영양소 탐정 <small>· 실험실</small>
     </div>

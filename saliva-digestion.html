@@ -60,8 +60,8 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
   background:#2f5d50;color:#f6d98a;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:2;}
 .labbar .lt{font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;display:flex;align-items:center;gap:8px;}
 .labbar .lt small{font-size:15px;color:#cfe3da;}
-.hub-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;margin-right:4px;
-  background:rgba(246,217,138,.18);color:#f6d98a;text-decoration:none;font-size:20px;}
+.hub-btn{display:flex;align-items:center;justify-content:center;height:34px;padding:0 14px;border-radius:999px;margin-right:6px;white-space:nowrap;
+  background:rgba(246,217,138,.18);color:#f6d98a;text-decoration:none;font-size:16px;font-family:'Jua','Malgun Gothic',sans-serif;}
 .hbtns{display:flex;gap:8px;align-items:center;}
 .dict{position:relative;display:flex;align-items:center;gap:6px;background:#f6d98a;color:#2f5d50;border:none;border-radius:12px;
   padding:6px 12px 6px 8px;cursor:pointer;font-family:'Jua','Malgun Gothic',sans-serif;font-size:16px;box-shadow:0 3px 0 #c9a54a;}
@@ -166,6 +166,9 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 #resumeCover{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(240,226,196,.96);
   font-family:'Jua','Malgun Gothic',sans-serif;font-size:24px;color:#3d2b17;}
 #resumeCover.on{display:flex;}
+
+/* 휴대폰처럼 좁은 화면: 실험실 위쪽 막대에서는 제목을 숨기고 '실험실 목록'과 도구 버튼만 */
+@media (max-width:640px){.labbar .lt{font-size:0;gap:0;}.labbar .lt svg,.labbar .lt small{display:none;}}
 </style>
 </head>
 <body>
@@ -216,7 +219,7 @@ html,body{height:100%;overflow:hidden;background:#f0e2c4;color:#2f2a24;
 <section id="lab" class="screen">
   <header class="labbar">
     <div class="lt">
-      <a class="hub-btn" id="hubBtn" href="index.html#list" title="실험실 목록으로" aria-label="실험실 목록으로">←</a>
+      <a class="hub-btn" id="hubBtn" href="index.html#list" title="실험실 목록으로">← 실험실 목록</a>
       침의 소화 작용 <small>· 실험실</small>
     </div>
     <div class="hbtns">

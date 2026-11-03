@@ -423,7 +423,7 @@ function renderResult(){
     </div>
     <div class="row">
       <button class="btn ghost" id="toReview" type="button"${wrongs.length?'':' disabled style="opacity:.5"'}>${wrongs.length?'내가 틀린 문제 확인하기':'틀린 문제가 없어요!'}</button>
-      <a class="btn ghost" href="index.html#list">실험 선택 화면으로 돌아가기</a>
+      <a class="btn ghost" href="index.html#list">실험실 목록으로 돌아가기</a>
     </div>
   </div></section>`;
   $('#retry').onclick=()=>{reset();S.screen='guide';go();};
