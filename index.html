@@ -66,7 +66,7 @@ body{background:radial-gradient(ellipse at 50% 30%,#fff8e8 0%,#f2e4c6 60%,#e2cfa
 .tag.wait{background:#ece5d6;color:#8a7a60;}
 .card.wait .thumb{filter:saturate(.55);}
 .card.go{border-color:#f5a043;}
-.card.go:not(.ext)::after{content:'NEW';position:absolute;top:12px;right:12px;background:#e5484d;color:#fff;font:700 12px 'Noto Sans KR',sans-serif;
+.card.new::after{content:'NEW';position:absolute;top:12px;right:12px;background:#e5484d;color:#fff;font:700 12px 'Noto Sans KR',sans-serif;
   padding:3px 9px;border-radius:999px;letter-spacing:.05em;}
 .card.zoom{transform:scale(1.04);box-shadow:0 20px 40px rgba(80,60,30,.3);}
 #fadeOut{position:fixed;inset:0;background:#f0e2c4;opacity:0;pointer-events:none;transition:opacity .45s;z-index:30;}
@@ -128,23 +128,29 @@ body{background:radial-gradient(ellipse at 50% 30%,#fff8e8 0%,#f2e4c6 60%,#e2cfa
 const $=s=>document.querySelector(s);
 
 /* 썸네일 그림 (320×200) */
+/* 닌자 표창(4갈래 별): 중심(cx,cy), 크기 R, 회전 각도 */
+function shuriken(cx,cy,R,rot){
+  const p=[];for(let k=0;k<8;k++){const a=(k*45+rot)*Math.PI/180,r=k%2?R*.32:R;p.push((cx+r*Math.cos(a)).toFixed(1)+' '+(cy+r*Math.sin(a)).toFixed(1));}
+  return `<path d="M${p.join(' L')} Z" fill="#cfd6de" stroke="#7f8b99" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${cx}" cy="${cy}" r="${(R*.16).toFixed(1)}" fill="#22374d" stroke="#7f8b99" stroke-width="1.5"/>`;
+}
 const THUMBS={
   nutrient:`<rect width="320" height="200" fill="#fdf0d5"/>
     <rect x="40" y="58" width="200" height="118" rx="16" fill="#fbfdff" stroke="#b4c4d2" stroke-width="3"/>
     ${[0,1,2].map(r=>[0,1,2,3].map(c=>{const f=[['#e7b45c','#3b3f8f','#d4a35e','#f0cf4a'],['#86bde6','#c4d6e4','#a77cc4','#f0cf4a'],['#d4e6f4','#f3ead0','#e2c893','#e5432a']][r][c];
       return `<ellipse cx="${72+c*45}" cy="${86+r*32}" rx="17" ry="11" fill="#e9eff4" stroke="#aebdca" stroke-width="2"/><ellipse cx="${72+c*45}" cy="${87+r*32}" rx="13" ry="8" fill="${f}"/>`;}).join('')).join('')}
     <circle cx="240" cy="76" r="38" fill="rgba(223,241,251,.75)" stroke="#3d2b17" stroke-width="9"/>
-    <rect x="264" y="106" width="16" height="50" rx="7" fill="#3d2b17" transform="rotate(-42 272 131)"/>
+    <!-- 손잡이: 렌즈 중심(240,76)에서 45° 방향 — 지름의 연장선 위 -->
+    <path d="M271 107 L302 138" stroke="#3d2b17" stroke-width="16" stroke-linecap="round"/>
     <path d="M222 60 Q230 50 242 50" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>`,
-  saliva:`<rect width="320" height="200" fill="#e3f1fb"/>
+  saliva:`<rect width="320" height="200" fill="#e3f1fb"/><g transform="translate(10 0)">
     <path d="M150 30 C150 30 128 58 128 74 C128 88 138 96 150 96 C162 96 172 88 172 74 C172 58 150 30 150 30Z" fill="#9fd3f2" stroke="#5aa7d6" stroke-width="3"/>
     <path d="M141 70 Q141 80 149 84" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
     ${[[96,'#3b3f8f'],[204,'#e7c27a']].map(([x,f])=>`<path d="M${x-17} 90 V158 A17 17 0 0 0 ${x+17} 158 V90" fill="#fff" stroke="#8ea3b5" stroke-width="3"/>
       <path d="M${x-15} 128 V158 A15 15 0 0 0 ${x+15} 158 V128Z" fill="${f}"/><ellipse cx="${x}" cy="90" rx="19" ry="4" fill="none" stroke="#8ea3b5" stroke-width="3"/>`).join('')}
     <text x="96" y="194" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#3d5a72">녹말 용액</text>
-    <text x="204" y="194" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#3d5a72">녹말 + 침</text>`,
+    <text x="204" y="194" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#3d5a72">녹말 + 침</text></g>`,
   ninja:`<rect width="320" height="200" fill="#22374d"/>
-    <path d="M112 30 L120 27 L140 120 L133 122 Z" fill="#c9ced6"/>
     <path d="M112 200 Q114 158 160 155 Q206 158 208 200 Z" fill="#1c1c1e"/>
     <circle cx="160" cy="105" r="52" fill="#151517"/>
     <path d="M200 84 Q222 74 230 86 Q216 90 208 92 Q222 100 218 112 Q206 102 198 96 Z" fill="#1c1c1e"/>
@@ -154,7 +160,8 @@ const THUMBS={
     <circle cx="52" cy="62" r="24" fill="#f1e2b8" stroke="#c9a965" stroke-width="3"/><text x="52" y="68" text-anchor="middle" font-family="Jua, sans-serif" font-size="14" fill="#5a4325">녹말</text>
     <circle cx="268" cy="56" r="24" fill="#e8737a" stroke="#b8474f" stroke-width="3"/><text x="268" y="62" text-anchor="middle" font-family="Jua, sans-serif" font-size="13" fill="#fff">단백질</text>
     <circle cx="272" cy="150" r="22" fill="#ffd43b" stroke="#d19a12" stroke-width="3"/><text x="272" y="156" text-anchor="middle" font-family="Jua, sans-serif" font-size="14" fill="#5a4325">지방</text>
-    <path d="M30 150 L100 96" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".85"/>`,
+    ${shuriken(84,146,24,18)}${shuriken(222,36,14,-12)}
+    <path d="M28 168 L52 160 M24 150 L50 148 M30 132 L54 138" stroke="#9fb0c2" stroke-width="3" stroke-linecap="round" opacity=".7"/>`,
   vr:`<rect width="320" height="200" fill="#efe6fa"/>
     <path d="M60 92 Q40 92 34 108" stroke="#6c4fa0" stroke-width="10" fill="none" stroke-linecap="round"/>
     <path d="M260 92 Q280 92 286 108" stroke="#6c4fa0" stroke-width="10" fill="none" stroke-linecap="round"/>
@@ -201,17 +208,24 @@ const THUMBS={
 };
 
 const LABS=[
-  {id:'nutrient',title:'영양소 탐정',desc:'검출 시약으로 음식 속에 숨어 있는 영양소를 찾아요.',href:'nutrient-detective.html'},
-  {id:'saliva',title:'침의 소화 작용',desc:'침이 녹말을 어떻게 바꾸는지 알아봐요.',href:'saliva-digestion.html'},
-  {id:'ninja',title:'소화 효소 닌자',desc:'소화 효소가 분해하는 영양소만 골라 베는 게임이에요.',href:'enzyme-ninja.html'},
+  {id:'nutrient',added:'2026-10-19',title:'영양소 탐정',desc:'검출 시약으로 음식 속에 숨어 있는 영양소를 찾아요.',href:'nutrient-detective.html'},
+  {id:'saliva',added:'2026-10-21',title:'침의 소화 작용',desc:'침이 녹말을 어떻게 바꾸는지 알아봐요.',href:'saliva-digestion.html'},
+  {id:'ninja',added:'2026-10-25',title:'소화 효소 닌자',desc:'소화 효소가 분해하는 영양소만 골라 베는 게임이에요.',href:'enzyme-ninja.html'},
   {id:'vr',title:'소화 과정 VR',desc:'음식물이 소화되는 길을 따라가 봐요.',href:'https://filest.edunet.net/360vr/webvr/m220001034/m220001034.html',ext:true},
   {id:'circ',title:'순환계',desc:'심장과 혈관이 하는 일을 탐구해요.'},
-  {id:'race',title:'혈액 택배 레이스',desc:'산소를 배송하고 이산화 탄소를 수거하며 혈액순환을 완주하세요!',href:'blood-race.html'},
-  {id:'resp',title:'호흡운동의 원리',desc:'가로막과 갈비뼈가 움직여 숨을 쉬는 원리를 3D 모형으로 살펴봐요.',href:'breathing.html'},
+  {id:'race',added:'2026-11-01',title:'혈액 택배 레이스',desc:'산소를 배송하고 이산화 탄소를 수거하며 혈액순환을 완주하세요!',href:'blood-race.html'},
+  {id:'resp',added:'2026-11-03',title:'호흡운동의 원리',desc:'가로막과 갈비뼈가 움직여 숨을 쉬는 원리를 3D 모형으로 살펴봐요.',href:'breathing.html'},
   {id:'excr',title:'배설계',desc:'노폐물이 몸 밖으로 나가는 과정을 살펴봐요.'},
 ];
 
-$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}" data-i="${i}" aria-label="${l.title}${l.href?'':' (준비 중)'}">
+/* 'NEW' 표시: 활동을 추가한 날(added)부터 NEW_DAYS일 동안만 보여요 */
+const NEW_DAYS=7;
+function isNew(l){
+  if(!l.added||!l.href||l.ext)return false;
+  const [y,m,d]=l.added.split('-').map(Number);
+  return Date.now()<new Date(y,m-1,d+NEW_DAYS).getTime();
+}
+$('#grid').innerHTML=LABS.map((l,i)=>`<button class="card ${l.href?'go':'wait'}${l.ext?' ext':''}${isNew(l)?' new':''}" data-i="${i}" aria-label="${l.title}${l.href?'':' (준비 중)'}">
   <span class="thumb"><svg viewBox="0 0 320 200" aria-hidden="true">${THUMBS[l.id]}</svg></span>
   <span class="body"><span class="no">실험 ${String(i+1).padStart(2,'0')}</span><span class="ct">${l.title}</span><span class="cd">${l.desc}</span>
   <span class="tag ${l.href?'go':'wait'}">${l.href?(l.ext?'VR 열기 ▶':'시작하기 ▶'):'준비 중'}</span></span></button>`).join('');

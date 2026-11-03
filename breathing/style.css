@@ -1,4 +1,4 @@
-/* 호흡 역학 탐구 — 화면 디자인 (의료 교육용 3D 시뮬레이션 느낌) */
+/* 호흡운동의 원리 — 화면 디자인 (의료 교육용 3D 시뮬레이션 느낌) */
 :root{--bg1:#0d1b2a;--bg2:#1b3a5c;--ink:#e8f1fa;--muted:#9fb6cc;--panel:rgba(16,32,52,.82);--line:rgba(160,200,235,.18);
   --accent:#4dabf7;--inhale:#ff8787;--exhale:#74c0fc;--ok:#69db7c;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}

@@ -1,4 +1,4 @@
-/* 호흡 역학 탐구 — 화면 연결
+/* 호흡운동의 원리 — 화면 연결
    anatomy.js(3D 기관) + respiration.js(호흡 상태, 공통 애니메이션) + modes.js(모드) + airflow.js + labels.js */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
