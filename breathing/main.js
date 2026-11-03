@@ -115,12 +115,33 @@ slider.addEventListener('keydown', e => {
 
 // 3D 화면의 가로막을 직접 위아래로 끌기 → 수동 호흡으로 바뀜
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+/* 손가락 아래에서 '가장 앞에 보이는 것'이 가로막일 때만 끌 수 있어요.
+   폐·심장, 그리고 불투명한 뼈가 앞에 있으면 그 뒤의 가로막은 잡히지 않아요. (뼈 투명 모드에서는 뼈를 통과) */
+let seeThrough = false;
+const BONE = /^(rib|cart|manub|stern|xiph|spine|clav)/;
+const pickables = [];
+root.traverse(o => { if (o.isMesh && !o.name.endsWith('_depth')) pickables.push(o); });
+function diaphragmUnder(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(pickables.filter(o => !(seeThrough && BONE.test(o.name))), false)[0];
+  return hit && hit.object === organs.diaphragm.mesh;
+}
+// 가로막 위에 올리면 손 모양 + 살짝 빛나서 '잡을 수 있다'는 걸 알려줘요
+let hoverT = 0;
+renderer.domElement.addEventListener('pointermove', e => {
+  if (drag || e.pointerType === 'touch' || performance.now() - hoverT < 60) return;
+  hoverT = performance.now();
+  const on = diaphragmUnder(e);
+  renderer.domElement.style.cursor = on ? 'grab' : '';
+  organs.diaphragm.mesh.material.emissive.setHex(on ? 0x331010 : 0x000000);
+});
 let drag = null;
 renderer.domElement.addEventListener('pointerdown', e => {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
-  ray.setFromCamera(ndc, camera);
-  if (!ray.intersectObject(organs.diaphragm.mesh).length) return;
+  if (!diaphragmUnder(e)) return;
   if (modeName !== 'manual') { setMode('manual'); toast('✋ 수동 호흡: 가로막을 아래로 끌면 들숨, 위로 올리면 날숨이에요.'); }
   drag = { y: e.clientY, v: modes.manual.value, h: r.height };
   controls.enabled = false;
@@ -138,7 +159,6 @@ $('#labelsBtn').addEventListener('click', () => {
   $('#labelsBtn').setAttribute('aria-pressed', labels.visible);
   $('#labelsBtn').textContent = labels.visible ? '이름표 켜짐' : '이름표 꺼짐';
 });
-let seeThrough = false;
 $('#boneBtn').addEventListener('click', () => {
   seeThrough = !seeThrough; anatomy.setBonesSeeThrough(seeThrough);
   $('#boneBtn').setAttribute('aria-pressed', seeThrough);
@@ -198,4 +218,4 @@ setMode('auto');
 requestAnimationFrame(frame);
 
 // 점검·테스트용
-window.BREATH = { breath, organs, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
+window.BREATH = { breath, organs, diaphragmUnder, ribMesh: root.getObjectByName('rib_R_6'), modes, setMode, setSlider, camera, controls, get mode() { return modeName; } };
