@@ -70,6 +70,8 @@ kbd{display:inline-block;background:#fff;border:2px solid #b8c4d4;border-bottom-
 .hud{position:absolute;left:0;right:0;top:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);gap:10px;padding:10px 12px;pointer-events:none;
   background:linear-gradient(rgba(10,16,30,.8),rgba(10,16,30,0));}
 .hud-l,.hud-r{background:rgba(20,33,61,.75);border-radius:14px;padding:8px 12px;font-size:15px;line-height:1.45;}
+.hud-hub{pointer-events:auto;display:inline-block;margin-bottom:4px;font-family:'Jua','Malgun Gothic',sans-serif;font-size:13px;color:#fff;text-decoration:none;
+  background:rgba(255,255,255,.16);padding:3px 10px;border-radius:999px;}
 .hud-l .stage{font-family:'Jua','Malgun Gothic',sans-serif;font-size:19px;color:#ffd43b;}
 .hud-l .loc{color:#cfe0f5;word-break:keep-all;} .hud-l b{color:#fff;font-size:17px;}
 .hud-c{text-align:center;}

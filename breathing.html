@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>호흡운동의 원리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="breathing/style.css">
+<link rel="stylesheet" href="breathing/camera/camera.css">
+<!-- three.js는 vendor 폴더에 들어 있어 외부 링크 없이 동작해요 -->
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="index.html#list">← 실험실 목록</a>
+  <h1>호흡운동의 원리</h1>
+  <nav class="modes" aria-label="호흡 모드">
+    <button type="button" class="mode" data-mode="camera" aria-pressed="false">📷 카메라 연동</button>
+    <button type="button" class="mode on" data-mode="auto" aria-pressed="true">⟳ 자동 호흡</button>
+    <button type="button" class="mode" data-mode="manual" aria-pressed="false">✋ 수동 호흡</button>
+    <button type="button" class="mode" data-mode="balloon" aria-pressed="false">🎈 풍선 모형 보기</button>
+  </nav>
+  <div class="tools">
+    <button type="button" class="tool" id="boneBtn" aria-pressed="false">뼈 투명하게</button>
+    <button type="button" class="tool" id="labelsBtn" aria-pressed="true">이름표 켜짐</button>
+    <button type="button" class="tool" id="resetBtn">↺ 초기화</button>
+  </div>
+</header>
+
+<main class="stage">
+  <div id="view" aria-label="3D 호흡 기관 모형. 손가락으로 돌려 볼 수 있어요.">
+    <!-- 전면 카메라 영상 (거울처럼 좌우 반전). 3D 화면은 이 위에 투명하게 겹쳐요 -->
+    <video id="camVideo" playsinline muted aria-hidden="true"></video>
+    <div id="labels" aria-hidden="true"></div>
+    <p class="loading" id="loading" hidden>3D 인체 모형을 불러오는 중…</p>
+    <p class="hint" id="hint">손가락(마우스)으로 끌면 모형을 돌려 볼 수 있어요</p>
+  </div>
+
+  <p class="credit">3D 모형: <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> · BodyParts3D © DBCLS · <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ko" target="_blank" rel="noopener">CC BY-SA 4.0</a> (가슴 부위만 골라 사용)</p>
+
+  <aside class="panel" id="autoPanel">
+    <h2>자동 호흡</h2>
+    <div class="seg" role="group" aria-label="빠르기">
+      <button type="button" data-period="8" data-rate="1분에 약 8번 · 깊고 느린 숨">느리게</button>
+      <button type="button" data-period="4.5" data-rate="1분에 약 13번 · 편안한 숨" class="on">보통</button>
+      <button type="button" data-period="2.4" data-rate="1분에 약 25번 · 운동 후 가쁜 숨">빠르게</button>
+    </div>
+    <p class="rate" id="rateTxt">1분에 약 13번 · 편안한 숨</p>
+    <button type="button" class="wide" id="pauseBtn">❚❚ 멈추기</button>
+  </aside>
+
+  <aside class="panel" id="cameraPanel" hidden>
+    <h2>카메라 연동</h2>
+    <p class="cam-rule"><small>1순위 · 어깨</small>
+      <b class="in">어깨 올리기</b> → 들숨<br><b class="ex">어깨 내리기</b> → 날숨</p>
+    <p class="cam-rule"><small>2순위 · 손 (상체 옆으로 손을 올리면)</small>
+      <b class="in">✊ 주먹</b> → 가로막 내려감<br><b class="ex">🖐 손바닥 펴기</b> → 가로막 올라감</p>
+    <label class="cam-zoom">카메라 배율 <b id="camZoomTxt">1배</b>
+      <input type="range" id="camZoom" min="0.5" max="1" step="0.05" value="1" aria-label="카메라 배율 0.5배에서 1배">
+      <span class="z-ends"><span>0.5배 (넓게)</span><span>1배</span></span>
+      <small id="camZoomInfo">카메라를 켜면 적용돼요</small>
+    </label>
+    <button type="button" class="wide cam-main" id="camStartBtn">📷 카메라 시작</button>
+    <button type="button" class="wide cam-main" id="camStopBtn" hidden>■ 카메라 종료</button>
+    <button type="button" class="wide" id="camRecalBtn" hidden>↺ 다시 보정</button>
+    <button type="button" class="wide" id="camStatusBtn" aria-pressed="true">인식 정보 숨기기</button>
+    <p class="tip">영상은 이 기기 안에서만 처리되고, 저장하거나 밖으로 보내지 않아요.</p>
+  </aside>
+
+  <!-- 카메라 인식 상태 (개발·수업용, '인식 정보' 버튼이나 camera/config.js로 숨길 수 있어요) -->
+  <div class="cam-status" id="camStatus" hidden aria-live="off">
+    <dl>
+      <dt>카메라</dt><dd id="cs-cam">-</dd>
+      <dt>어깨</dt><dd id="cs-sh">-</dd>
+      <dt>손</dt><dd id="cs-hand">-</dd>
+      <dt>호흡</dt><dd id="cs-breath">-</dd>
+      <dt>인식 방식</dt><dd id="cs-method">-</dd>
+    </dl>
+    <dl class="cs-debug">
+      <dt>어깨 이동</dt><dd id="cs-dy">-</dd>
+      <dt>손 모양</dt><dd id="cs-gesture">-</dd>
+      <dt>처리</dt><dd id="cs-cost">-</dd>
+    </dl>
+  </div>
+
+  <!-- 손 모양을 알 수 없을 때 (브이 등) -->
+  <div class="cam-notice" id="camNotice" hidden role="alert">인식할 수 없습니다.<small>주먹을 쥐거나, 손가락을 펴서 손바닥을 보여 주세요</small></div>
+
+  <!-- 카메라 안내 (보정, 오류, 인식 실패) -->
+  <div class="cam-guide" id="camGuide" hidden role="status">
+    <p class="g-title"></p><p class="g-sub"></p>
+    <div class="g-bar" hidden><i></i></div>
+    <div class="g-btns"></div>
+  </div>
+
+  <aside class="panel" id="balloonPanel" hidden>
+    <h2>고무막 당기기</h2>
+    <div class="slider" id="bSlider" role="slider" tabindex="0" aria-label="고무막 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span class="end up">밀어 올리기<br><small>날숨</small></span>
+      <div class="track"><div class="fill" id="bSliderFill"></div><div class="knob" id="bSliderKnob">고무막</div></div>
+      <span class="end down">잡아당기기<br><small>들숨</small></span>
+    </div>
+    <button type="button" class="wide" id="bAutoBtn" aria-pressed="false" style="margin-top:8px">▶ 자동으로 움직이기</button>
+    <dl class="bmap">
+      <dt>고무풍선</dt><dd>폐</dd><dt>고무막</dt><dd>가로막</dd><dt>병 속 공간</dt><dd>흉강</dd><dt>Y자 유리관</dt><dd>기관·기관지</dd>
+    </dl>
+    <p class="tip">손잡이를 끌거나, 3D 화면의 <b>고무막</b>을 직접 위아래로 끌어 보세요.</p>
+  </aside>
+
+  <aside class="panel" id="manualPanel" hidden>
+    <h2>가로막 움직이기</h2>
+    <div class="slider" id="slider" role="slider" tabindex="0" aria-label="가로막 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span class="end up">위로<br><small>이완 · 날숨</small></span>
+      <div class="track"><div class="fill" id="sliderFill"></div><div class="knob" id="sliderKnob">가로막</div></div>
+      <span class="end down">아래로<br><small>수축 · 들숨</small></span>
+    </div>
+    <p class="tip">손잡이를 끌거나, 3D 화면의 <b>가로막</b>을 직접 위아래로 끌어 보세요.</p>
+  </aside>
+</main>
+
+<footer class="status" aria-live="polite">
+  <div class="state" id="state"><b id="stateName">날숨</b><small id="stateSub">숨을 내쉬는 중</small></div>
+  <ul class="facts" id="facts"></ul>
+  <div class="meter"><span id="volLabel">흉강 부피</span><div class="mbar"><i id="volBar"></i></div><span id="volTxt">작음</span></div>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+<noscript><p class="nojs">이 시뮬레이션은 자바스크립트가 필요해요.</p></noscript>
+
+<script type="module" src="breathing/main.js"></script>
+</body>
+</html>
