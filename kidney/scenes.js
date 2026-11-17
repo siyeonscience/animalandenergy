@@ -16,11 +16,11 @@ export const SCENES = [
     slots: { kidney: ['left', 0.22], ureter: ['right', 0.5], bladder: ['right', 0.8], urethra: ['left', 0.92] },
   },
   { // 2단계: 콩팥 단면 (노란 고리 = 네프론이 있는 곳)
-    viewBox: vb(570, 817), pad: [250, 250],
-    svg: img('section.webp', 570, 817) + `
-      <circle cx="486" cy="318" r="14" fill="none" stroke="#ffd43b" stroke-width="5"><animate attributeName="r" values="12;16;12" dur="1.4s" repeatCount="indefinite"/></circle>`,
-    anchors: { artery: [24, 320], vein: [18, 372], ureter2: [62, 680], nephron: [486, 318] },
-    slots: { artery: ['left', 0.36], vein: ['left', 0.52], ureter2: ['left', 0.84], nephron: ['right', 0.3] },
+    viewBox: vb(662, 812), pad: [250, 250],
+    svg: img('section.webp', 662, 812) + `
+      <circle cx="580" cy="296" r="22" fill="none" stroke="#ffd43b" stroke-width="6"><animate attributeName="r" values="19;25;19" dur="1.4s" repeatCount="indefinite"/></circle>`,
+    anchors: { artery: [122, 316], vein: [118, 366], ureter2: [172, 660], nephron: [580, 296] },
+    slots: { artery: ['left', 0.3], vein: ['left', 0.5], ureter2: ['left', 0.84], nephron: ['right', 0.36] },
   },
   { // 3단계: 네프론
     viewBox: vb(1155, 1090), pad: [270, 10],
