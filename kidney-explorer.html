@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>콩팥 3D 해부 탐구</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="kidney/style.css">
+<!-- three.js는 vendor 폴더에 들어 있어 외부 링크 없이 동작해요 -->
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="index.html#list">← 실험실 목록</a>
+  <h1>콩팥 3D 해부 탐구</h1>
+  <nav class="tabs" id="tabs" aria-label="단계"></nav>
+  <button type="button" class="tool" id="homeBtn">↺ 처음 각도</button>
+</header>
+
+<div class="body">
+  <main class="stage" id="stageEl">
+    <div id="view" aria-label="배설 기관 3D 모형. 손가락으로 돌려 볼 수 있어요."></div>
+    <svg id="leaders" aria-hidden="true"></svg>
+    <div id="overlay"></div>
+    <p class="loading" id="loading">3D 모형을 불러오는 중…</p>
+    <p class="credit">3D 모형: <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" target="_blank" rel="noopener">Z-Anatomy</a> · BodyParts3D © DBCLS · Human Reference Atlas · <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ko" target="_blank" rel="noopener">CC BY-SA 4.0</a></p>
+  </main>
+  <aside class="panel">
+    <h2 id="stageTitle">1단계 · 배설 기관</h2>
+    <p class="inst">빈칸에 알맞은 구조의 이름을 적어보세요.</p>
+    <button type="button" class="check" id="checkBtn">확인하기</button>
+    <button type="button" class="next" id="nextBtn" disabled>다음 단계 →</button>
+  </aside>
+</div>
+
+<!-- 시작 화면 -->
+<div class="gate" id="gate">
+  <section class="gate-card">
+    <p class="kicker">실험 09 · 배설계</p>
+    <h2>오줌은 어디서 만들어질까?</h2>
+    <p class="desc">3D 모형을 돌려 보며 배설 기관을 살펴보고, 빈칸에 각 부분의 이름을 직접 써 보세요.</p>
+    <div class="gate-btns">
+      <button type="button" class="go" id="startBtn">탐구 시작하기</button>
+      <button type="button" class="ghost" id="resumeBtn" hidden>이어서 하기</button>
+    </div>
+  </section>
+</div>
+
+<!-- 끝 화면 -->
+<div class="gate" id="done" hidden>
+  <section class="gate-card done-card">
+    <p class="kicker">탐구 완료!</p>
+    <h2>콩팥 해부 탐구를 마쳤어요</h2>
+    <p class="score"><b id="doneScore">0</b> / 12 칸 정답</p>
+    <div class="gate-btns">
+      <a class="go" href="nephron-factory.html">네프론 필터 공장으로 →</a>
+      <button type="button" class="ghost" id="againBtn">처음부터 다시</button>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<noscript><p>이 탐구 활동은 자바스크립트가 필요해요.</p></noscript>
+<script type="module" src="kidney/main.js"></script>
+</body>
+</html>
