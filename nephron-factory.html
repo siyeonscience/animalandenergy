@@ -27,6 +27,7 @@
   </defs>
 </svg>
 
+<div class="rotate" id="rotate" aria-live="polite"><div><svg width="90" height="90" viewBox="0 0 90 90" aria-hidden="true"><rect x="26" y="8" width="38" height="66" rx="8" fill="none" stroke="#2b3a55" stroke-width="5"/><path d="M14 54 a32 32 0 0 0 30 28" fill="none" stroke="#ff8a3d" stroke-width="5" stroke-linecap="round"/><path d="M38 76 l8 6 -7 7" fill="none" stroke="#ff8a3d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg><p>기기를 가로로 돌려 주세요</p></div></div>
 <div id="frame">
 <div id="stage">
 
@@ -83,6 +84,7 @@
     <header class="bar">
       <a class="hub-in" href="index.html#list">← 실험실 목록</a>
       <div class="chips"><span class="chip" data-s="0">1 여과</span><span class="chip" data-s="1">2 재흡수</span><span class="chip" data-s="2">3 분비</span></div>
+      <div class="timer" id="timer" role="timer" aria-label="남은 시간"><span aria-hidden="true">⏱</span><b id="timerN">40</b><small>초</small></div>
       <div class="speed" id="speed" aria-label="속도 1단계">⚡</div>
       <div class="combo" id="combo" hidden>콤보 <b id="comboN">0</b><span id="comboX"></span></div>
       <div class="score">점수 <b id="score">0</b></div>

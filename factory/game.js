@@ -1,8 +1,9 @@
 /* 네프론 필터 공장 — 게임 진행
    첫 화면 → 공장장 → 오늘의 근무 안내서 → (안내서가 보고서 아이콘으로 쏙) → 하이라이트 튜토리얼 3단계
-   → 1단계 여과 → 2단계 재흡수(긴급 주문) → 3단계 분비 → 오줌 성분표 · 별 평가
+   → 1단계 여과(끌기) → 2단계 재흡수(누르기, 긴급 주문) → 3단계 분비(누르기) → 오줌 성분표 · 별 평가
+   단계마다 제한 시간 동안 벨트가 계속 돌고, 시간이 다 되면 단계가 끝나요.
    게임 요소: 콤보(연속 정답 ×2, ×3), 속도 단계(벨트가 점점 빨라짐), 긴급 주문, 별 평가와 칭호, 최고 기록 */
-import { SUBS, WAVES, POINT, PENALTY, LEVELS, levelAt, comboMult, ORDERS, reabsorbQueue,
+import { SUBS, POOLS, STAGE_TIME, POINT, PENALTY, LEVELS, levelAt, comboMult, ORDERS, orderAt,
   canFilter, canReabsorb, canSecrete, urineTable, bossComment, rating } from './logic.js';
 
 const $ = s => document.querySelector(s);
@@ -11,8 +12,13 @@ const BEST_KEY = 'nephron-factory-best';
 
 /* ================= 화면 크기 맞추기 (1280×800 기준) ================= */
 let scale = 1;
-function fitStage() { scale = Math.min(innerWidth / 1280, innerHeight / 800); stageEl.style.transform = `translate(-50%, -50%) scale(${scale})`; }
-addEventListener('resize', fitStage); fitStage();
+function fitStage() {
+  const w = window.visualViewport ? visualViewport.width : innerWidth, h = window.visualViewport ? visualViewport.height : innerHeight;
+  scale = Math.min(w / 1280, h / 800); stageEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+}
+addEventListener('resize', fitStage); addEventListener('orientationchange', () => setTimeout(fitStage, 300));
+if (window.visualViewport) visualViewport.addEventListener('resize', fitStage);
+fitStage();
 const toStage = e => { const r = stageEl.getBoundingClientRect(); return { x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale }; };
 const show = id => document.querySelectorAll('.scr').forEach(s => s.classList.toggle('on', s.id === id));
 
@@ -52,9 +58,9 @@ function drawFloor(s) {
 }
 
 /* ================= 상태 ================= */
-const G = { s: 0, score: 0, items: [], queue: [], decor: [], spawnT: 0, decorT: 0, running: false, paused: false,
-  filtrate: [], record: { filtered: {}, urine: {} },
-  combo: 0, maxCombo: 0, stats: { good: 0, bad: 0, miss: 0 }, total: 0, spawned: 0, level: 0, order: null };
+const G = { s: 0, score: 0, items: [], bag: [], decor: [], spawnT: 0, decorT: 0, running: false, paused: false,
+  filtrate: [], record: { filtered: {}, urine: {} }, timeLeft: STAGE_TIME,
+  combo: 0, maxCombo: 0, stats: { good: 0, bad: 0, miss: 0 }, level: 0, order: null };
 
 function makeItem(type, x, y, { belt = null, decor = false, order = null } = {}) {
   const el = document.createElement('div');
@@ -136,17 +142,20 @@ function onDown(e, it) {
   if (!G.running || G.paused || it.state !== 'belt') return;
   e.preventDefault();
   if (G.s === 1) { if (it.belt === 'top') tapReabsorb(it); return; }
-  const source = G.s === 0 ? 'blood' : 'cap';
-  if (it.belt !== source) return;
+  if (G.s === 2) { if (it.belt === 'cap') tapSecrete(it); return; }
+  if (it.belt !== 'blood') return;
+  // 1단계만 끌어서 거름망에 올려요
   it.state = 'drag'; it.el.classList.add('drag');
-  it.el.setPointerCapture(e.pointerId);
+  try { it.el.setPointerCapture(e.pointerId); } catch {}
   it.el.onpointermove = ev => { const p = toStage(ev); it.x = p.x; it.y = p.y; place(it); };
-  it.el.onpointerup = it.el.onpointercancel = () => drop(it);
+  it.el.onpointerup = it.el.onpointercancel = it.el.onlostpointercapture = () => drop(it);
 }
 function drop(it) {
-  it.el.onpointermove = it.el.onpointerup = it.el.onpointercancel = null;
+  it.el.onpointermove = it.el.onpointerup = it.el.onpointercancel = it.el.onlostpointercapture = null;
+  if (it.state !== 'drag') return;
   it.el.classList.remove('drag');
-  if (G.s === 0) dropFilter(it); else dropSecrete(it);
+  if (!G.running) { it.state = 'belt'; it.y = BELT.blood; place(it); return; }
+  dropFilter(it);
 }
 function backToBelt(it, beltY, isBad) {
   if (isBad) shake(it);
@@ -161,7 +170,11 @@ function dropFilter(it) {
     count(G.record.filtered, it.type); G.filtrate.push(it.type);
     good(it, `${NAME(it.type)}${josa(NAME(it.type), '은', '는')} 크기가 작아서 거름망을 통과해요!`);
     const tx = 430 + Math.random() * 420, ty = 470 + Math.random() * 110;
-    animateTo(it, Math.min(Math.max(it.x, 440), 840), 360, 200, () => animateTo(it, tx, ty, 450, () => { it.state = 'hopper'; it.belt = 'hopper'; }));
+    animateTo(it, Math.min(Math.max(it.x, 440), 840), 360, 200, () => animateTo(it, tx, ty, 450, () => {
+      it.state = 'hopper'; it.belt = 'hopper';
+      // 보먼주머니에 쌓이지 않게 잠시 뒤 사라져요 (다음 단계로 흘러가요)
+      setTimeout(() => { it.el.classList.add('gone'); setTimeout(() => removeItem(it), 500); }, 1200);
+    }));
   } else {
     bad(it, `${NAME(it.type)}${josa(NAME(it.type), '은', '는')} 너무 커서 거름망을 통과하지 못해요!`);
     backToBelt(it, BELT.blood, true);
@@ -184,17 +197,15 @@ function tapReabsorb(it) {
     shake(it);
   }
 }
-/* 3단계 분비 */
-function dropSecrete(it) {
-  const inZone = it.y > 130 && it.y < 310;
-  if (!inZone) return backToBelt(it, BELT.cap, false);
+/* 3단계 분비: 눌러서 세뇨관으로 */
+function tapSecrete(it) {
   if (canSecrete(it.type)) {
     count(G.record.urine, it.type);
     good(it, '요소를 세뇨관으로 보냈어요! 이제 오줌으로 나가요.');
-    it.belt = 'top'; animateTo(it, it.x, BELT.top, 300, () => { it.state = 'belt'; });
+    it.belt = 'top'; animateTo(it, it.x + 30, BELT.top, 600, () => { it.state = 'belt'; });
   } else {
     bad(it, `${NAME(it.type)}${josa(NAME(it.type), '은', '는')} 몸에 필요한 물질이에요! 혈액에 남겨 두세요.`);
-    backToBelt(it, BELT.cap, true);
+    shake(it);
   }
 }
 
@@ -214,14 +225,9 @@ function reachEnd(it) {
 }
 
 /* ================= 긴급 주문 ================= */
-function currentOrder() {
-  const onBelt = G.items.find(it => it.order && it.belt === 'top' && (it.state === 'belt' || it.state === 'anim'));
-  if (onBelt) return onBelt.order;
-  const soon = G.queue.slice(0, 2).find(q => q.o);
-  return soon ? soon.o : null;
-}
+const progress = () => 1 - G.timeLeft / STAGE_TIME;
 function updateOrder() {
-  const o = G.s === 1 && G.running ? currentOrder() : null;
+  const o = G.s === 1 && G.running ? orderAt(progress()) : null;
   if (o === G.order) return;
   G.order = o;
   const box = $('#order');
@@ -234,31 +240,44 @@ function updateOrder() {
 
 /* ================= 단계 진행 ================= */
 const SOURCE = ['blood', 'top', 'cap'];
-const INTRO = ['', '필요한 물질을 눌러서 모세혈관으로 돌려보내요!', '모세혈관에 남은 노폐물을 끌어서 세뇨관으로 보내요!'];
+const INTRO = ['', '필요한 물질을 눌러서 모세혈관으로 돌려보내요!', '모세혈관에 남은 노폐물을 눌러서 세뇨관으로 보내요!'];
 function setupStage(s) {
   G.s = s; clearItems(); drawFloor(s);
-  const plain = list => list.map(t => ({ t, o: null }));
-  G.queue = s === 0 ? plain(WAVES.filter) : s === 1 ? reabsorbQueue(G.filtrate) : plain(WAVES.secrete);
-  G.total = G.queue.length; G.spawned = 0; G.level = 0; G.order = null; $('#order').hidden = true; showSpeed();
+  G.bag = []; G.timeLeft = STAGE_TIME; G.level = 0; G.order = null; $('#order').hidden = true;
+  showSpeed(); showTimer();
   G.decor = s === 1 ? ['rbc', 'protein', 'rbc'] : s === 2 ? ['water', 'urea', 'water'] : [];
-  G.spawnT = 1.2; G.decorT = 0.4;
+  G.spawnT = 0.6; G.decorT = 0.4;
 }
 function startStage(s) {
   setupStage(s); G.running = true; G.paused = false;
   stageEl.classList.remove('paused');
-  if (INTRO[s]) say(INTRO[s], '', 3600);
+  say(`${INTRO[s] ? INTRO[s] + ' ' : ''}제한 시간 ${STAGE_TIME}초!`, '', 3600);
 }
-function stageFinished() {
-  return G.queue.length === 0 && !G.items.some(it => !it.decor && (it.state === 'drag' || it.state === 'anim' || (it.state === 'belt' && it.belt === SOURCE[G.s])));
+/* 물질 묶음을 섞어서 하나씩 꺼내요 */
+function nextType() {
+  if (G.s === 1 && orderAt(progress()) && Math.random() < 0.45) return 'water';   // 긴급 주문 중엔 물이 자주 와요
+  if (!G.bag.length) { G.bag = [...POOLS[G.s]]; for (let i = G.bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [G.bag[i], G.bag[j]] = [G.bag[j], G.bag[i]]; } }
+  return G.bag.pop();
+}
+function showTimer() {
+  const t = Math.ceil(G.timeLeft), el = $('#timer');
+  $('#timerN').textContent = t; el.classList.toggle('low', G.running && t <= 5);
+}
+function timeUp() {
+  G.running = false; G.timeLeft = 0; showTimer(); updateOrder();
+  // 끌고 있던 물질은 벨트로 돌려놓아요
+  G.items.forEach(it => { if (it.state === 'drag') drop(it); });
+  flash('⏰ 시간 종료!', 'speed');
+  setTimeout(endStage, 1100);
 }
 function endStage() {
-  G.running = false; updateOrder();
   const names = ['1단계 여과', '2단계 재흡수', '3단계 분비'];
   $('#clearTitle').textContent = `${names[G.s]} 완료!`;
   $('#clearScore').textContent = G.score;
   $('#clearSub').textContent = `지금까지 최대 콤보 ${G.maxCombo}`;
   $('#clearBtn').textContent = G.s < 2 ? `다음 단계: ${['재흡수', '분비'][G.s]}` : '오줌 성분표 보기';
-  setTimeout(() => { $('#clear').hidden = false; }, 700);
+  $('#flash').hidden = true;
+  $('#clear').hidden = false;
 }
 $('#clearBtn').addEventListener('click', () => {
   $('#clear').hidden = true;
@@ -268,20 +287,21 @@ $('#clearBtn').addEventListener('click', () => {
 /* ================= 반복 ================= */
 let last = performance.now();
 function spawn() {
-  const q = G.queue.shift(); G.spawned++;
-  makeItem(q.t, 70, BELT[SOURCE[G.s]], { belt: SOURCE[G.s], order: q.o });
-  const lv = levelAt(G.spawned / G.total);
-  if (lv > G.level) { G.level = lv; showSpeed(); flash(`⚡ 속도 UP! ${lv + 1}단계`, 'speed'); }
+  const t = nextType(), order = G.s === 1 && t === 'water' ? orderAt(progress()) : null;
+  makeItem(t, 70, BELT[SOURCE[G.s]], { belt: SOURCE[G.s], order });
   // 가장 빠른 단계에서는 가끔 두 개가 연달아 와요
   G.spawnT = LEVELS[G.level].gap * (G.level === 2 && Math.random() < 0.3 ? 0.4 : 1);
 }
 function tick(now) {
   const dt = Math.max(0, Math.min(0.1, (now - last) / 1000)); last = now;
   if (G.running && !G.paused) {
+    G.timeLeft -= dt; showTimer();
+    const lv = levelAt(progress());
+    if (lv > G.level) { G.level = lv; showSpeed(); flash(`⚡ 속도 UP! ${lv + 1}단계`, 'speed'); }
     G.spawnT -= dt;
-    if (G.spawnT <= 0 && G.queue.length) spawn();
+    if (G.spawnT <= 0) spawn();
     G.decorT -= dt;
-    if (G.decorT <= 0 && G.decor.length && G.queue.length) {
+    if (G.decorT <= 0 && G.decor.length) {
       const belt = G.s === 1 ? 'cap' : 'top', t = G.decor.shift(); G.decor.push(t);
       makeItem(t, 70, BELT[belt] + 4, { belt, decor: true }); G.decorT = 2.6;
     }
@@ -292,7 +312,7 @@ function tick(now) {
       if (it.x > 1205) reachEnd(it);
     }
     updateOrder();
-    if (stageFinished()) { G.items.filter(it => it.decor).forEach(removeItem); endStage(); }
+    if (G.timeLeft <= 0) timeUp();
   }
   requestAnimationFrame(tick);
 }
@@ -365,7 +385,7 @@ function showResult() {
 
 /* ================= 시작 · 다시 ================= */
 function resetGame() {
-  Object.assign(G, { s: 0, score: 0, queue: [], decor: [], filtrate: [], record: { filtered: {}, urine: {} }, running: false, paused: false,
+  Object.assign(G, { s: 0, score: 0, bag: [], decor: [], filtrate: [], record: { filtered: {}, urine: {} }, running: false, paused: false, timeLeft: STAGE_TIME,
     combo: 0, maxCombo: 0, stats: { good: 0, bad: 0, miss: 0 }, level: 0, order: null });
   clearItems(); $('#score').textContent = 0; showCombo(false);
 }
@@ -374,4 +394,4 @@ $('#okBossBtn').addEventListener('click', () => { resetGame(); show('scrPlay'); 
 $('#againBtn').addEventListener('click', () => { resetGame(); show('scrPlay'); startStage(0); say('다시 근무 시작! 작은 물질을 끌어서 거름망에 올려요.', '', 3000); });
 
 // 점검·테스트용
-window.FACTORY = { G, startStage, showResult, setupStage, dropFilter, tapReabsorb, dropSecrete };
+window.FACTORY = { G, startStage, showResult, setupStage, dropFilter, tapReabsorb, tapSecrete, timeUp };

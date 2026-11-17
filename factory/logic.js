@@ -13,13 +13,15 @@ export const ORDER = ['water', 'glucose', 'amino', 'urea', 'protein', 'rbc'];
 /* 정상 오줌에 들어 있는 물질 (교과서: 단백질은 여과 안 됨, 포도당·아미노산은 모두 재흡수, 요소·물은 일부만 재흡수) */
 export const NORMAL_URINE = { water: true, glucose: false, amino: false, urea: true, protein: false, rbc: false };
 
-export const WAVES = {
-  filter:  ['rbc', 'water', 'glucose', 'protein', 'urea', 'amino', 'water', 'rbc', 'glucose', 'urea', 'water', 'protein',
-            'amino', 'water', 'urea', 'rbc', 'water', 'glucose', 'protein', 'amino', 'urea'],
-  secrete: ['rbc', 'urea', 'glucose', 'protein', 'urea', 'amino', 'water', 'urea', 'rbc', 'urea', 'glucose', 'urea'],
-};
+/* 단계마다 흘러오는 물질 묶음: 이 묶음을 섞어서 계속 꺼내 써요 (시간이 다 될 때까지 끝없이) */
+export const POOLS = [
+  ['rbc', 'water', 'glucose', 'protein', 'urea', 'amino', 'water', 'urea'],   // 1단계 여과: 혈액 속 물질 모두
+  ['water', 'water', 'glucose', 'amino', 'urea', 'urea'],                     // 2단계 재흡수: 걸러진 작은 물질
+  ['urea', 'urea', 'urea', 'rbc', 'glucose', 'protein', 'amino', 'water'],   // 3단계 분비: 혈액에 남은 물질
+];
+export const STAGE_TIME = 40;   // 단계마다 제한 시간(초)
 
-/* 속도 단계: 단계 안에서 물질이 1/3, 2/3 지나갈 때마다 벨트가 빨라져요 */
+/* 속도 단계: 제한 시간의 1/3, 2/3가 지날 때마다 벨트가 빨라져요 */
 export const LEVELS = [
   { speed: 80, gap: 1.3 },
   { speed: 105, gap: 1.05 },
@@ -37,15 +39,8 @@ export const ORDERS = {
   drink: { title: '긴급 주문! 물을 많이 마셨대요', text: '표시된 물은 재흡수하지 말고 오줌으로 보내 주세요.' },
   sweat: { title: '긴급 주문! 땀을 많이 흘렸대요', text: '표시된 물은 놓치지 말고 꼭 재흡수해 주세요.' },
 };
-/* 2단계 대기열: 걸러진 물질 + (물이 모자라면 채워서) 물 5개 이상, 2~3번째 물은 drink, 4~5번째 물은 sweat */
-export function reabsorbQueue(filtrate) {
-  const q = filtrate.map(t => ({ t, o: null }));
-  let waters = q.filter(x => x.t === 'water').length;
-  for (let k = 0; waters < 5; k++, waters++) q.splice(Math.min(q.length, 1 + k * 3), 0, { t: 'water', o: null });
-  let n = 0;
-  for (const x of q) if (x.t === 'water') { n++; if (n === 2 || n === 3) x.o = 'drink'; if (n === 4 || n === 5) x.o = 'sweat'; }
-  return q;
-}
+/* 긴급 주문이 걸리는 때 (2단계 시간의 비율): 이때 나오는 물에 주문 표시가 붙어요 */
+export const orderAt = p => (p >= 0.22 && p < 0.5 ? 'drink' : p >= 0.6 && p < 0.88 ? 'sweat' : null);
 
 /* 별 평가와 칭호: 정확도(맞힘 ÷ 전체 판단)로 별을 주고, 오줌 성분이 틀리면 별은 최대 2개 */
 export const TITLES = ['', '견습생', '숙련공', '명예 공장장'];
