@@ -83,12 +83,16 @@
     <header class="bar">
       <a class="hub-in" href="index.html#list">← 실험실 목록</a>
       <div class="chips"><span class="chip" data-s="0">1 여과</span><span class="chip" data-s="1">2 재흡수</span><span class="chip" data-s="2">3 분비</span></div>
+      <div class="speed" id="speed" aria-label="속도 1단계">⚡</div>
+      <div class="combo" id="combo" hidden>콤보 <b id="comboN">0</b><span id="comboX"></span></div>
       <div class="score">점수 <b id="score">0</b></div>
       <button type="button" class="report" id="reportBtn" aria-label="근무 안내서 보기"><svg width="34" height="40" viewBox="0 0 48 56" aria-hidden="true"><use href="#report"/></svg></button>
     </header>
     <svg id="floorSvg" class="floor" width="1280" height="800" viewBox="0 0 1280 800" aria-hidden="true"></svg>
     <div id="signs"></div>
     <div id="items"></div>
+    <div class="order" id="order" role="status" hidden><span class="siren" aria-hidden="true">🚨</span><div><b id="orderTitle"></b><p id="orderText"></p></div></div>
+    <div class="flash" id="flash" aria-live="polite" hidden></div>
     <div class="boss-mini" id="bossMini" hidden>
       <svg width="96" height="96" viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="140" fill="#fff"/><use href="#boss-head"/></svg>
       <p id="bossMsg"></p>
@@ -100,6 +104,7 @@
     <section class="card clear-card">
       <h2 id="clearTitle">1단계 여과 완료!</h2>
       <p class="clear-score">점수 <b id="clearScore">0</b></p>
+      <p class="clear-sub" id="clearSub"></p>
       <button type="button" class="big" id="clearBtn">다음 단계</button>
     </section>
   </div>
@@ -148,6 +153,7 @@
     </section>
     <aside class="res-side">
       <div class="card res-score"><svg width="78" height="78" viewBox="0 0 80 80" aria-hidden="true"><path d="M40 6 L49 28 L73 30 L55 46 L61 70 L40 57 L19 70 L25 46 L7 30 L31 28Z" fill="#ffd43b" stroke="#f2a900" stroke-width="4" stroke-linejoin="round"/></svg><b id="resScore">0</b><span>점</span></div>
+      <div class="card res-rank"><div class="stars" id="resStars"></div><p class="rank-title"><span id="resTitle"></span><span class="new" id="resNew" hidden>새 기록!</span></p><p class="rank-sub" id="resSub"></p></div>
       <div class="res-boss"><svg width="96" height="96" viewBox="0 0 300 300" aria-hidden="true"><circle cx="150" cy="150" r="140" fill="#fff"/><use href="#boss-head"/></svg><p id="resComment"></p></div>
       <button type="button" class="big" id="againBtn">처음부터 다시 근무하기</button>
     </aside>

@@ -14,9 +14,47 @@ export const ORDER = ['water', 'glucose', 'amino', 'urea', 'protein', 'rbc'];
 export const NORMAL_URINE = { water: true, glucose: false, amino: false, urea: true, protein: false, rbc: false };
 
 export const WAVES = {
-  filter:  ['rbc', 'water', 'glucose', 'protein', 'urea', 'amino', 'water', 'rbc', 'glucose', 'urea', 'protein', 'amino', 'water', 'urea', 'rbc'],
-  secrete: ['rbc', 'urea', 'glucose', 'protein', 'urea', 'amino', 'water', 'urea', 'rbc'],
+  filter:  ['rbc', 'water', 'glucose', 'protein', 'urea', 'amino', 'water', 'rbc', 'glucose', 'urea', 'water', 'protein',
+            'amino', 'water', 'urea', 'rbc', 'water', 'glucose', 'protein', 'amino', 'urea'],
+  secrete: ['rbc', 'urea', 'glucose', 'protein', 'urea', 'amino', 'water', 'urea', 'rbc', 'urea', 'glucose', 'urea'],
 };
+
+/* 속도 단계: 단계 안에서 물질이 1/3, 2/3 지나갈 때마다 벨트가 빨라져요 */
+export const LEVELS = [
+  { speed: 80, gap: 1.3 },
+  { speed: 105, gap: 1.05 },
+  { speed: 130, gap: 0.85 },
+];
+export const levelAt = progress => (progress < 1 / 3 ? 0 : progress < 2 / 3 ? 1 : 2);
+
+/* 콤보: 연속으로 맞히면 점수가 2배, 3배 */
+export const comboMult = combo => (combo >= 8 ? 3 : combo >= 4 ? 2 : 1);
+
+/* 긴급 주문 (2단계 재흡수의 물)
+   drink: 물을 많이 마셨대요 → 물을 재흡수하지 않고 오줌으로 보내야 정답
+   sweat: 땀을 많이 흘렸대요 → 물을 꼭 재흡수해야 정답 */
+export const ORDERS = {
+  drink: { title: '긴급 주문! 물을 많이 마셨대요', text: '표시된 물은 재흡수하지 말고 오줌으로 보내 주세요.' },
+  sweat: { title: '긴급 주문! 땀을 많이 흘렸대요', text: '표시된 물은 놓치지 말고 꼭 재흡수해 주세요.' },
+};
+/* 2단계 대기열: 걸러진 물질 + (물이 모자라면 채워서) 물 5개 이상, 2~3번째 물은 drink, 4~5번째 물은 sweat */
+export function reabsorbQueue(filtrate) {
+  const q = filtrate.map(t => ({ t, o: null }));
+  let waters = q.filter(x => x.t === 'water').length;
+  for (let k = 0; waters < 5; k++, waters++) q.splice(Math.min(q.length, 1 + k * 3), 0, { t: 'water', o: null });
+  let n = 0;
+  for (const x of q) if (x.t === 'water') { n++; if (n === 2 || n === 3) x.o = 'drink'; if (n === 4 || n === 5) x.o = 'sweat'; }
+  return q;
+}
+
+/* 별 평가와 칭호: 정확도(맞힘 ÷ 전체 판단)로 별을 주고, 오줌 성분이 틀리면 별은 최대 2개 */
+export const TITLES = ['', '견습생', '숙련공', '명예 공장장'];
+export function rating({ good, bad, miss }, rows) {
+  const total = good + bad + miss, acc = total ? good / total : 0;
+  let stars = acc >= 0.9 ? 3 : acc >= 0.7 ? 2 : 1;
+  if (rows.some(r => r.wrong)) stars = Math.min(stars, 2);
+  return { stars, acc, title: TITLES[stars] };
+}
 
 export const POINT = 10, PENALTY = 5;
 
