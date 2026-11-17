@@ -1,4 +1,4 @@
-/* 콩팥 해부 탐구 — 평면 그림 */
+/* 배설계의 구조 — 평면 그림 */
 :root{--ink:#e8f1fa;--muted:#9fb6cc;--panel:rgba(16,32,52,.88);--line:rgba(160,200,235,.18);--accent:#4dabf7;--ok:#69db7c;--no:#ffa94d;--out:#868e96;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}

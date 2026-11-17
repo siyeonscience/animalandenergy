@@ -1,4 +1,4 @@
-/* 콩팥 해부 탐구 — 화면 연결
+/* 배설계의 구조 — 화면 연결
    1단계 배설 기관 → 2단계 콩팥 단면 → 3단계 네프론 (모두 평면 그림: scenes.js)
    빈칸 채점 규칙은 quiz.js */
 import { STAGES, freshBlank, grade, showHint, isDone, stageDone } from './quiz.js';

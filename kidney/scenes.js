@@ -1,34 +1,34 @@
-/* 콩팥 해부 탐구 — 평면 그림 3장 (배설 기관 · 콩팥 단면 · 네프론)
+/* 배설계의 구조 — 교과서 그림을 참고한 평면 그림 3장 (배설 기관 · 콩팥 단면 · 네프론)
    - 혈관은 모두 같은 색이고, 흐르는 방향의 화살표로 동맥과 정맥을 구분해요.
    - 오줌은 노란 알갱이가 흐르는 모습으로 보여 줘요.
    각 장면: { viewBox, svg(그림), anchors(빈칸이 가리키는 점), slots(빈칸 자리), pad(양옆 빈칸 자리 너비) } */
 
-const VES = '#e8798a', VES_D = '#b8505f', VES_H = '#ffc9cf';   // 혈관 (동맥·정맥 같은 색)
-const URI = '#f1c879', URI_D = '#c99a45', URI_H = '#fff0c8';   // 오줌이 지나는 길
-const KID_D = '#b85d4f';
+const VES = '#e26a62', VES_D = '#b2453f', VES_H = '#ffb9b0';   // 혈관 (동맥·정맥 같은 색)
+const URE = '#efdcae', URE_D = '#c9ae78', URE_H = '#fff6dc';   // 오줌관 (연한 살구색)
+const TUB = '#f3cf72', TUB_D = '#d2a743', TUB_H = '#fff0bf';   // 세뇨관 (노란색)
+const VESSEL = [VES, VES_D, VES_H], URETER = [URE, URE_D, URE_H], TUBULE = [TUB, TUB_D, TUB_H];
 
 /* ---------- 도구 ---------- */
 let uid = 0;
-/* 흐름 표시: 경로를 따라 움직이는 화살표 · 알갱이 */
-function flow(d, { n = 3, dur = 3, kind = 'arrow' } = {}) {
+function flow(d, { n = 3, dur = 3, kind = 'arrow', s = 1 } = {}) {
   const id = 'fp' + (uid++);
   const mark = kind === 'arrow'
-    ? '<path d="M-6,-5 L7,0 L-6,5 Z" fill="#fff" stroke="rgba(80,20,30,.35)" stroke-width="1"/>'
-    : '<circle r="4" fill="#fff6b8" stroke="#d9a030" stroke-width="1.2"/>';
-  let s = `<path id="${id}" d="${d}" fill="none" stroke="none"/>`;
-  for (let i = 0; i < n; i++) s += `<g>${mark}<animateMotion dur="${dur}s" begin="${(-dur * i / n).toFixed(2)}s" repeatCount="indefinite" rotate="auto"><mpath href="#${id}"/></animateMotion></g>`;
-  return s;
+    ? `<path d="M-6,-5 L7,0 L-6,5 Z" fill="#fff" stroke="rgba(90,20,20,.4)" stroke-width="1" transform="scale(${s})"/>`
+    : `<circle r="${(4 * s).toFixed(1)}" fill="#fff6b8" stroke="#d9a030" stroke-width="${(1.2 * s).toFixed(2)}"/>`;
+  let out = `<path id="${id}" d="${d}" fill="none" stroke="none"/>`;
+  for (let i = 0; i < n; i++) out += `<g>${mark}<animateMotion dur="${dur}s" begin="${(-dur * i / n).toFixed(2)}s" repeatCount="indefinite" rotate="auto"><mpath href="#${id}"/></animateMotion></g>`;
+  return out;
 }
-/* 둥근 관: 테두리 · 바탕 · 윗쪽 빛 (입체감) */
-function tube(d, w, [c, cd, ch], extra = '') {
-  const o = (w * 0.18).toFixed(1);
-  return `<g ${extra}><path d="${d}" fill="none" stroke="${cd}" stroke-width="${w + 3}" stroke-linecap="round" stroke-linejoin="round"/>
+/* 둥근 관: 테두리 · 바탕 · 윗쪽 빛 */
+function tube(d, w, [c, cd, ch]) {
+  const o = (w * 0.17).toFixed(1);
+  return `<g><path d="${d}" fill="none" stroke="${cd}" stroke-width="${(w + Math.max(1.6, w * 0.16)).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${d}" fill="none" stroke="${ch}" stroke-width="${(w * 0.28).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round" opacity=".6" transform="translate(-${o} -${o})"/></g>`;
+    <path d="${d}" fill="none" stroke="${ch}" stroke-width="${(w * 0.26).toFixed(1)}" stroke-linecap="round" stroke-linejoin="round" opacity=".65" transform="translate(-${o} -${o})"/></g>`;
 }
-const VESSEL = [VES, VES_D, VES_H], URINE = [URI, URI_D, URI_H];
-
-/* 점들을 부드러운 곡선으로 (Catmull-Rom) */
+/* 잘린 관 끝 (구멍이 보이게) */
+const cutEnd = (x, y, rx, ry, [c, cd]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${c}" stroke="${cd}" stroke-width="1.2"/>
+  <ellipse cx="${x}" cy="${y}" rx="${(rx * .6).toFixed(1)}" ry="${(ry * .6).toFixed(1)}" fill="${cd}" opacity=".75"/>`;
 function smooth(pts, step = 3) {
   const out = [];
   for (let i = 0; i < pts.length - 1; i++) {
@@ -43,6 +43,7 @@ function smooth(pts, step = 3) {
   return out;
 }
 const toD = pts => 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L');
+const sm = (pts, step) => toD(smooth(pts, step));
 let seed = 11;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
@@ -52,181 +53,198 @@ const BEAN = 'M12,-95 C64,-97 78,-42 75,4 C72,56 54,95 6,95 C-34,95 -56,66 -50,4
 /* ================= 1단계: 배설 기관 ================= */
 function organs() {
   const defs = `
-    <radialGradient id="kidG" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#f5ab97"/><stop offset=".6" stop-color="#df8270"/><stop offset="1" stop-color="#c4685a"/></radialGradient>
-    <radialGradient id="bladG" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fde6b5"/><stop offset=".65" stop-color="#f1c47a"/><stop offset="1" stop-color="#d9a24f"/></radialGradient>
-    <linearGradient id="fadeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".1" stop-color="#fff"/><stop offset=".86" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-    <mask id="vmask" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="700"><rect x="200" y="14" width="200" height="460" fill="url(#fadeG)"/><rect x="0" y="150" width="600" height="160" fill="#fff"/></mask>`;
-  const kidney = (cx, cy, flip) => `<g transform="translate(${cx} ${cy}) scale(${flip ? -0.9 : 0.9} 0.9)">
-      <path d="${BEAN}" fill="url(#kidG)" stroke="${KID_D}" stroke-width="3"/>
-      <path d="M44,-72 C62,-52 66,-20 64,6" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".28"/>
-      <path d="M-20,-12 C-14,-4 -14,10 -20,18 L-30,22 C-34,8 -34,-4 -30,-16 Z" fill="${URI}" opacity=".9"/></g>`;
-  const rA = 'M297,232 C340,236 380,240 424,246', lA = 'M279,230 C250,232 215,236 186,240';
-  const lV = 'M311,214 C270,212 225,218 186,226', rV = 'M333,220 C365,224 395,228 424,232';
-  const lU = 'M190,252 C200,300 215,350 236,410 C248,446 256,474 266,494';
-  const rU = 'M420,262 C410,310 392,360 368,410 C354,442 343,472 334,494';
+    <radialGradient id="kidG" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#e3a07c"/><stop offset=".6" stop-color="#c97c58"/><stop offset="1" stop-color="#a85f40"/></radialGradient>
+    <radialGradient id="bladG" cx=".42" cy=".3" r=".8"><stop offset="0" stop-color="#f6c3b6"/><stop offset=".65" stop-color="#e49b8c"/><stop offset="1" stop-color="#c97566"/></radialGradient>
+    <linearGradient id="fadeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".06" stop-color="#fff"/><stop offset=".94" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <mask id="vmask" maskUnits="userSpaceOnUse" x="-20" y="-10" width="300" height="530"><rect x="-20" y="-6" width="300" height="512" fill="url(#fadeG)"/></mask>`;
+  const kidney = (cx, cy, flip) => `<g transform="translate(${cx} ${cy}) scale(${flip ? -0.5 : 0.5} 0.5)">
+      <path d="${BEAN}" fill="url(#kidG)" stroke="#94513a" stroke-width="2.4"/>
+      <path d="M44,-72 C62,-52 66,-20 64,6" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".3"/></g>`;
+  // 아래대정맥(왼쪽)과 대동맥(오른쪽): 아래에서 두 갈래로 나뉘어요
+  const ivc = ['M110,-4 V258 C110,300 50,330 34,505', 'M110,258 C112,300 200,330 226,505'];
+  const ao = ['M140,-4 V262 C140,300 80,330 66,505', 'M140,262 C142,300 180,330 196,505'];
+  const lV = 'M110,104 C96,104 86,104 76,104', rV = 'M110,100 C140,92 160,96 176,100';
+  const lA = 'M140,112 C116,118 96,114 78,112', rA = 'M140,108 C152,108 164,108 176,110';
+  const lU = 'M78,118 C80,170 84,240 92,300 C98,350 104,400 112,446';
+  const rU = 'M175,118 C172,170 168,240 164,300 C160,350 156,400 150,446';
   const svg = `<defs>${defs}</defs>
     <g mask="url(#vmask)">
-      ${tube(rA, 8, VESSEL)}
-      ${tube('M288,20 V470', 20, VESSEL)}
-      ${tube(lA, 8, VESSEL)}
-      ${tube('M322,20 V470', 22, VESSEL)}
-      ${tube(lV, 9, VESSEL)}${tube(rV, 9, VESSEL)}
+      ${tube(ivc[1], 15, VESSEL)}${tube(ivc[0], 15, VESSEL)}${tube(rA, 6, VESSEL)}
+      ${tube(ao[1], 13, VESSEL)}${tube(ao[0], 13, VESSEL)}
+      ${tube(lV, 7, VESSEL)}${tube(rV, 7, VESSEL)}${tube(lA, 6, VESSEL)}
     </g>
-    ${kidney(160, 236, true)}${kidney(446, 246, false)}
-    ${tube(lU, 7, URINE)}${tube(rU, 7, URINE)}
-    <path d="M300,466 C354,464 388,492 386,530 C384,568 348,594 320,602 C311,605 306,608 300,608 C294,608 289,605 280,602 C252,594 216,568 214,530 C212,492 246,464 300,466 Z" fill="url(#bladG)" stroke="${URI_D}" stroke-width="3"/>
-    <path d="M246,500 C256,486 272,478 290,476" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".45"/>
-    ${tube('M300,606 C300,622 300,636 300,652', 8, URINE)}
-    ${flow('M288,30 V460', { n: 4, dur: 4.5 })}
-    ${flow('M322,460 V30', { n: 4, dur: 4.5 })}
-    ${flow(lA, { n: 2, dur: 2 })}${flow(rA, { n: 2, dur: 2 })}
-    ${flow('M186,226 C225,218 270,212 311,214', { n: 2, dur: 2 })}
-    ${flow('M424,232 C395,228 365,224 333,220', { n: 2, dur: 2 })}
-    ${flow(lU, { n: 5, dur: 4, kind: 'dot' })}${flow(rU, { n: 5, dur: 4, kind: 'dot' })}
-    ${flow('M300,606 C300,622 300,636 300,652', { n: 2, dur: 1.4, kind: 'dot' })}`;
+    ${kidney(52, 108, true)}${kidney(200, 108, false)}
+    ${tube(lU, 5, URETER)}${tube(rU, 5, URETER)}
+    <path d="M131,440 C162,440 176,456 175,472 C174,489 156,498 138,500 C135,500 133,502 131,502 C129,502 127,500 124,500 C106,498 88,489 87,472 C86,456 100,440 131,440 Z" fill="url(#bladG)" stroke="#b5675a" stroke-width="1.6"/>
+    <path d="M100,458 C106,451 114,448 122,447" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".45"/>
+    ${tube('M131,501 V518', 4, URETER)}
+    ${flow('M140,10 V250', { n: 3, dur: 4, s: .6 })}
+    ${flow('M110,250 V10', { n: 3, dur: 4, s: .6 })}
+    ${flow(lA, { n: 1, dur: 1.6, s: .5 })}${flow(rA, { n: 1, dur: 1.6, s: .5 })}
+    ${flow('M76,104 C86,104 96,104 110,104', { n: 1, dur: 1.6, s: .5 })}
+    ${flow('M176,100 C160,96 140,92 110,100', { n: 1, dur: 1.6, s: .5 })}
+    ${flow(lU, { n: 5, dur: 4, kind: 'dot', s: .55 })}${flow(rU, { n: 5, dur: 4, kind: 'dot', s: .55 })}
+    ${flow('M131,501 V512', { n: 1, dur: 1.2, kind: 'dot', s: .55 })}`;
   return {
-    viewBox: '40 10 520 650', svg, pad: [250, 250],
-    anchors: { kidney: [132, 212], ureter: [391, 352], bladder: [342, 540], urethra: [300, 638] },
-    slots: { kidney: ['left', 0.24], ureter: ['right', 0.42], bladder: ['right', 0.68], urethra: ['left', 0.86] },
+    viewBox: '0 0 252 516', svg, pad: [250, 250],
+    anchors: { kidney: [38, 96], ureter: [166, 300], bladder: [150, 470], urethra: [131, 508] },
+    slots: { kidney: ['left', 0.2], ureter: ['right', 0.5], bladder: ['right', 0.8], urethra: ['left', 0.9] },
   };
 }
 
 /* ================= 2단계: 콩팥 단면 ================= */
 function section() {
   seed = 11;
-  const DEG = Math.PI / 180, S = [-6, 0];
+  const DEG = Math.PI / 180, S = [-4, 0];
   const at = (a, r) => [S[0] + Math.cos(a) * r, S[1] + Math.sin(a) * r];
-  const rr = a => 0.97 / Math.sqrt((Math.cos(a) / 76) ** 2 + (Math.sin(a) / 93) ** 2);
-  const P = [-118, -78, -38, 2, 42, 82, 120].map(d => ({ a: d * DEG, r1: 30, r2: rr(d * DEG) * 0.72, h: 15 * DEG }));
+  const rr = a => 0.97 / Math.sqrt((Math.cos(a) / 74) ** 2 + (Math.sin(a) / 92) ** 2);
+  const P = [-112, -72, -32, 8, 48, 88, 124].map(d => ({ a: d * DEG, r1: 31, r2: rr(d * DEG) * 0.76, h: 15.5 * DEG }));
   const f = p => p.map(v => v.toFixed(1)).join(',');
-  let pyr = '', calyx = '', calyxD = '', ves = '';
+  let pyr = '', cups = '', cupsD = '', ves = '', hair = '';
   for (const p of P) {
     const m = (p.r1 + p.r2) / 2;
-    const d = `M${f(at(p.a - p.h * .42, p.r1 + 4))} Q${f(at(p.a, p.r1 - 5))} ${f(at(p.a + p.h * .42, p.r1 + 4))}
-      Q${f(at(p.a + p.h * 1.12, m))} ${f(at(p.a + p.h * 1.05, p.r2))} Q${f(at(p.a, p.r2 + 8))} ${f(at(p.a - p.h * 1.05, p.r2))}
-      Q${f(at(p.a - p.h * 1.12, m))} ${f(at(p.a - p.h * .42, p.r1 + 4))} Z`;
+    const d = `M${f(at(p.a - p.h * .45, p.r1 + 5))} Q${f(at(p.a, p.r1 - 6))} ${f(at(p.a + p.h * .45, p.r1 + 5))}
+      Q${f(at(p.a + p.h * 1.15, m))} ${f(at(p.a + p.h * 1.08, p.r2))} Q${f(at(p.a, p.r2 + 10))} ${f(at(p.a - p.h * 1.08, p.r2))}
+      Q${f(at(p.a - p.h * 1.15, m))} ${f(at(p.a - p.h * .45, p.r1 + 5))} Z`;
     let lines = '';
-    for (let k = -5; k <= 5; k++) lines += `<path d="M${f(at(p.a, p.r1))} L${f(at(p.a + k / 5 * p.h * 1.1, p.r2 + 6))}" />`;
+    for (let k = -6; k <= 6; k++) lines += `<path d="M${f(at(p.a, p.r1))} L${f(at(p.a + k / 6 * p.h * 1.15, p.r2 + 8))}"/>`;
     const cid = 'pc' + (uid++);
-    pyr += `<clipPath id="${cid}"><path d="${d}"/></clipPath><path d="${d}" fill="url(#medG)"/><g stroke="#e7928a" stroke-width=".5" opacity=".55" clip-path="url(#${cid})">${lines}</g>`;
-    const cup = at(p.a, p.r1 - 3), mid = at(p.a, 15);
-    calyx += `<path d="M-12,4 Q${f(mid)} ${f(cup)}" stroke-width="6"/><circle cx="${cup[0].toFixed(1)}" cy="${cup[1].toFixed(1)}" r="7.5"/>`;
-    calyxD += `<path d="M-12,4 Q${f(mid)} ${f(cup)}" stroke-width="8"/><circle cx="${cup[0].toFixed(1)}" cy="${cup[1].toFixed(1)}" r="8.6"/>`;
-  }
-  P.forEach((p, i) => {
-    const q = P[i + 1]; if (!q) return;
-    const g = (p.a + q.a) / 2, r2 = Math.min(p.r2, q.r2);
-    ves += `<path d="M-16,${(-4 + i * 1.2).toFixed(1)} Q${f(at(g, 14))} ${f(at(g, 30))} L${f(at(g, r2 + 2))}"/>`;
-    const arc = [];
-    for (let t = -1; t <= 1.001; t += 0.25) arc.push(at(g + t * 18 * DEG, r2 + 5));
-    ves += `<path d="${toD(smooth(arc, 1))}"/>`;
-    for (const t of [-0.6, 0.6]) {
-      const a = g + t * 18 * DEG;
-      ves += `<path d="M${f(at(a, r2 + 5))} L${f(at(a + (rnd() - 0.5) * 0.06, rr(a) * 0.9))}" stroke-width=".9"/>`;
+    pyr += `<clipPath id="${cid}"><path d="${d}"/></clipPath><path d="${d}" fill="url(#medG)" stroke="#c97a62" stroke-width=".6"/>
+      <g stroke="#f2b9a2" stroke-width=".7" opacity=".6" clip-path="url(#${cid})">${lines}</g>`;
+    const cup = at(p.a, p.r1 - 2), mid = at(p.a, 16);
+    cups += `<path d="M-14,4 Q${f(mid)} ${f(cup)}" stroke-width="7"/><circle cx="${cup[0].toFixed(1)}" cy="${cup[1].toFixed(1)}" r="8.5"/>`;
+    cupsD += `<path d="M-14,4 Q${f(mid)} ${f(cup)}" stroke-width="9"/><circle cx="${cup[0].toFixed(1)}" cy="${cup[1].toFixed(1)}" r="9.6"/>`;
+    // 피라미드 둘레를 감싸는 혈관 (양옆 + 바닥)
+    for (const [side, off] of [[-1, 0], [1, 1.6]]) {
+      const pts = [];
+      pts.push(at(p.a + side * p.h * 0.6, p.r1 - 4 + off));
+      pts.push(at(p.a + side * p.h * 1.32, m));
+      pts.push(at(p.a + side * p.h * 1.2, p.r2 + 4 + off));
+      pts.push(at(p.a + side * p.h * 0.5, p.r2 + 13 + off));
+      pts.push(at(p.a, p.r2 + 14 + off));
+      ves += `<path d="${sm(pts, 1)}"/>`;
     }
-  });
-  const hull = [[-24, -18], ...P.map(p => at(p.a, 19)), [-26, 24]];
-  const pelvis = (extra) => `<ellipse cx="-11" cy="5" rx="${16 + extra}" ry="${25 + extra}"/>
-      <path d="${toD(hull)} Z" stroke-width="${2 + extra * 2}" stroke-linejoin="round"/>
-      <path d="M-20,20 C-34,34 -48,52 -54,84 C-57,104 -57,124 -57,150" fill="none" stroke-width="${10 + extra * 2}" stroke-linecap="round"/>`;
-  const NS = at(-40 * DEG, rr(-40 * DEG) * 0.86);
+    for (let k = -4; k <= 4; k++) {
+      const a = p.a + k / 4 * p.h * 1.1, r0 = p.r2 + 13 - Math.abs(k) * 1.2;
+      hair += `<path d="M${f(at(a, r0))} l${f([Math.cos(a + (rnd() - .5) * .5) * (4 + rnd() * 4), Math.sin(a + (rnd() - .5) * .5) * (4 + rnd() * 4)])}"/>`;
+    }
+  }
+  const hull = [[-24, -18], ...P.map(p => at(p.a, 20)), [-26, 24]];
+  const pelvis = extra => `<ellipse cx="-12" cy="6" rx="${15 + extra}" ry="${25 + extra}"/><ellipse cx="2" cy="1" rx="${26 + extra}" ry="${36 + extra}"/>
+      <path d="${toD(hull)} Z" stroke-width="${2 + extra * 2}" stroke-linejoin="round"/>`;
+  const NS = at(-42 * DEG, rr(-42 * DEG) * 0.88);
   const K = 2.25, T = [330, 300];
   const L = ([x, y]) => [T[0] + x * K, T[1] + y * K];
-  const vein = `M70,${L([0, -11])[1]} C150,${L([0, -12])[1]} 220,${L([0, -10])[1]} ${L([-22, -8]).join(',')}`;
-  const artery = `M70,${L([0, 12])[1]} C150,${L([0, 12])[1]} 220,${L([0, 9])[1]} ${L([-22, 8]).join(',')}`;
-  const ureterScene = `M${L([-20, 20]).join(',')} C${L([-34, 34]).join(' ')} ${L([-48, 52]).join(' ')} ${L([-54, 84]).join(',')} C${L([-57, 104]).join(' ')} ${L([-57, 124]).join(' ')} ${L([-57, 150]).join(',')}`;
+  const yA = L([0, -12])[1], yV = L([0, 4])[1];
+  const artery = `M84,${yA} C150,${yA} 220,${yA + 2} ${L([-24, -8]).join(',')}`;
+  const vein = `${L([-24, 6]).join(',')} C220,${yV} 150,${yV} 84,${yV}`;
+  const ureter = `M${L([-18, 18]).join(',')} C${L([-36, 36]).join(' ')} ${L([-48, 56]).join(' ')} ${L([-52, 90]).join(',')} C${L([-55, 112]).join(' ')} ${L([-56, 130]).join(' ')} ${L([-56, 152]).join(',')}`;
   const svg = `<defs>
-      <radialGradient id="corG" cx=".55" cy=".45" r=".6"><stop offset="0" stop-color="#f3b2a0"/><stop offset=".8" stop-color="#e99682"/><stop offset="1" stop-color="#d97c69"/></radialGradient>
-      <radialGradient id="medG" gradientUnits="userSpaceOnUse" cx="-6" cy="0" r="80"><stop offset=".3" stop-color="#b9504f"/><stop offset="1" stop-color="#d0706a"/></radialGradient>
+      <radialGradient id="corG" cx=".5" cy=".45" r=".62"><stop offset="0" stop-color="#f4bba3"/><stop offset=".85" stop-color="#eba087"/><stop offset="1" stop-color="#df8c72"/></radialGradient>
+      <linearGradient id="sideG" x1="0" y1="0" x2="1" y2="0"><stop offset=".5" stop-color="#b8735a"/><stop offset="1" stop-color="#7f4634"/></linearGradient>
+      <radialGradient id="medG" gradientUnits="userSpaceOnUse" cx="-4" cy="0" r="80"><stop offset=".35" stop-color="#cf7a63"/><stop offset="1" stop-color="#e2967e"/></radialGradient>
       <filter id="goo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/><feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter>
     </defs>
-    ${tube(vein, 18, VESSEL)}${tube(artery, 14, VESSEL)}
     <g transform="translate(${T[0]} ${T[1]}) scale(${K})">
-      <path d="${BEAN}" fill="url(#corG)" stroke="${KID_D}" stroke-width="1.6"/>
-      <path d="${BEAN}" fill="none" stroke="#f8c8ba" stroke-width=".8" transform="scale(.955)" opacity=".8"/>
-      <g fill="none" stroke="${VES}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ves}</g>
+      <path d="${BEAN}" fill="url(#sideG)" transform="translate(9 3)"/>
+      <path d="${BEAN}" fill="url(#corG)" stroke="#c9775f" stroke-width="1"/>
+      <path d="${BEAN}" fill="none" stroke="#f9d6c6" stroke-width="1.4" transform="scale(.955)"/>
+      <g filter="url(#goo)" fill="#ad9566" stroke="#ad9566" stroke-linecap="round">${cupsD}${pelvis(1.2)}</g>
+      <g filter="url(#goo)" fill="#d8c493" stroke="#d8c493" stroke-linecap="round">${cups}${pelvis(0)}</g>
+      <path d="M-20,-10 C-14,0 -14,12 -20,20" fill="none" stroke="#fff3d2" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
       ${pyr}
-      <g filter="url(#goo)" fill="${URI_D}" stroke="${URI_D}" stroke-linecap="round">${calyxD}${pelvis(1.2)}</g>
-      <g filter="url(#goo)" fill="${URI}" stroke="${URI}" stroke-linecap="round">${calyx}${pelvis(0)}</g>
-      <path d="M-22,-8 C-18,0 -18,10 -22,16" fill="none" stroke="${URI_H}" stroke-width="2" stroke-linecap="round" opacity=".6"/>
+      <g fill="none" stroke="${VES}" stroke-linecap="round" stroke-linejoin="round">
+        <g stroke-width="1.5">${ves}</g><g stroke-width=".7">${hair}</g>
+        <path d="M-24,-8 C-12,-10 -4,-12 ${f(at(P[2].a - P[2].h * .9, 32))} M-24,-6 C-12,-4 -6,6 ${f(at(P[4].a - P[4].h * .9, 32))} M-24,-7 C-14,-16 -12,-22 ${f(at(P[0].a + P[0].h * .9, 32))} M-24,-6 C-14,8 -12,18 ${f(at(P[6].a - P[6].h * .9, 32))}" stroke-width="1.6"/>
+      </g>
       <circle cx="${NS[0].toFixed(1)}" cy="${NS[1].toFixed(1)}" r="7" fill="none" stroke="#ffd43b" stroke-width="2.4"><animate attributeName="r" values="6;8;6" dur="1.4s" repeatCount="indefinite"/></circle>
     </g>
+    ${tube(ureter, 24, URETER)}
+    ${tube(artery, 13, VESSEL)}${tube('M' + vein, 16, VESSEL)}
+    ${cutEnd(84, yA, 4, 6.5, VESSEL)}${cutEnd(84, yV, 5, 8, VESSEL)}
     ${flow(artery, { n: 3, dur: 2.4 })}
-    ${flow(`M${L([-22, -8]).join(',')} C220,${L([0, -10])[1]} 150,${L([0, -12])[1]} 70,${L([0, -11])[1]}`, { n: 3, dur: 2.4 })}
-    ${flow(ureterScene, { n: 5, dur: 3, kind: 'dot' })}`;
+    ${flow('M' + vein, { n: 3, dur: 2.4 })}
+    ${flow(ureter, { n: 5, dur: 3, kind: 'dot' })}`;
   return {
-    viewBox: '50 70 470 480', svg, pad: [250, 250],
-    anchors: { vein: [120, L([0, -11])[1]], artery: [120, L([0, 12])[1]], ureter2: L([-57, 120]), nephron: L(NS) },
-    slots: { vein: ['left', 0.30], artery: ['left', 0.47], ureter2: ['left', 0.80], nephron: ['right', 0.22] },
+    viewBox: '60 70 460 480', svg, pad: [250, 250],
+    anchors: { artery: [130, yA], vein: [130, yV], ureter2: L([-56, 122]), nephron: L(NS) },
+    slots: { artery: ['left', 0.32], vein: ['left', 0.5], ureter2: ['left', 0.82], nephron: ['right', 0.22] },
   };
 }
 
 /* ================= 3단계: 네프론 ================= */
 function nephron() {
-  seed = 5;
-  const G = [188, 172], RO = 64, RI = 50;
-  const pol = (r, deg) => [G[0] + r * Math.cos(deg * Math.PI / 180), G[1] + r * Math.sin(deg * Math.PI / 180)];
-  const f = p => p.map(v => v.toFixed(1)).join(',');
+  // 보먼주머니 (오른쪽 위로 세뇨관이 이어지는 둥근 주머니)
+  const B = [300, 236], BR = 58;
+  const capsule = `M${B[0] - 50},${B[1] + 28} C${B[0] - 66},${B[1] - 20} ${B[0] - 30},${B[1] - 60} ${B[0] + 14},${B[1] - 58}
+    C${B[0] + 36},${B[1] - 57} ${B[0] + 46},${B[1] - 66} ${B[0] + 56},${B[1] - 76} L${B[0] + 74},${B[1] - 58}
+    C${B[0] + 62},${B[1] - 44} ${B[0] + 60},${B[1] - 30} ${B[0] + 60},${B[1]}
+    C${B[0] + 60},${B[1] + 36} ${B[0] + 30},${B[1] + 60} ${B[0]},${B[1] + 60} C${B[0] - 24},${B[1] + 60} ${B[0] - 42},${B[1] + 48} ${B[0] - 50},${B[1] + 28} Z`;
+  // 토리: 들어온 혈관이 여러 고리로 갈라졌다가 다시 모여 나가요
+  const pole = [B[0] - 46, B[1] + 6];
+  let loops = '';
+  [-50, -30, -12, 6, 24, 42].forEach((deg, i) => {
+    const a = deg * Math.PI / 180, r = 46 - Math.abs(i - 2.5) * 3;
+    const tip = [pole[0] + Math.cos(a) * r * 1.9, pole[1] + Math.sin(a) * r * 1.25];
+    const c1 = [pole[0] + Math.cos(a - .32) * r * 1.5, pole[1] + Math.sin(a - .32) * r * 1.4];
+    const c2 = [pole[0] + Math.cos(a + .32) * r * 1.5, pole[1] + Math.sin(a + .32) * r * 1.4];
+    loops += `M${pole[0]},${pole[1] - 2} Q${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${tip[0].toFixed(1)},${tip[1].toFixed(1)} Q${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${pole[0]},${pole[1] + 2} `;
+  });
 
-  // 세뇨관: 보먼주머니 → 구불구불 → 아래로 내려갔다 올라오는 고리 → 구불구불 → 오줌관 쪽으로
-  const tub = smooth([pol(RO, 22), [276, 214], [298, 192], [322, 210], [316, 238], [342, 250], [362, 280], [362, 340], [362, 430], [364, 470],
-    [387, 494], [409, 470], [410, 420], [410, 330], [418, 298], [446, 302], [462, 274], [490, 284], [506, 252], [534, 244], [556, 226],
-    [561, 262], [561, 400], [561, 560]], 2);
-  const len = [0];
-  for (let i = 1; i < tub.length; i++) len.push(len[i - 1] + Math.hypot(tub[i][0] - tub[i - 1][0], tub[i][1] - tub[i - 1][1]));
-  // 모세혈관: 세뇨관을 감싸며 물결치듯 따라가요
-  const wrap = [];
-  for (let i = 1; i < tub.length - 1; i++) {
-    const s = len[i];
-    if (s < 60 || tub[i][1] < 200 && tub[i][0] > 540) continue;
-    if (tub[i][0] > 548 && tub[i][1] > 230) break;
-    const dx = tub[i + 1][0] - tub[i - 1][0], dy = tub[i + 1][1] - tub[i - 1][1], n = Math.hypot(dx, dy);
-    const A = 15 + 3 * Math.sin(s / 60 * Math.PI * 2);
-    wrap.push([tub[i][0] - dy / n * A, tub[i][1] + dx / n * A]);
-  }
-  // 좁게 꺾이는 곳이 엉키지 않도록 고르게 펴 줘요
-  for (let pass = 0; pass < 3; pass++) {
-    const c = wrap.map(p => p.slice());
-    for (let i = 4; i < wrap.length - 4; i++) for (const j of [0, 1]) { let t = 0; for (let k = -4; k <= 4; k++) t += c[i + k][j]; wrap[i][j] = t / 9; }
-  }
-  const efferent = smooth([pol(RI - 6, 196), pol(RO + 6, 196), [138, 236], [172, 258], [214, 254], wrap[0]], 3);
-  const venule = smooth([wrap[wrap.length - 1], [590, 236], [606, 300], [608, 450], [604, 600]], 3);
-  const capPts = [...efferent, ...wrap.slice(1), ...venule.slice(1)];
-  const capD = toD(capPts);
-  const afferent = `M14,112 C70,110 112,128 ${f(pol(RO + 4, 168))} L${f(pol(RI - 8, 172))}`;
-
-  // 토리: 모세혈관이 실타래처럼 뭉친 모양
-  const tangle = [];
-  for (let i = 0; i < 30; i++) { const a = i * 2.39996, r = 38 * Math.sqrt(0.15 + 0.85 * rnd()); tangle.push([G[0] + 2 + r * Math.cos(a), G[1] + r * Math.sin(a)]); }
-  const tangleD = toD(smooth([pol(RI - 8, 172), ...tangle, pol(RI - 6, 196)], 2));
-
-  // 보먼주머니: 두 겹 컵 (왼쪽이 혈관이 드나드는 입구)
-  const cup = `M${f(pol(RO, 206))} A${RO},${RO} 0 1 1 ${f(pol(RO, 154))} L${f(pol(RI, 154))} A${RI},${RI} 0 1 0 ${f(pol(RI, 206))} Z`;
+  // 동맥 · 정맥 줄기 (왼쪽)
+  const artery = 'M92,130 V420', vein = 'M140,250 V520';
+  const afferent = `M92,330 C120,330 150,322 180,300 C205,282 222,262 ${pole[0]},${pole[1]}`;
+  const efferent = `M${pole[0]},${pole[1] - 4} C222,232 196,214 184,186 C170,150 196,108 260,104 C320,100 360,112 400,104`;
+  // 세뇨관
+  const PCT = sm([[B[0] + 66, B[1] - 66], [392, 140], [418, 104], [450, 112], [458, 152], [430, 180], [404, 214], [420, 250], [456, 246], [476, 214], [494, 232], [490, 290]], 2);
+  const DESC = sm([[490, 288], [490, 380], [490, 470]], 3);
+  const THIN = 'M490,466 C490,520 492,560 512,566 C532,572 544,556 546,520 L546,470';
+  const ASC = sm([[546, 474], [546, 380], [548, 300], [556, 250]], 3);
+  const DCT = sm([[556, 252], [576, 214], [612, 228], [624, 190], [596, 160], [600, 124], [640, 110], [676, 128], [688, 160], [700, 168], [732, 170]], 2);
+  const DUCT = 'M746,40 V588';
+  // 모세혈관 그물 (세뇨관을 감싸요)
+  const net = [
+    'M400,104 C470,96 540,110 600,96 C650,84 690,80 716,100',
+    'M410,104 C400,160 380,214 420,272 C440,300 470,306 520,300 C560,296 600,304 640,290',
+    'M480,100 C470,150 520,190 500,240',
+    'M560,104 C560,150 540,200 570,240 C590,270 620,262 640,290',
+    'M640,90 C650,140 640,190 690,210 C710,220 716,250 700,290 C690,320 660,330 640,320',
+    'M420,190 C460,186 520,200 560,180 C600,166 630,180 680,170',
+    'M640,290 C620,360 604,420 606,500 C606,540 590,590 548,596 C510,600 470,592 466,540 C462,470 470,380 468,300',
+  ].join(' ');
+  const rungs = [330, 372, 414, 456, 498, 540].map(y => `M468,${y} C500,${y - 8} 560,${y + 8} 606,${y}`).join(' ');
+  const venous = 'M468,300 C420,300 360,330 300,370 C240,408 190,414 140,420';
   const svg = `<defs>
-      <radialGradient id="capsG" cx=".5" cy=".5" r=".5"><stop offset=".7" stop-color="#fff6dc"/><stop offset="1" stop-color="#fbe5a8"/></radialGradient>
+      <radialGradient id="bowG" cx=".45" cy=".5" r=".6"><stop offset="0" stop-color="#f7e2b6"/><stop offset=".85" stop-color="#ecc985"/><stop offset="1" stop-color="#d9ad5c"/></radialGradient>
     </defs>
-    ${tube(capD, 5, VESSEL)}
-    ${tube(toD(tub), 16, URINE)}
-    <circle cx="${G[0]}" cy="${G[1]}" r="${RO}" fill="url(#capsG)"/>
-    <path d="${cup}" fill="#f6d68e" stroke="${URI_D}" stroke-width="2.5" stroke-linejoin="round"/>
-    ${tube(afferent, 9, VESSEL)}
-    ${tube(tangleD, 4.5, VESSEL)}
-    ${tube(toD(efferent), 6, VESSEL)}
+    ${tube(DUCT, 30, TUBULE)}
+    <path d="M746,300 l-26,-34 M746,470 l26,-34" stroke="${TUB_D}" stroke-width="12" stroke-linecap="round"/><path d="M746,300 l-26,-34 M746,470 l26,-34" stroke="${TUB}" stroke-width="9" stroke-linecap="round"/>
+    <g fill="none" stroke="${VES_D}" stroke-width="7" stroke-linecap="round"><path d="${net} ${rungs} ${venous}"/></g>
+    <g fill="none" stroke="${VES}" stroke-width="5" stroke-linecap="round"><path d="${net} ${rungs} ${venous}"/></g>
+    ${tube(PCT, 22, TUBULE)}${tube(DESC, 18, TUBULE)}${tube(THIN, 9, TUBULE)}${tube(ASC, 17, TUBULE)}${tube(DCT, 21, TUBULE)}
+    <g fill="none" stroke="${VES}" stroke-width="5" stroke-linecap="round" opacity=".95"><path d="M440,140 C452,170 470,180 480,200 M600,140 C612,170 630,176 650,170 M520,250 C528,276 540,282 552,290 M484,330 C496,326 504,334 512,330"/></g>
+    ${tube(artery, 20, VESSEL)}${tube(vein, 20, VESSEL)}
+    ${cutEnd(92, 130, 10, 5, VESSEL)}${cutEnd(140, 250, 10, 5, VESSEL)}
+    <path d="M92,420 l-24,22 M140,520 l-24,22" stroke="${VES_D}" stroke-width="13" stroke-linecap="round"/><path d="M92,420 l-24,22 M140,520 l-24,22" stroke="${VES}" stroke-width="10" stroke-linecap="round"/>
+    ${tube(afferent, 10, VESSEL)}${tube(efferent, 8, VESSEL)}
+    <path d="${capsule}" fill="url(#bowG)" stroke="${TUB_D}" stroke-width="2.5"/>
+    <ellipse cx="${B[0] + 2}" cy="${B[1] + 2}" rx="${BR - 12}" ry="${BR - 14}" fill="#fbecc8" opacity=".75"/>
+    <path d="${loops}" fill="none" stroke="${VES_D}" stroke-width="5.5" stroke-linejoin="round"/>
+    <path d="${loops}" fill="none" stroke="${VES}" stroke-width="3.6" stroke-linejoin="round"/>
     ${flow(afferent, { n: 2, dur: 1.8 })}
-    ${flow(capD, { n: 10, dur: 12 })}
-    ${flow(toD(tub), { n: 10, dur: 11, kind: 'dot' })}
-    <g transform="translate(561 600)"><rect x="-62" y="-6" width="124" height="34" rx="10" fill="rgba(8,18,30,.8)"/>
+    ${flow(efferent, { n: 2, dur: 2.2 })}
+    ${flow('M410,104 C400,160 380,214 420,272 C440,300 470,306 520,300 C560,296 600,304 640,290', { n: 2, dur: 3 })}
+    ${flow('M640,290 C620,360 604,420 606,500 C606,540 590,590 548,596 C510,600 470,592 466,540 C462,470 470,380 468,300', { n: 3, dur: 4 })}
+    ${flow(venous, { n: 2, dur: 3 })}
+    ${flow('M92,400 V340', { n: 1, dur: 1.4 })}${flow('M140,430 V510', { n: 1, dur: 1.4 })}
+    ${flow(PCT, { n: 4, dur: 4, kind: 'dot' })}${flow(DESC, { n: 2, dur: 2, kind: 'dot' })}${flow(THIN, { n: 2, dur: 2, kind: 'dot' })}
+    ${flow(ASC, { n: 2, dur: 2, kind: 'dot' })}${flow(DCT, { n: 4, dur: 4, kind: 'dot' })}${flow('M746,180 V590', { n: 4, dur: 4, kind: 'dot' })}
+    <g transform="translate(746 620)"><rect x="-62" y="-6" width="124" height="34" rx="10" fill="rgba(8,18,30,.8)"/>
       <text x="0" y="17" text-anchor="middle" font-size="17" font-weight="700" fill="#ffe8a3" font-family="Noto Sans KR, sans-serif">오줌관으로 ↓</text></g>`;
-  const near = (pts, test) => pts.reduce((b, p) => (test(p) < test(b) ? p : b));
   return {
-    viewBox: '0 80 650 560', svg, pad: [270, 10],
-    anchors: {
-      tori: [G[0] + 2, G[1]],
-      bowman: pol(RO - 2, 95),
-      capillary: near(wrap, p => (p[0] < 385 ? Math.abs(p[1] - 370) : 999) + Math.abs(p[0] - 348) * 0.3),
-      tubule: [364, 462],
-    },
-    slots: { tori: ['left', 0.18], bowman: ['left', 0.38], capillary: ['left', 0.62], tubule: ['left', 0.84] },
+    viewBox: '40 30 780 630', svg, pad: [270, 10],
+    anchors: { tori: [pole[0] + 50, pole[1] - 4], bowman: [B[0] + 10, B[1] + 58], capillary: [548, 596], tubule: [490, 420] },
+    slots: { tori: ['left', 0.28], bowman: ['left', 0.48], tubule: ['left', 0.66], capillary: ['left', 0.86] },
   };
 }
 
