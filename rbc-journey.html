@@ -560,20 +560,52 @@ a.tool { text-decoration: none; }
     camS = s0; phi = 0.6; resetCells(); curYaw = curPitch = 0; arrive(0);
   }
 
-  /* ---------- Sound: S1 at ventricular systole onset, S2 as the aortic valve closes ---------- */
-  var ac = null;
+  /* ---------- 심장 소리: 심실이 수축할 때 '쿵'(제1음), 대동맥판막이 닫힐 때 '탁'(제2음) ----------
+     예전 소리(60~80Hz 사인파)는 너무 낮아서 휴대폰 · 태블릿 · 노트북 스피커로는 거의 들리지 않았어요.
+     그래서 배음이 많은 삼각파 + 짧은 잡음으로 '쿵' 하는 질감을 만들고, 압축기로 소리를 키웠어요. */
+  var ac = null, master = null, noiseBuf = null;
+  function soundOn() { return $('sound').getAttribute('aria-pressed') === 'true'; }
+  function initAudio() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    // 아이폰 무음 모드에서도 소리가 나게 (지원하는 사파리에서만)
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    ac = new AC();
+    var comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -24; comp.knee.value = 12; comp.ratio.value = 6; comp.attack.value = 0.002; comp.release.value = 0.15;
+    master = ac.createGain(); master.gain.value = 2.0;
+    master.connect(comp); comp.connect(ac.destination);
+    noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.25), ac.sampleRate);
+    var d = noiseBuf.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  function thump(t, f0, dur, vol) {
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.45, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    var n = ac.createBufferSource(), f = ac.createBiquadFilter(), gn = ac.createGain();
+    n.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = 800; f.Q.value = 0.8;
+    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(vol * 0.7, t + 0.006);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.7);
+    n.connect(f); f.connect(gn); gn.connect(master); n.start(t); n.stop(t + dur);
+  }
   function heartSound(first) {
-    if (!ac || !$('sound').getAttribute('aria-pressed') || $('sound').getAttribute('aria-pressed') === 'false') return;
-    var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(first ? 62 : 84, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.14);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(first ? 0.9 : 0.6, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + (first ? 0.17 : 0.12));
-    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.2);
+    if (!ac || !soundOn()) return;
+    if (ac.state === 'suspended') ac.resume();
+    var t = ac.currentTime + 0.01;
+    if (first) thump(t, 140, 0.17, 0.9);   // 쿵 (제1음)
+    else thump(t, 190, 0.11, 0.65);        // 탁 (제2음)
   }
   $('sound').onclick = function () {
     var on = this.getAttribute('aria-pressed') !== 'true'; this.setAttribute('aria-pressed', on);
-    if (on && !ac) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
-    if (ac && ac.state === 'suspended') ac.resume();
+    if (on && !ac) initAudio();
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    // 켜는 순간 바로 '쿵-탁' 한 번 들려줘서 소리가 켜졌는지 알 수 있게
+    if (on) { var t = ac.currentTime + 0.05; thump(t, 140, 0.17, 0.9); thump(t + 0.32, 190, 0.11, 0.65); }
   };
   function setSpeed(v) {
     speed = speed === v ? 1 : v;
