@@ -560,10 +560,32 @@ a.tool { text-decoration: none; }
     camS = s0; phi = 0.6; resetCells(); curYaw = curPitch = 0; arrive(0);
   }
 
-  /* ---------- 심장 소리: 심실이 수축할 때 '쿵'(제1음), 대동맥판막이 닫힐 때 '탁'(제2음) ----------
-     예전 소리(60~80Hz 사인파)는 너무 낮아서 휴대폰 · 태블릿 · 노트북 스피커로는 거의 들리지 않았어요.
-     그래서 배음이 많은 삼각파 + 짧은 잡음으로 '쿵' 하는 질감을 만들고, 압축기로 소리를 키웠어요. */
-  var ac = null, master = null, noiseBuf = null;
+  /* ---------- 심장 소리: 심실이 수축할 때 '쿵'(제1음), 대동맥판막이 닫힐 때 '덕'(제2음) ----------
+     묵직한 저음(45~80Hz)을 바탕으로 하고, 이 저음을 살짝 찌그러뜨려(포화) 생기는 배음으로
+     저음을 잘 못 내는 휴대폰 · 태블릿 스피커에서도 '둥' 하는 낮은 소리로 들리게 해요.
+     높은 소리는 걸러 내서(저역 통과) 딸깍거리지 않고 둔탁하게 들려요. */
+  function makeHeart(ctx, dest) {
+    var curve = new Float32Array(1024);
+    for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; curve[i] = Math.tanh(x * 3.2) / Math.tanh(3.2); }
+    function layer(t, f0, f1, dur, vol, drive) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), sh = ctx.createWaveShaper(), lp = ctx.createBiquadFilter(), out = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(drive, t + 0.018);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      sh.curve = curve;
+      lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
+      out.gain.value = vol;
+      o.connect(g); g.connect(sh); sh.connect(lp); lp.connect(out); out.connect(dest);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    return {
+      lub: function (t) { layer(t, 78, 46, 0.24, 1.0, 1.4); layer(t + 0.004, 156, 92, 0.16, 0.35, 0.9); },   // 쿵 (제1음): 길고 묵직하게
+      dub: function (t) { layer(t, 96, 60, 0.15, 0.8, 1.2); layer(t + 0.003, 190, 120, 0.1, 0.28, 0.8); },  // 덕 (제2음): 짧고 조금 높게
+    };
+  }
+  window.__makeHeart = makeHeart;   // 점검용 (소리 미리 듣기 파일 만들기)
+  var ac = null, heart = null;
   function soundOn() { return $('sound').getAttribute('aria-pressed') === 'true'; }
   function initAudio() {
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -572,40 +594,24 @@ a.tool { text-decoration: none; }
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     ac = new AC();
     var comp = ac.createDynamicsCompressor();
-    comp.threshold.value = -24; comp.knee.value = 12; comp.ratio.value = 6; comp.attack.value = 0.002; comp.release.value = 0.15;
-    master = ac.createGain(); master.gain.value = 2.0;
+    comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.2;
+    var master = ac.createGain(); master.gain.value = 1.8;
     master.connect(comp); comp.connect(ac.destination);
-    noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.25), ac.sampleRate);
-    var d = noiseBuf.getChannelData(0);
-    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  }
-  function thump(t, f0, dur, vol) {
-    var o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'triangle';
-    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.45, t + dur);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
-    var n = ac.createBufferSource(), f = ac.createBiquadFilter(), gn = ac.createGain();
-    n.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = 800; f.Q.value = 0.8;
-    gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(vol * 0.7, t + 0.006);
-    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.7);
-    n.connect(f); f.connect(gn); gn.connect(master); n.start(t); n.stop(t + dur);
+    heart = makeHeart(ac, master);
   }
   function heartSound(first) {
     if (!ac || !soundOn()) return;
     if (ac.state === 'suspended') ac.resume();
     var t = ac.currentTime + 0.01;
-    if (first) thump(t, 140, 0.17, 0.9);   // 쿵 (제1음)
-    else thump(t, 190, 0.11, 0.65);        // 탁 (제2음)
+    if (first) heart.lub(t); else heart.dub(t);
   }
   $('sound').onclick = function () {
     var on = this.getAttribute('aria-pressed') !== 'true'; this.setAttribute('aria-pressed', on);
     if (on && !ac) initAudio();
     if (!ac) return;
     if (ac.state === 'suspended') ac.resume();
-    // 켜는 순간 바로 '쿵-탁' 한 번 들려줘서 소리가 켜졌는지 알 수 있게
-    if (on) { var t = ac.currentTime + 0.05; thump(t, 140, 0.17, 0.9); thump(t + 0.32, 190, 0.11, 0.65); }
+    // 켜는 순간 바로 '쿵-덕' 한 번 들려줘서 소리가 켜졌는지 알 수 있게
+    if (on) { var t = ac.currentTime + 0.05; heart.lub(t); heart.dub(t + 0.32); }
   };
   function setSpeed(v) {
     speed = speed === v ? 1 : v;
