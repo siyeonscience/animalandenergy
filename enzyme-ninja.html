@@ -52,6 +52,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
 #flash{position:fixed;inset:0;z-index:4;pointer-events:none;background:rgba(255,60,60,.0);transition:background .25s;}
 #flash.on{background:rgba(255,60,60,.25);transition:none;}
 
+/* 세로 화면(스마트폰): 닌자 소개를 위쪽 띠로 */
+body.port #side{right:0;bottom:auto;width:auto;height:var(--top);padding:52px 14px 8px;border-right:none;border-bottom:2px solid rgba(255,255,255,.08);
+  background:linear-gradient(to bottom,rgba(8,14,22,.6),rgba(8,14,22,.25));
+  display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto 1fr;column-gap:12px;row-gap:2px;align-items:center;justify-items:start;}
+body.port #ninja{grid-row:1/4;width:calc(var(--top) - 70px);max-width:110px;}
+body.port #nname{font-size:24px;text-align:left;}
+body.port #nname small{display:inline;font-size:15px;margin:0 6px 0 0;}
+body.port #nmission{font-size:14px;line-height:1.35;text-align:left;}
+body.port #nmission br{display:none;}
+body.port #nmsg{min-height:0;font-size:13px;line-height:1.3;text-align:left;align-self:start;}
+body.port #hud{left:14px;right:14px;top:calc(var(--top) + 10px);}
+body.port #score{font-size:26px;min-width:96px;}
+body.port #center{left:0;top:var(--top);}
+
 /* 시작·결과 화면 */
 .panel{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(10,16,24,.72);}
 .panel.on{display:flex;}
@@ -163,15 +177,20 @@ const ROUND_SEC=20, GOOD=10, BAD=-5;
 
 /* ================= 화면 크기 ================= */
 const cv=$('#cv'), ctx=cv.getContext('2d');
-let W=0,H=0,SIDE=280,DPR=1;
+let W=0,H=0,SIDE=280,TOP=0,DPR=1;
+/* 가로 화면: 닌자 소개가 왼쪽 / 세로 화면(스마트폰): 닌자 소개가 위쪽 띠, 게임은 화면 너비 전체 */
 function resize(){
   DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;
-  SIDE=Math.round(Math.max(160,Math.min(300,W*.26)));
+  const port=W<H*0.9;
+  document.body.classList.toggle('port',port);
+  SIDE=port?0:Math.round(Math.max(160,Math.min(300,W*.26)));
+  TOP=port?Math.round(Math.max(150,Math.min(190,H*.2))):0;
   document.documentElement.style.setProperty('--side',SIDE+'px');
+  document.documentElement.style.setProperty('--top',TOP+'px');
   cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
 }
 addEventListener('resize',resize);resize();
-const R=()=>Math.max(34,Math.min(54,Math.min(W-SIDE,H)*.075));   // 영양소 크기
+const R=()=>Math.max(34,Math.min(54,Math.min(W-SIDE,H-TOP)*.075));   // 영양소 크기
 
 /* ================= 게임 상태 ================= */
 let items=[], pieces=[], drops=[], texts=[], trail=[];
@@ -193,7 +212,7 @@ function spawn(){
   const types=Object.keys(NUTRIENTS);
   const type=Math.random()<.45?en.target:types.filter(t=>t!==en.target)[Math.random()*2|0];
   const x=SIDE+r+Math.random()*(W-SIDE-2*r);
-  const g=H*1.5, h=H*(.45+Math.random()*.35);
+  const g=H*1.5, h=Math.min((H-TOP)*(.5+Math.random()*.32), H-TOP-r*1.6);   // 닌자 소개 띠 아래까지만 올라가게
   const vy=-Math.sqrt(2*g*h);
   const cx=SIDE+(W-SIDE)/2, vx=(cx-x)*(.25+Math.random()*.5)+(Math.random()-.5)*80;
   items.push({type,x,y:H+r,vx,vy,g,r,rot:Math.random()*6,vr:(Math.random()-.5)*4});
@@ -325,7 +344,7 @@ async function startRound(k){
   await wait(800);
   $('#nname').innerHTML=`<small>나는</small>${en.name} 닌자!`;$('#nname').classList.add('on');
   await wait(500);
-  $('#nmission').innerHTML='내가 소화하는 영양소만<br>골라서 베어라!';$('#nmission').classList.add('on');
+  $('#nmission').innerHTML='내가 소화하는 영양소만 <br>골라서 베어라!';$('#nmission').classList.add('on');
   await wait(600);bigText('준비…');await wait(900);bigText('시작!');await wait(300);
   G.playing=true;
 }
