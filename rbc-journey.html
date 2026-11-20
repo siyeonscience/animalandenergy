@@ -560,20 +560,58 @@ a.tool { text-decoration: none; }
     camS = s0; phi = 0.6; resetCells(); curYaw = curPitch = 0; arrive(0);
   }
 
-  /* ---------- Sound: S1 at ventricular systole onset, S2 as the aortic valve closes ---------- */
-  var ac = null;
+  /* ---------- 심장 소리: 심실이 수축할 때 '쿵'(제1음), 대동맥판막이 닫힐 때 '덕'(제2음) ----------
+     묵직한 저음(45~80Hz)을 바탕으로 하고, 이 저음을 살짝 찌그러뜨려(포화) 생기는 배음으로
+     저음을 잘 못 내는 휴대폰 · 태블릿 스피커에서도 '둥' 하는 낮은 소리로 들리게 해요.
+     높은 소리는 걸러 내서(저역 통과) 딸깍거리지 않고 둔탁하게 들려요. */
+  function makeHeart(ctx, dest) {
+    var curve = new Float32Array(1024);
+    for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; curve[i] = Math.tanh(x * 3.2) / Math.tanh(3.2); }
+    function layer(t, f0, f1, dur, vol, drive) {
+      var o = ctx.createOscillator(), g = ctx.createGain(), sh = ctx.createWaveShaper(), lp = ctx.createBiquadFilter(), out = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(drive, t + 0.018);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      sh.curve = curve;
+      lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
+      out.gain.value = vol;
+      o.connect(g); g.connect(sh); sh.connect(lp); lp.connect(out); out.connect(dest);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    return {
+      lub: function (t) { layer(t, 78, 46, 0.24, 1.0, 1.4); layer(t + 0.004, 156, 92, 0.16, 0.35, 0.9); },   // 쿵 (제1음): 길고 묵직하게
+      dub: function (t) { layer(t, 96, 60, 0.15, 0.8, 1.2); layer(t + 0.003, 190, 120, 0.1, 0.28, 0.8); },  // 덕 (제2음): 짧고 조금 높게
+    };
+  }
+  window.__makeHeart = makeHeart;   // 점검용 (소리 미리 듣기 파일 만들기)
+  var ac = null, heart = null;
+  function soundOn() { return $('sound').getAttribute('aria-pressed') === 'true'; }
+  function initAudio() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    // 아이폰 무음 모드에서도 소리가 나게 (지원하는 사파리에서만)
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    ac = new AC();
+    var comp = ac.createDynamicsCompressor();
+    comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.2;
+    var master = ac.createGain(); master.gain.value = 1.8;
+    master.connect(comp); comp.connect(ac.destination);
+    heart = makeHeart(ac, master);
+  }
   function heartSound(first) {
-    if (!ac || !$('sound').getAttribute('aria-pressed') || $('sound').getAttribute('aria-pressed') === 'false') return;
-    var t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(first ? 62 : 84, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.14);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(first ? 0.9 : 0.6, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + (first ? 0.17 : 0.12));
-    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.2);
+    if (!ac || !soundOn()) return;
+    if (ac.state === 'suspended') ac.resume();
+    var t = ac.currentTime + 0.01;
+    if (first) heart.lub(t); else heart.dub(t);
   }
   $('sound').onclick = function () {
     var on = this.getAttribute('aria-pressed') !== 'true'; this.setAttribute('aria-pressed', on);
-    if (on && !ac) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) ac = new AC(); }
-    if (ac && ac.state === 'suspended') ac.resume();
+    if (on && !ac) initAudio();
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    // 켜는 순간 바로 '쿵-덕' 한 번 들려줘서 소리가 켜졌는지 알 수 있게
+    if (on) { var t = ac.currentTime + 0.05; heart.lub(t); heart.dub(t + 0.32); }
   };
   function setSpeed(v) {
     speed = speed === v ? 1 : v;
