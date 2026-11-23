@@ -561,15 +561,15 @@ a.tool { text-decoration: none; }
   }
 
   /* ---------- 심장 소리: 심실이 수축할 때 '쿵'(제1음), 대동맥판막이 닫힐 때 '덕'(제2음) ----------
-     묵직한 저음(32~76Hz)을 바탕으로 하고, 이 저음을 살짝 찌그러뜨려(포화) 생기는 배음으로
+     묵직한 저음(22~64Hz)을 바탕으로 하고, 이 저음을 살짝 찌그러뜨려(포화) 생기는 배음으로
      저음을 잘 못 내는 휴대폰 · 태블릿 스피커에서도 '둥' 하는 낮은 소리로 들리게 해요.
      높은 소리는 걸러 내서(저역 통과) 딸깍거리지 않고 둔탁하게 들려요. */
   function makeHeart(ctx, dest) {
     var curve = new Float32Array(1024);
-    for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; curve[i] = Math.tanh(x * 3.6) / Math.tanh(3.6); }
+    for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; curve[i] = Math.tanh(x * 4.2) / Math.tanh(4.2); }
     // 저음을 키우는 필터: 우퍼가 있는 스피커 · 이어폰에서는 더 깊게 울려요
     var shelf = ctx.createBiquadFilter();
-    shelf.type = 'lowshelf'; shelf.frequency.value = 90; shelf.gain.value = 7;
+    shelf.type = 'lowshelf'; shelf.frequency.value = 80; shelf.gain.value = 10;
     shelf.connect(dest);
     function layer(t, f0, f1, dur, vol, drive, atk) {
       var o = ctx.createOscillator(), g = ctx.createGain(), sh = ctx.createWaveShaper(), lp = ctx.createBiquadFilter(), out = ctx.createGain();
@@ -578,16 +578,16 @@ a.tool { text-decoration: none; }
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(drive, t + atk);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       sh.curve = curve;
-      lp.type = 'lowpass'; lp.frequency.value = 280; lp.Q.value = 0.6;
+      lp.type = 'lowpass'; lp.frequency.value = 210; lp.Q.value = 0.6;
       out.gain.value = vol;
       o.connect(g); g.connect(sh); sh.connect(lp); lp.connect(out); out.connect(shelf);
       o.start(t); o.stop(t + dur + 0.05);
     }
     return {
       // 쿵 (제1음): 낮고 길게, 두 판막이 아주 조금 어긋나 닫히는 것처럼 두 겹으로
-      lub: function (t) { layer(t, 60, 34, 0.32, 1.0, 1.9, 0.025); layer(t + 0.024, 54, 32, 0.26, 0.55, 1.6, 0.02); },
+      lub: function (t) { layer(t, 50, 28, 0.36, 1.0, 2.2, 0.03); layer(t + 0.026, 46, 26, 0.3, 0.6, 1.9, 0.025); layer(t, 34, 22, 0.42, 0.5, 1.2, 0.04); },
       // 덕 (제2음): 쿵보다 짧고 조금 높게, 그래도 둔탁하게
-      dub: function (t) { layer(t, 76, 44, 0.18, 0.8, 1.7, 0.018); },
+      dub: function (t) { layer(t, 64, 36, 0.24, 0.85, 2.0, 0.022); layer(t, 40, 26, 0.3, 0.4, 1.1, 0.03); },
     };
   }
   window.__makeHeart = makeHeart;   // 점검용 (소리 미리 듣기 파일 만들기)
@@ -601,7 +601,7 @@ a.tool { text-decoration: none; }
     ac = new AC();
     var comp = ac.createDynamicsCompressor();
     comp.threshold.value = -20; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.2;
-    var master = ac.createGain(); master.gain.value = 1.8;
+    var master = ac.createGain(); master.gain.value = 1.4;
     master.connect(comp); comp.connect(ac.destination);
     heart = makeHeart(ac, master);
   }
